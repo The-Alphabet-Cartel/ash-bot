@@ -2,7 +2,7 @@
 
 > *Complete crisis detection ecosystem with advanced analytics dashboard and comprehensive testing validation*
 
-[![Version](https://img.shields.io/badge/version-2.1-blue)](https://github.com/The-Alphabet-Cartel/ash/releases/tag/v2.1)
+[![Version](https://img.shields.io/badge/version-2.1-blue)](https://github.com/The-Alphabet-Cartel/ash-bot/releases/tag/v2.1)
 [![Discord.py](https://img.shields.io/badge/discord.py-2.3+-green)](https://discordpy.readthedocs.io/)
 [![Claude 4](https://img.shields.io/badge/Claude-4%20Sonnet-purple)](https://docs.anthropic.com/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue)](https://docker.com/)
@@ -123,7 +123,7 @@ Advanced community adaptation with comprehensive analytics:
 ### Complete v2.1 Ecosystem Deployment
 ```bash
 # Clone all repositories
-git clone https://github.com/The-Alphabet-Cartel/ash.git
+git clone https://github.com/The-Alphabet-Cartel/ash-bot.git
 git clone https://github.com/The-Alphabet-Cartel/ash-nlp.git
 git clone https://github.com/The-Alphabet-Cartel/ash-dash.git
 git clone https://github.com/The-Alphabet-Cartel/ash-thrash.git
@@ -751,7 +751,7 @@ docker-compose exec ash tar -xzf /tmp/ash-backup.tar.gz -C /app/
 ### Development Environment Setup
 ```bash
 # Clone complete ecosystem for development
-git clone https://github.com/The-Alphabet-Cartel/ash.git
+git clone https://github.com/The-Alphabet-Cartel/ash-bot.git
 git clone https://github.com/The-Alphabet-Cartel/ash-nlp.git
 git clone https://github.com/The-Alphabet-Cartel/ash-dash.git
 git clone https://github.com/The-Alphabet-Cartel/ash-thrash.git
