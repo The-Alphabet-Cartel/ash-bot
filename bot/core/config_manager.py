@@ -95,7 +95,165 @@ class ConfigManager:
         
         # Use default
         return default
-    
+
+    def _validate_discord_token(self, token: str) -> bool:
+        """
+        Validate Discord token format and log debug information
+        
+        Discord bot tokens should be:
+        - 59+ characters long (newer tokens are longer)
+        - Format: base64.base64.base64 (3 parts separated by dots)
+        - Each part should be valid base64
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Debug logging for token troubleshooting
+        if not token:
+            logger.error("🔴 DISCORD_TOKEN is completely missing/empty")
+            return False
+        
+        logger.info(f"🔍 DISCORD_TOKEN Debug Information:")
+        logger.info(f"   📏 Token length: {len(token)} characters")
+        logger.info(f"   🎯 Token format preview: {token[:20]}...{token[-10:] if len(token) > 30 else ''}")
+        
+        # Check minimum length
+        if len(token) < 59:
+            logger.error(f"🔴 DISCORD_TOKEN too short: {len(token)} chars (minimum 59 required)")
+            logger.error(f"   📋 Current token: '{token}'")
+            logger.error(f"   💡 Expected format: 'MTxxxxxxxxxxxxxxxxxx.Yxxxxx.zzzzzzzzzzzzzzzzzzzzzzzzzz'")
+            return False
+        
+        # Check for proper bot token format (3 parts separated by dots)
+        parts = token.split('.')
+        if len(parts) != 3:
+            logger.error(f"🔴 DISCORD_TOKEN invalid format: expected 3 parts separated by dots, got {len(parts)}")
+            logger.error(f"   📋 Token parts: {[f'{part[:10]}...' for part in parts]}")
+            logger.error(f"   💡 Expected format: 'part1.part2.part3'")
+            return False
+        
+        # Validate each part is base64-like
+        import re
+        base64_pattern = re.compile(r'^[A-Za-z0-9_-]+$')
+        
+        for i, part in enumerate(parts):
+            if not base64_pattern.match(part):
+                logger.error(f"🔴 DISCORD_TOKEN part {i+1} contains invalid characters")
+                logger.error(f"   📋 Part {i+1}: '{part}'")
+                logger.error(f"   💡 Should only contain: A-Z, a-z, 0-9, _, -")
+                return False
+            
+            logger.info(f"   ✅ Part {i+1}: {len(part)} chars - valid base64 format")
+        
+        logger.info("✅ DISCORD_TOKEN format validation passed")
+        return True
+
+    def _load_and_validate_config(self) -> ConfigValidationResult:
+        """Load and comprehensively validate all configuration with enhanced token debugging"""
+        logger = logging.getLogger(__name__)
+        logger.info("📋 Loading and validating configuration with enhanced token debugging...")
+        
+        errors = []
+        warnings = []
+        
+        try:
+            # Enhanced Discord Token Loading with Debug Info
+            logger.info("🔍 Loading DISCORD_TOKEN with debug information...")
+            
+            # Try multiple sources and log each attempt
+            discord_token = None
+            
+            # 1. Check Docker secrets first
+            secret_paths = [
+                "/run/secrets/discord_token",
+                "./secrets/discord_token",
+                "./bot/secrets/discord_token.txt"
+            ]
+            
+            for path in secret_paths:
+                logger.info(f"🔍 Checking secret file: {path}")
+                if os.path.exists(path):
+                    try:
+                        with open(path, 'r') as f:
+                            file_content = f.read().strip()
+                        logger.info(f"✅ Found secret file: {path}")
+                        logger.info(f"   📏 File content length: {len(file_content)} chars")
+                        if file_content:
+                            discord_token = file_content
+                            logger.info(f"🔐 Using Discord token from secret file: {path}")
+                            break
+                    except Exception as e:
+                        logger.warning(f"⚠️ Could not read secret file {path}: {e}")
+                else:
+                    logger.debug(f"📁 Secret file not found: {path}")
+            
+            # 2. Check environment variable if no secret file found
+            if not discord_token:
+                logger.info("🔍 Checking DISCORD_TOKEN environment variable...")
+                env_token = os.getenv('DISCORD_TOKEN')
+                if env_token:
+                    logger.info("✅ Found DISCORD_TOKEN in environment")
+                    logger.info(f"   📏 Environment token length: {len(env_token)} chars")
+                    discord_token = env_token
+                else:
+                    logger.warning("⚠️ DISCORD_TOKEN not found in environment")
+            
+            # 3. Validate the token we found
+            if discord_token:
+                logger.info("🔍 Validating Discord token...")
+                if self._validate_discord_token(discord_token):
+                    self._config['DISCORD_TOKEN'] = discord_token
+                    logger.info("✅ Discord token validated and stored")
+                else:
+                    errors.append("🔴 DISCORD_TOKEN validation failed - see logs above for details")
+            else:
+                logger.error("🔴 No Discord token found in any location!")
+                logger.error("🔍 Checked locations:")
+                for path in secret_paths:
+                    logger.error(f"   📁 {path}")
+                logger.error("   🌍 Environment variable: DISCORD_TOKEN")
+                errors.append("🔴 DISCORD_TOKEN not found in any location")
+            
+            # Continue with other configuration loading...
+            logger.info("🔍 Loading other configuration values...")
+            
+            # Claude API Key (with similar debugging if needed)
+            self._config['CLAUDE_API_KEY'] = self._get_config_value(
+                'CLAUDE_API_KEY',
+                secret_file_suffix='claude_api_key'
+            )
+            
+            # Validate Claude API key exists
+            if not self._config['CLAUDE_API_KEY']:
+                errors.append("🔴 CLAUDE_API_KEY not found")
+            else:
+                claude_key = self._config['CLAUDE_API_KEY']
+                logger.info(f"✅ Claude API key found: {len(claude_key)} chars")
+            
+            # Load other required configuration...
+            self._config['GUILD_ID'] = self._get_config_value('GUILD_ID', secret_file_suffix='guild_id')
+            self._config['CLAUDE_MODEL'] = self._get_config_value('CLAUDE_MODEL', default='claude-sonnet-4-20250514')
+            
+            # Basic validation for other required fields
+            required_fields = ['GUILD_ID']
+            for field in required_fields:
+                if not self._config.get(field):
+                    errors.append(f"🔴 Required field {field} is missing")
+            
+            logger.info("📊 Configuration Loading Summary:")
+            logger.info(f"   🔐 Discord Token: {'✅ VALID' if discord_token and self._validate_discord_token(discord_token) else '❌ INVALID'}")
+            logger.info(f"   🧠 Claude API Key: {'✅ SET' if self._config.get('CLAUDE_API_KEY') else '❌ MISSING'}")
+            logger.info(f"   🏠 Guild ID: {'✅ SET' if self._config.get('GUILD_ID') else '❌ MISSING'}")
+            
+        except Exception as e:
+            error_msg = f"🔴 Unexpected error during configuration loading: {e}"
+            errors.append(error_msg)
+            logger.exception("Configuration loading failed with exception")
+        
+        # Create and return validation result
+        is_valid = len(errors) == 0
+        return ConfigValidationResult(is_valid, errors, warnings)
+
     def _load_and_validate_config(self) -> ConfigValidationResult:
         """Load and comprehensively validate all configuration"""
         logger.info("📋 Loading and validating configuration with secrets support...")
