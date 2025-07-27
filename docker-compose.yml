@@ -1,14 +1,14 @@
 services:
-  ash:
+  ash-bot:
     # For local development: build locally
     build:
       context: .
       dockerfile: Dockerfile
 
     # For production: pull from GitHub Container Registry
-    image: ghcr.io/the-alphabet-cartel/ash:latest
+    image: ghcr.io/the-alphabet-cartel/ash-bot:latest
 
-    container_name: ash
+    container_name: ash-bot
     restart: unless-stopped
     networks:
       - ash-network
