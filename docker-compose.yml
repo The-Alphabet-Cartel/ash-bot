@@ -1,0 +1,107 @@
+services:
+  ash:
+    # For local development: build locally
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # For production: pull from GitHub Container Registry
+    image: ghcr.io/the-alphabet-cartel/ash:latest
+
+    container_name: ash
+    restart: unless-stopped
+    networks:
+      - ash-network
+    ports:
+      - 8882:8882  
+    environment:
+      # Core Discord and Claude settings (using Docker Secrets)
+      - DISCORD_TOKEN=/run/secrets/discord_token
+      - SESSION_TOKEN=/run/secrets/session_token
+      - CLAUDE_API_KEY=/run/secrets/claude_api_key
+
+      # Claude Configuration
+      - CLAUDE_MODEL=${CLAUDE_MODEL}
+
+      # Discord and Channel Configuration
+      - GUILD_ID=${GUILD_ID}
+      - RESOURCES_CHANNEL_ID=${RESOURCES_CHANNEL_ID}
+      - CRISIS_RESPONSE_CHANNEL_ID=${CRISIS_RESPONSE_CHANNEL_ID}
+      - ALLOWED_CHANNELS=${ALLOWED_CHANNELS}
+
+      # Team Configuration
+      - STAFF_PING_USER=${STAFF_PING_USER}
+      - CRISIS_RESPONSE_ROLE_ID=${CRISIS_RESPONSE_ROLE_ID}
+      - RESOURCES_CHANNEL_NAME=${RESOURCES_CHANNEL_NAME}
+      - CRISIS_RESPONSE_ROLE_NAME=${CRISIS_RESPONSE_ROLE_NAME}
+      - STAFF_PING_NAME=${STAFF_PING_NAME}
+
+      # API Server Configuration
+      - API_HOST=${API_HOST:-0.0.0.0}
+      - API_PORT=${API_PORT:-8882}
+      - API_RATE_LIMIT_PER_MINUTE=${API_RATE_LIMIT_PER_MINUTE:-60}
+      - API_RATE_LIMIT_PER_HOUR=${API_RATE_LIMIT_PER_HOUR:-1000}
+      - API_ENABLE_CORS=${API_ENABLE_CORS:-true}
+      - API_ALLOWED_ORIGINS=${API_ALLOWED_ORIGINS:-*}
+
+      # Learning System Configuration
+      - ENABLE_LEARNING_SYSTEM=${ENABLE_LEARNING_SYSTEM}
+      - LEARNING_CONFIDENCE_THRESHOLD=${LEARNING_CONFIDENCE_THRESHOLD}
+      - MAX_LEARNING_ADJUSTMENTS_PER_DAY=${MAX_LEARNING_ADJUSTMENTS_PER_DAY}
+
+      # NLP Server Configuration
+      - NLP_SERVICE_HOST=${NLP_SERVICE_HOST}
+      - NLP_SERVICE_PORT=${NLP_SERVICE_PORT:-8881}
+
+      # Bot Behavior Configuration
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_DAILY_CALLS=${MAX_DAILY_CALLS:-1000}
+      - RATE_LIMIT_PER_USER=${RATE_LIMIT_PER_USER:-10}
+
+      # Conversation Configuration
+      - CONVERSATION_REQUIRES_MENTION=${CONVERSATION_REQUIRES_MENTION:-true}
+      - CONVERSATION_TRIGGER_PHRASES=${CONVERSATION_TRIGGER_PHRASES:-ash,hey ash,ash help,@ash}
+      - CONVERSATION_ALLOW_STARTERS=${CONVERSATION_ALLOW_STARTERS:-true}
+      - CONVERSATION_SETUP_INSTRUCTIONS=${CONVERSATION_SETUP_INSTRUCTIONS:-true}
+      - CONVERSATION_LOG_ATTEMPTS=${CONVERSATION_LOG_ATTEMPTS:-true}
+      - CONVERSATION_TIMEOUT=${CONVERSATION_TIMEOUT:-300}
+
+      # Performance Monitoring
+      - ENABLE_PERFORMANCE_TRACKING=${ENABLE_PERFORMANCE_TRACKING:-true}
+      - TRACK_RESPONSE_TIMES=${TRACK_RESPONSE_TIMES:-true}
+      - TRACK_MEMORY_USAGE=${TRACK_MEMORY_USAGE:-true}
+      - COLLECT_CRISIS_STATS=${COLLECT_CRISIS_STATS:-true}
+      - COLLECT_KEYWORD_STATS=${COLLECT_KEYWORD_STATS:-true}
+      - COLLECT_LEARNING_STATS=${COLLECT_LEARNING_STATS:-true}
+      - STATS_RETENTION_DAYS=${STATS_RETENTION_DAYS:-90}
+      - LOGS_RETENTION_DAYS=${LOGS_RETENTION_DAYS:-30}
+    volumes:
+      - ./bot/logs:/app/logs
+      - ./bot/data:/app/data
+      - ./bot/secrets:/run/secrets:ro
+    user: "1001:1001"
+    depends_on:
+      ash-redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import discord; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ash-redis:
+    image: redis:7-alpine
+    container_name: ash-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - ash-network
+
+volumes:
+  redis_data:
+
+networks:
+  ash-network:
+    driver: bridge
