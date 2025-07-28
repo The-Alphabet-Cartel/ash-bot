@@ -343,7 +343,7 @@ class ConfigManager:
                 errors.append("🔴 MAX_LEARNING_ADJUSTMENTS_PER_DAY must be a valid integer")
             
             # NLP Service Configuration (pointing to your AI rig)
-            self._config['NLP_SERVICE_HOST'] = self._get_config_value('NLP_SERVICE_HOST', '10.20.30.16')
+            self._config['NLP_SERVICE_HOST'] = self._get_config_value('NLP_SERVICE_HOST', '10.20.30.253')
             
             try:
                 self._config['NLP_SERVICE_PORT'] = int(self._get_config_value('NLP_SERVICE_PORT', '8881'))

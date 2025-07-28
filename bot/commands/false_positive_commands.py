@@ -280,7 +280,7 @@ class FalsePositiveLearningCommands(commands.Cog):
                 return {'status': 'no_nlp_server', 'patterns_discovered': 0, 'confidence_adjustments': 0}
             
             # Send to NLP server for pattern analysis
-            nlp_host = os.getenv('NLP_SERVICE_HOST', '10.20.30.16')
+            nlp_host = os.getenv('NLP_SERVICE_HOST', '10.20.30.253')
             nlp_port = os.getenv('NLP_SERVICE_PORT', '8881')
             nlp_url = f"http://{nlp_host}:{nlp_port}/analyze_false_positive"
             
@@ -314,7 +314,7 @@ class FalsePositiveLearningCommands(commands.Cog):
     async def _send_learning_update_to_nlp(self, record: Dict):
         """Send learning update to NLP server for model adjustment"""
         try:
-            nlp_host = os.getenv('NLP_SERVICE_HOST', '10.20.30.16')
+            nlp_host = os.getenv('NLP_SERVICE_HOST', '10.20.30.253')
             nlp_port = os.getenv('NLP_SERVICE_PORT', '8881')
             nlp_url = f"http://{nlp_host}:{nlp_port}/update_learning_model"
             
