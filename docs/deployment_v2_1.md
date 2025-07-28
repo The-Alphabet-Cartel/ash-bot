@@ -1,626 +1,369 @@
-# Ash v2.1 Complete Ecosystem Deployment Guide
+# 🚀 ASH-BOT Deployment Guide v2.1
 
-**Comprehensive deployment instructions for the complete Ash crisis detection platform**
+**Complete deployment instructions for ASH-BOT Discord crisis detection system**
 
-This guide provides step-by-step instructions for deploying the complete Ash v2.1 ecosystem, including the main Discord bot, NLP server, analytics dashboard, and testing suite across your infrastructure.
-
----
-
-## 🎯 Deployment Overview
-
-### System Architecture Summary
-
-The Ash v2.1 ecosystem consists of four integrated services:
-
-- **🤖 Ash Bot** - Main Discord bot (Linux server: 10.20.30.253:8882)
-- **🧠 Ash-NLP** - AI processing server (Windows 11: 10.20.30.16:8881)
-- **📊 Ash-Dash** - Analytics dashboard (Windows 11: 10.20.30.16:8883)
-- **🧪 Ash-Thrash** - Testing suite (Windows 11: 10.20.30.16:8884)
-
-### Deployment Prerequisites
-
-**Infrastructure Requirements:**
-- **Linux Server** (Debian/Ubuntu) with Docker for main bot
-- **Windows 11 Server** with Docker Desktop, RTX 3050 GPU, Ryzen 7 7700X, 64GB RAM
-- **Network connectivity** between servers
-- **GitHub access** to The Alphabet Cartel organization repositories
-- **Discord Bot Application** with proper permissions
-
-**Required Accounts & Tokens:**
-- Discord Bot Token with appropriate permissions
-- Claude 4 Sonnet API key from Anthropic
-- GitHub access to private repositories
-- SSL certificates for HTTPS dashboard (optional but recommended)
+**Repository**: https://github.com/the-alphabet-cartel/ash-bot  
+**Ecosystem**: https://github.com/the-alphabet-cartel/ash  
+**Discord**: https://discord.gg/alphabetcartel  
 
 ---
 
-## 🚀 Quick Deployment (Experienced Users)
+## 📋 Deployment Overview
 
-### One-Command Deployment
+### System Architecture
 
-```bash
-# Clone all repositories
-git clone https://github.com/The-Alphabet-Cartel/ash.git
-git clone https://github.com/The-Alphabet-Cartel/ash-nlp.git
-git clone https://github.com/The-Alphabet-Cartel/ash-dash.git
-git clone https://github.com/The-Alphabet-Cartel/ash-thrash.git
+ASH-BOT runs on a dedicated Debian 12 server as part of the integrated Ash ecosystem:
 
-# Configure all services (edit .env files)
-cd ash && cp .env.template .env && cd ..
-cd ash-nlp && cp .env.template .env && cd ..
-cd ash-dash && cp .env.template .env && cd ..
-cd ash-thrash && cp .env.template .env && cd ..
-
-# Deploy complete ecosystem
-cd ash && docker-compose up -d && cd ..
-cd ash-nlp && docker-compose up -d && cd ..
-cd ash-dash && docker-compose up -d && cd ..
-cd ash-thrash && docker-compose up -d && cd ..
-
-# Verify deployment
-curl http://10.20.30.253:8882/health  # Bot
-curl http://10.20.30.16:8881/health   # NLP
-curl http://10.20.30.16:8883/health   # Dashboard
-curl http://10.20.30.16:8884/health   # Testing
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEDICATED SERVER                            │
+│                  IP: 10.20.30.253                              │
+│                Debian 12 Linux Server                          │
+│            AMD Ryzen 7 5800X | 64GB RAM | RTX 3060            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+    ┌───────────────────────────┼───────────────────────────┐
+    │                           │                           │
+    ▼                           ▼                           ▼
+┌─────────────┐        ┌─────────────┐        ┌─────────────┐
+│  ASH-BOT    │◄──────►│  ASH-NLP    │◄──────►│ ASH-DASH    │
+│ Port: 8882  │        │ Port: 8881  │        │ Port: 8883  │
+│Discord Bot  │        │AI Analysis  │        │Analytics    │
+│API Server   │        │Crisis Score │        │Dashboard    │
+└─────────────┘        └─────────────┘        └─────────────┘
+    │                           │                           │
+    └───────────────────────────┼───────────────────────────┘
+                                ▼
+                       ┌─────────────┐
+                       │ ASH-THRASH  │
+                       │ Port: 8884  │
+                       │Testing Suite│
+                       │Quality Check│
+                       └─────────────┘
 ```
 
-### Quick Verification
+### Service Endpoints
 
-```bash
-# Access analytics dashboard
-open https://10.20.30.16:8883
-
-# Run quick test
-curl -X POST http://10.20.30.16:8884/api/test/quick-validation
-
-# Check Discord bot status
-# Bot should appear online in Discord server
-```
+- **ASH-BOT API**: `http://10.20.30.253:8882`
+- **NLP Integration**: `http://10.20.30.253:8881` 
+- **Dashboard Reporting**: `http://10.20.30.253:8883`
+- **Testing Integration**: `http://10.20.30.253:8884`
+- **External Dashboard**: `https://dashboard.alphabetcartel.net`
 
 ---
 
-## 📋 Detailed Step-by-Step Deployment
+## 🎯 Prerequisites
 
-### Phase 1: Prerequisites Setup
+### Infrastructure Requirements
 
-#### 1.1 Discord Bot Application Setup
+**Server Specifications:**
+- **Operating System**: Debian 12 (recommended) or Ubuntu 20.04+
+- **CPU**: Multi-core processor (AMD Ryzen 7 5800X or equivalent)
+- **RAM**: 8GB minimum, 16GB+ recommended
+- **Storage**: 50GB+ SSD storage
+- **Network**: Stable internet connection with static IP
 
-**Create Discord Application:**
+**Software Requirements:**
+- **Docker**: 20.10+ and Docker Compose 2.0+
+- **Git**: For repository management
+- **Python**: 3.9+ (for development)
+- **SSH Access**: For remote management
+
+### Discord Application Setup
+
+**Create Discord Bot:**
 1. Go to https://discord.com/developers/applications
 2. Click "New Application" and name it "Ash"
-3. Go to "Bot" section and create a bot
-4. **Save the Bot Token** securely
-5. Enable all necessary Intents:
-   - Presence Intent
-   - Server Members Intent
-   - Message Content Intent
+3. Navigate to "Bot" section and create a bot
+4. **Copy and save the Bot Token securely**
+5. Enable required bot permissions (see Configuration section)
+6. Generate OAuth2 URL and invite bot to your server
 
-**Generate Invite URL:**
-1. Go to "OAuth2" > "URL Generator"
-2. Select scopes: `bot` and `applications.commands`
-3. Select permissions:
-   - Read Messages/View Channels
-   - Send Messages
-   - Read Message History
-   - Use Slash Commands
-   - Manage Messages (optional)
-4. **Invite bot to your Discord server** using generated URL
+**Required Discord Permissions:**
+```
+Permissions Integer: 8589934591
+- Read Messages/View Channels
+- Send Messages  
+- Manage Messages
+- Manage Roles
+- Kick Members
+- Ban Members
+- Manage Channels
+- View Audit Log
+- Use Slash Commands
+```
 
-#### 1.2 API Keys and Accounts
-
-**Anthropic Claude API:**
-1. Sign up at https://console.anthropic.com/
-2. Generate API key for Claude 4 Sonnet
-3. **Save API key securely**
-4. Verify you have access to `claude-sonnet-4-20250514` model
+### Access Requirements
 
 **GitHub Access:**
-1. Ensure access to The Alphabet Cartel organization
-2. Generate Personal Access Token if using HTTPS
-3. Configure SSH keys if using SSH authentication
+- Access to The Alphabet Cartel organization
+- SSH keys configured for repository access
+- Required for private repository access
 
-#### 1.3 Server Preparation
+**API Keys:**
+- Discord Bot Token
+- NLP Server API Key (generated during deployment)
+- Dashboard Webhook URLs
 
-**Linux Server (10.20.30.253):**
+---
+
+## 🚀 Deployment Methods
+
+### Method 1: Standalone ASH-BOT Deployment
+
+**Use Case**: Deploying only the Discord bot component
+
 ```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
+# 1. Clone the repository
+git clone https://github.com/the-alphabet-cartel/ash-bot.git
+cd ash-bot
 
-# Install Docker and Docker Compose
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo apt install docker-compose -y
-
-# Add user to docker group
-sudo usermod -aG docker $USER
-newgrp docker
-
-# Verify installation
-docker --version
-docker-compose --version
-
-# Create application directory
-sudo mkdir -p /opt/ash
-sudo chown $USER:$USER /opt/ash
-```
-
-**Windows 11 Server (10.20.30.16):**
-```powershell
-# Install Docker Desktop for Windows
-# Download from: https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
-# Follow installation wizard and enable WSL2 integration
-
-# Install Windows Subsystem for Linux (if needed)
-wsl --install
-
-# Verify Docker installation
-docker --version
-docker-compose --version
-
-# Install NVIDIA Container Toolkit for GPU access
-# Follow guide: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
-
-# Verify GPU access
-docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-
-# Create project directories
-New-Item -Path "C:\Projects" -ItemType Directory -Force
-```
-
-### Phase 2: Service Deployment
-
-#### 2.1 Deploy Main Bot (Linux Server)
-
-**Clone and Configure:**
-```bash
-# SSH into Linux server (10.20.30.253)
-ssh admin@10.20.30.253
-
-# Clone repository
-cd /opt
-sudo git clone https://github.com/The-Alphabet-Cartel/ash.git
-sudo chown -R $USER:$USER ash
-cd ash
-
-# Create environment configuration
+# 2. Configure environment
 cp .env.template .env
-```
 
-**Configure Environment (.env):**
-```bash
-# Edit .env file
-nano .env
-
-# Required configuration:
+# Edit .env with the following configuration:
+cat > .env << 'EOF'
+# Discord Configuration
 DISCORD_TOKEN=your_discord_bot_token_here
-GUILD_ID=your_discord_server_id_here
-CLAUDE_API_KEY=your_claude_api_key_here
-CLAUDE_MODEL=claude-sonnet-4-20250514
+DISCORD_GUILD_ID=your_server_id_here
+CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
+CRISIS_RESPONSE_ROLE_ID=your_crisis_team_role_id
 
-# Channel Configuration
-RESOURCES_CHANNEL_ID=your_resources_channel_id
-CRISIS_RESPONSE_CHANNEL_ID=your_crisis_response_channel_id
-ALLOWED_CHANNELS=channel_id_1,channel_id_2,channel_id_3
+# Server Configuration
+BOT_API_HOST=0.0.0.0
+BOT_API_PORT=8882
 
-# Team Configuration
-STAFF_PING_USER=staff_user_id_here
-CRISIS_RESPONSE_ROLE_ID=crisis_team_role_id_here
+# NLP Integration (if available)
+NLP_SERVER_URL=http://10.20.30.253:8881
+NLP_SERVER_API_KEY=secure_api_key_here
+ENABLE_NLP_INTEGRATION=true
 
-# Learning System
-ENABLE_LEARNING_SYSTEM=true
-LEARNING_CONFIDENCE_THRESHOLD=0.6
-MAX_LEARNING_ADJUSTMENTS_PER_DAY=50
+# Database Configuration
+DATABASE_URL=sqlite:///data/ash_bot.db
 
-# NLP Server Integration
-NLP_SERVICE_HOST=10.20.30.16
-NLP_SERVICE_PORT=8881
+# Crisis Detection Settings
+HIGH_PRIORITY_THRESHOLD=0.8
+MEDIUM_PRIORITY_THRESHOLD=0.6
+LOW_PRIORITY_THRESHOLD=0.4
+ENABLE_KEYWORD_DETECTION=true
+ENABLE_AI_ANALYSIS=true
 
-# Dashboard Integration
-DASHBOARD_URL=https://10.20.30.16:8883
-ENABLE_DASHBOARD_INTEGRATION=true
-
-# Testing Integration
-TESTING_API_URL=http://10.20.30.16:8884
-ENABLE_AUTOMATED_TESTING=true
-
-# Optional Settings
-LOG_LEVEL=INFO
-MAX_DAILY_CALLS=1000
-RATE_LIMIT_PER_USER=10
-```
-
-**Deploy Bot:**
-```bash
-# Build and start bot
-docker-compose build
-docker-compose up -d
-
-# Verify deployment
-docker-compose ps
-docker-compose logs ash
-
-# Check health endpoint
-curl http://localhost:8882/health
-```
-
-#### 2.2 Deploy NLP Server (Windows 11)
-
-**Clone and Configure:**
-```powershell
-# On Windows 11 server (10.20.30.16)
-cd C:\Projects
-
-# Clone NLP repository
-git clone https://github.com/The-Alphabet-Cartel/ash-nlp.git
-cd ash-nlp
-
-# Create environment configuration
-Copy-Item .env.template .env
-```
-
-**Configure Environment (.env):**
-```powershell
-# Edit .env file
-notepad .env
-
-# Required configuration:
-NODE_ENV=production
-NLP_SERVER_HOST=0.0.0.0
-NLP_SERVER_PORT=8881
-
-# AI Model Configuration
-MODEL_PATH=models/crisis_detection_model
-MODEL_TYPE=transformers
-CUDA_VISIBLE_DEVICES=0
-
-# Processing Configuration
-MAX_BATCH_SIZE=32
-PROCESSING_TIMEOUT=30
-CACHE_SIZE=1000
-
-# Learning Integration
-ENABLE_LEARNING_UPDATES=true
-LEARNING_MODEL_PATH=models/learning_adjustments
-
-# API Configuration
-API_KEY=secure_api_key_for_internal_communication
+# Analytics Integration
+DASHBOARD_WEBHOOK_URL=http://10.20.30.253:8883/webhook/bot_events
+ENABLE_ANALYTICS_EXPORT=true
 
 # Logging
 LOG_LEVEL=INFO
-LOG_FILE=logs/nlp_server.log
-```
-
-**Deploy NLP Server:**
-```powershell
-# Build and start NLP server
-docker-compose build
-docker-compose up -d
-
-# Verify deployment
-docker-compose ps
-docker-compose logs ash-nlp
-
-# Check health endpoint
-curl http://localhost:8881/health
-
-# Test GPU access
-docker-compose exec ash-nlp python -c "import torch; print(torch.cuda.is_available())"
-```
-
-#### 2.3 Deploy Analytics Dashboard (Windows 11)
-
-**Clone and Configure:**
-```powershell
-# Continue on Windows 11 server (10.20.30.16)
-cd C:\Projects
-
-# Clone dashboard repository
-git clone https://github.com/The-Alphabet-Cartel/ash-dash.git
-cd ash-dash
-
-# Create environment configuration
-Copy-Item .env.template .env
-```
-
-**Configure Environment (.env):**
-```powershell
-# Edit .env file
-notepad .env
-
-# Server Configuration
-NODE_ENV=production
-PORT=8883
-ENABLE_SSL=true
-
-# SSL Configuration (create certificates first)
-SSL_CERT_PATH=C:\Projects\ash-dash\certs\cert.pem
-SSL_KEY_PATH=C:\Projects\ash-dash\certs\key.pem
-
-# Service Endpoints
-ASH_BOT_API=http://10.20.30.253:8882
-ASH_NLP_API=http://localhost:8881
-ASH_TESTING_API=http://localhost:8884
-
-# Dashboard Branding
-DASHBOARD_TITLE="Ash Analytics Dashboard"
-DASHBOARD_SUBTITLE="The Alphabet Cartel Crisis Detection Analytics"
-COMMUNITY_NAME="The Alphabet Cartel"
-COMMUNITY_DISCORD="https://discord.gg/alphabetcartel"
-
-# Performance Settings
-CACHE_TTL=600
-HEALTH_CHECK_INTERVAL=120000
-METRICS_UPDATE_INTERVAL=60000
+LOG_FILE=logs/ash_bot.log
+ENABLE_DEBUG_LOGGING=false
 
 # Security
-ENABLE_CORS=true
-RATE_LIMIT_WINDOW=900000
-RATE_LIMIT_MAX=100
-SESSION_TIMEOUT=3600
+API_KEY=secure_api_key_for_external_access
+ENABLE_API_AUTHENTICATION=true
+EOF
 
-# Authentication (optional)
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=secure_password_here
+# 3. Create required directories
+mkdir -p data logs
 
-# Database
-DATABASE_URL=sqlite:///data/dashboard.db
-```
-
-**Generate SSL Certificates (Recommended):**
-```powershell
-# Create certificate directory
-New-Item -Path "C:\Projects\ash-dash\certs" -ItemType Directory -Force
-cd C:\Projects\ash-dash\certs
-
-# Generate self-signed certificate (for development/internal use)
-# Install OpenSSL for Windows first
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
-
-# Or use PowerShell (Windows 10+)
-$cert = New-SelfSignedCertificate -DnsName "10.20.30.16" -CertStoreLocation "cert:\LocalMachine\My"
-Export-Certificate -Cert $cert -FilePath "cert.pem"
-```
-
-**Deploy Dashboard:**
-```powershell
-# Build and start dashboard
-docker-compose build
+# 4. Deploy with Docker
 docker-compose up -d
 
-# Verify deployment
-docker-compose ps
-docker-compose logs ash-dash
-
-# Check health endpoint
-curl http://localhost:8883/health
-
-# Access dashboard
-start https://localhost:8883
+# 5. Verify deployment
+curl http://10.20.30.253:8882/health
 ```
 
-#### 2.4 Deploy Testing Suite (Windows 11)
+### Method 2: Full Ecosystem Deployment (Recommended)
 
-**Clone and Configure:**
-```powershell
-# Continue on Windows 11 server (10.20.30.16)
-cd C:\Projects
+**Use Case**: Complete Ash crisis detection platform
 
-# Clone testing repository
-git clone https://github.com/The-Alphabet-Cartel/ash-thrash.git
+```bash
+# 1. Clone the main ecosystem repository
+git clone --recursive https://github.com/the-alphabet-cartel/ash.git
+cd ash
+
+# 2. Configure all components
+# Configure ASH-BOT
+cd ash-bot
+cp .env.template .env
+# Edit .env with bot-specific configuration (see above)
+cd ..
+
+# Configure ASH-NLP
+cd ash-nlp  
+cp .env.template .env
+# Edit .env with NLP configuration
+cd ..
+
+# Configure ASH-DASH
+cd ash-dash
+cp .env.template .env
+# Edit .env with dashboard configuration  
+cd ..
+
+# Configure ASH-THRASH
 cd ash-thrash
+cp .env.template .env
+# Edit .env with testing configuration
+cd ..
 
-# Create environment configuration
-Copy-Item .env.template .env
-```
-
-**Configure Environment (.env):**
-```powershell
-# Edit .env file
-notepad .env
-
-# Testing Configuration
-NODE_ENV=production
-PORT=8884
-
-# Target Services
-NLP_SERVER_URL=http://localhost:8881
-ASH_BOT_URL=http://10.20.30.253:8882
-DASHBOARD_URL=http://localhost:8883
-
-# Test Configuration
-COMPREHENSIVE_TEST_SIZE=350
-QUICK_TEST_SIZE=10
-TEST_TIMEOUT=60
-PARALLEL_TESTS=4
-
-# Accuracy Targets
-OVERALL_ACCURACY_TARGET=0.85
-HIGH_CRISIS_ACCURACY_TARGET=1.0
-MEDIUM_CRISIS_ACCURACY_TARGET=0.95
-LOW_CRISIS_ACCURACY_TARGET=0.90
-
-# Automated Testing
-ENABLE_SCHEDULED_TESTING=true
-TESTING_SCHEDULE="0 6 * * *"    # Daily at 6 AM
-ACCURACY_ALERT_THRESHOLD=0.85
-
-# Results & Reporting
-RESULTS_RETENTION_DAYS=30
-ENABLE_PERFORMANCE_TRACKING=true
-ENABLE_TREND_ANALYSIS=true
-
-# Notifications
-DISCORD_WEBHOOK_URL=your_webhook_url_for_test_results
-ALERT_ON_FAILURE_RATE=0.1
-```
-
-**Deploy Testing Suite:**
-```powershell
-# Build and start testing suite
-docker-compose build
+# 3. Deploy complete ecosystem
 docker-compose up -d
 
-# Verify deployment
-docker-compose ps
-docker-compose logs ash-thrash
+# 4. Verify all services
+curl http://10.20.30.253:8882/health  # Bot
+curl http://10.20.30.253:8881/health  # NLP
+curl http://10.20.30.253:8883/health  # Dashboard
+curl http://10.20.30.253:8884/health  # Testing
 
-# Check health endpoint
-curl http://localhost:8884/health
-
-# Run initial test
-curl -X POST http://localhost:8884/api/test/quick-validation
+# 5. Access dashboard
+open https://dashboard.alphabetcartel.net
 ```
 
-### Phase 3: System Integration & Verification
+### Method 3: Development Deployment
 
-#### 3.1 Complete System Health Check
+**Use Case**: Development and testing environment
 
-**Automated Health Check Script:**
 ```bash
-#!/bin/bash
-# save as check_ash_health.sh
+# 1. Clone for development
+git clone https://github.com/the-alphabet-cartel/ash-bot.git
+cd ash-bot
 
-echo "=== Ash v2.1 Complete Ecosystem Health Check ==="
-echo "Timestamp: $(date)"
-echo
+# 2. Set up Python virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Check all services
-services=(
-    "10.20.30.253:8882|Ash Bot"
-    "10.20.30.16:8881|NLP Server"
-    "10.20.30.16:8883|Dashboard"
-    "10.20.30.16:8884|Testing Suite"
-)
+# 3. Install development dependencies
+pip install -r requirements-dev.txt
 
-for service in "${services[@]}"; do
-    IFS='|' read -r url name <<< "$service"
-    echo -n "Checking $name ($url)... "
-    
-    if curl -f -s "http://$url/health" > /dev/null; then
-        echo "✅ HEALTHY"
-    else
-        echo "❌ UNHEALTHY"
-    fi
-done
+# 4. Configure development environment
+cp .env.template .env.development
 
-echo
-echo "=== Integration Test ==="
-echo "Running quick validation test..."
-response=$(curl -s -X POST http://10.20.30.16:8884/api/test/quick-validation)
-accuracy=$(echo $response | jq -r '.results.accuracy_percent' 2>/dev/null || echo "unknown")
-echo "Detection Accuracy: $accuracy%"
+# Edit .env.development for development settings:
+cat > .env.development << 'EOF'
+# Development Configuration
+ENVIRONMENT=development
+DEBUG=true
+LOG_LEVEL=DEBUG
 
-echo
-echo "=== Dashboard Access ==="
-echo "Analytics Dashboard: https://10.20.30.16:8883"
-echo "System Status: All services operational"
-```
+# Discord Configuration (use test server)
+DISCORD_TOKEN=your_development_bot_token
+DISCORD_GUILD_ID=your_test_server_id
+CRISIS_RESPONSE_CHANNEL_ID=your_test_channel_id
 
-**Run Health Check:**
-```bash
-chmod +x check_ash_health.sh
-./check_ash_health.sh
-```
+# Local Development URLs
+NLP_SERVER_URL=http://localhost:8881
+DASHBOARD_WEBHOOK_URL=http://localhost:8883/webhook/bot_events
 
-#### 3.2 Discord Integration Verification
+# Development Database
+DATABASE_URL=sqlite:///data/ash_bot_dev.db
 
-**Test Discord Bot:**
-1. **Check Bot Status** - Bot should appear online in Discord
-2. **Test Slash Commands** - Use `/keyword_stats` to verify commands work
-3. **Test Crisis Detection** - Send test message in allowed channel
-4. **Verify Team Alerts** - Ensure crisis team receives appropriate notifications
+# Development Security (less strict)
+ENABLE_API_AUTHENTICATION=false
+API_KEY=dev_api_key
 
-**Test Learning System:**
-```bash
-# In Discord, as Crisis Response team member:
-/learning_stats
-# Should show learning system status and statistics
+# Enhanced Logging for Development
+ENABLE_DEBUG_LOGGING=true
+LOG_FILE=logs/ash_bot_dev.log
+EOF
 
-# Test false positive reporting (use a non-crisis message):
-/report_false_positive message_link:... detected_level:High correct_level:None context:Test message
-```
+# 5. Run in development mode
+python main.py
 
-#### 3.3 Dashboard Integration Test
-
-**Access Dashboard:**
-1. **Open Browser** - Go to https://10.20.30.16:8883
-2. **Verify SSL** - Check certificate is working (or accept self-signed)
-3. **Check Real-time Data** - Verify crisis alerts and system metrics display
-4. **Test Mobile** - Access dashboard from mobile device
-
-**Verify Data Flow:**
-1. **Send Test Crisis Message** in Discord
-2. **Check Dashboard** - Alert should appear in real-time
-3. **Verify Analytics** - Charts and metrics should update
-4. **Test Team Coordination** - Use dashboard to coordinate response
-
-#### 3.4 Testing Suite Validation
-
-**Run Comprehensive Test:**
-```bash
-curl -X POST http://10.20.30.16:8884/api/test/comprehensive
-```
-
-**Monitor Test Progress:**
-```bash
-# Check test status
-curl http://10.20.30.16:8884/api/test/status
-
-# View results
-curl http://10.20.30.16:8884/api/test/results/latest
-```
-
-**Verify Scheduled Testing:**
-```bash
-# Check that daily testing is scheduled
-curl http://10.20.30.16:8884/api/test/schedule
+# 6. Run development tests
+pytest tests/
 ```
 
 ---
 
-## 🔧 Configuration Management
+## ⚙️ Configuration Details
 
-### Centralized Configuration
+### Critical Configuration Parameters
 
-**Configuration File Locations:**
-- **Main Bot:** `/opt/ash/.env` (Linux)
-- **NLP Server:** `C:\Projects\ash-nlp\.env` (Windows)
-- **Dashboard:** `C:\Projects\ash-dash\.env` (Windows)
-- **Testing:** `C:\Projects\ash-thrash\.env` (Windows)
-
-**Environment Template Management:**
+**Discord Configuration:**
 ```bash
-# Keep templates updated
-cd /opt/ash && git pull origin main && cp .env.template .env.new
-# Compare and merge new settings
+# Required: Discord bot token from Discord Developer Portal
+DISCORD_TOKEN=your_discord_bot_token_here
 
-cd C:\Projects\ash-nlp && git pull origin main && Compare-Object (Get-Content .env.template) (Get-Content .env)
+# Required: Your Discord server ID (enable Developer Mode to copy)
+DISCORD_GUILD_ID=123456789012345678
+
+# Required: Channel where crisis alerts are sent
+CRISIS_RESPONSE_CHANNEL_ID=123456789012345678
+
+# Required: Role that gets notified for crises (@Crisis Team)
+CRISIS_RESPONSE_ROLE_ID=123456789012345678
+
+# Optional: Admin user IDs (comma-separated)
+ADMIN_USER_IDS=123456789012345678,987654321098765432
 ```
 
-### Network Configuration
-
-**Firewall Setup (Linux Server):**
+**Crisis Detection Configuration:**
 ```bash
-# Configure UFW firewall
-sudo ufw allow ssh
-sudo ufw allow 8882  # Ash Bot API
-sudo ufw allow from 10.20.30.16  # Allow Windows server access
-sudo ufw enable
+# Crisis severity thresholds (0.0 to 1.0)
+HIGH_PRIORITY_THRESHOLD=0.8    # Immediate intervention required
+MEDIUM_PRIORITY_THRESHOLD=0.6  # Close monitoring needed
+LOW_PRIORITY_THRESHOLD=0.4     # General support offered
+
+# Detection methods
+ENABLE_KEYWORD_DETECTION=true  # Use keyword-based detection
+ENABLE_AI_ANALYSIS=true        # Use NLP AI analysis (requires ash-nlp)
+
+# Response behavior
+AUTO_RESPOND_TO_CRISIS=true    # Send automatic support messages
+NOTIFY_TEAM_FOR_HIGH=true      # Alert team for high-priority cases
+MODERATE_HARMFUL_CONTENT=true  # Remove harmful content automatically
 ```
 
-**Windows Firewall (Windows Server):**
-```powershell
-# Allow inbound connections for services
-New-NetFirewallRule -DisplayName "Ash-NLP" -Direction Inbound -Port 8881 -Protocol TCP -Action Allow
-New-NetFirewallRule -DisplayName "Ash-Dashboard" -Direction Inbound -Port 8883 -Protocol TCP -Action Allow
-New-NetFirewallRule -DisplayName "Ash-Testing" -Direction Inbound -Port 8884 -Protocol TCP -Action Allow
+**Integration Configuration:**
+```bash
+# NLP Server Integration
+NLP_SERVER_URL=http://10.20.30.253:8881
+NLP_SERVER_API_KEY=secure_generated_api_key
+NLP_TIMEOUT=30                 # Timeout for NLP requests (seconds)
+NLP_RETRY_ATTEMPTS=3           # Number of retry attempts
+
+# Dashboard Integration  
+DASHBOARD_WEBHOOK_URL=http://10.20.30.253:8883/webhook/bot_events
+ANALYTICS_UPDATE_INTERVAL=300  # Send stats every 5 minutes
+ENABLE_ANALYTICS_EXPORT=true
+
+# Testing Integration
+TESTING_WEBHOOK_URL=http://10.20.30.253:8884/webhook/bot_test_results
+ENABLE_TESTING_INTEGRATION=true
 ```
 
-### Docker Network Configuration
+### Docker Configuration
 
-**Custom Docker Network (Optional):**
+**docker-compose.yml:**
 ```yaml
-# Add to all docker-compose.yml files
+version: '3.8'
+
+services:
+  ash-bot:
+    build: .
+    container_name: ash-bot
+    restart: unless-stopped
+    ports:
+      - "8882:8882"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - NLP_SERVER_URL=http://ash-nlp:8881
+      - DATABASE_URL=sqlite:///data/ash_bot.db
+    networks:
+      - ash-network
+    depends_on:
+      - ash-nlp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8882/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   ash-network:
     driver: bridge
@@ -628,491 +371,329 @@ networks:
       config:
         - subnet: 172.20.0.0/16
 
-services:
-  # Add to each service:
-  networks:
-    - ash-network
+volumes:
+  bot-data:
+  bot-logs:
+```
+
+**Dockerfile:**
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p data logs config
+
+# Expose port
+EXPOSE 8882
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8882/health || exit 1
+
+# Run the application
+CMD ["python", "main.py"]
 ```
 
 ---
 
-## 🔄 Update & Maintenance Procedures
+## 🔧 Advanced Configuration
 
-### Update Process
+### Database Configuration
 
-**Complete Ecosystem Update:**
+**SQLite (Default):**
 ```bash
-# Create update script: update_ash_ecosystem.sh
-#!/bin/bash
-
-echo "=== Ash v2.1 Ecosystem Update ==="
-
-# Backup current state
-mkdir -p backups/$(date +%Y%m%d_%H%M%S)
-docker-compose exec ash tar -czf /tmp/ash-data-backup.tar.gz /app/data
-docker cp ash:/tmp/ash-data-backup.tar.gz backups/$(date +%Y%m%d_%H%M%S)/
-
-# Update repositories
-cd /opt/ash && git pull origin main
-cd /path/to/ash-nlp && git pull origin main
-cd /path/to/ash-dash && git pull origin main
-cd /path/to/ash-thrash && git pull origin main
-
-# Pull latest images
-cd /opt/ash && docker-compose pull
-cd /path/to/ash-nlp && docker-compose pull
-cd /path/to/ash-dash && docker-compose pull
-cd /path/to/ash-thrash && docker-compose pull
-
-# Deploy updates
-cd /opt/ash && docker-compose up -d
-cd /path/to/ash-nlp && docker-compose up -d
-cd /path/to/ash-dash && docker-compose up -d
-cd /path/to/ash-thrash && docker-compose up -d
-
-# Verify update
-./check_ash_health.sh
-
-echo "Update completed. Check health status above."
+DATABASE_URL=sqlite:///data/ash_bot.db
+DATABASE_POOL_SIZE=10
+DATABASE_TIMEOUT=30
 ```
 
-### Backup Procedures
-
-**Automated Backup Script:**
+**PostgreSQL (Production):**
 ```bash
-#!/bin/bash
-# save as backup_ash_ecosystem.sh
-
-BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/backups/ash_ecosystem_$BACKUP_DATE"
-
-# Create backup directory
-mkdir -p $BACKUP_DIR
-
-# Backup bot data
-docker-compose exec ash tar -czf /tmp/ash_data.tar.gz /app/data
-docker cp ash:/tmp/ash_data.tar.gz $BACKUP_DIR/
-
-# Backup NLP models and data
-docker-compose exec ash-nlp tar -czf /tmp/nlp_data.tar.gz /app/models /app/data
-docker cp ash-nlp:/tmp/nlp_data.tar.gz $BACKUP_DIR/
-
-# Backup dashboard data
-docker-compose exec ash-dash tar -czf /tmp/dashboard_data.tar.gz /app/data
-docker cp ash-dash:/tmp/dashboard_data.tar.gz $BACKUP_DIR/
-
-# Backup testing data
-docker-compose exec ash-thrash tar -czf /tmp/testing_data.tar.gz /app/data
-docker cp ash-thrash:/tmp/testing_data.tar.gz $BACKUP_DIR/
-
-# Backup configurations
-cp /opt/ash/.env $BACKUP_DIR/ash_config.env
-cp /path/to/ash-nlp/.env $BACKUP_DIR/nlp_config.env
-cp /path/to/ash-dash/.env $BACKUP_DIR/dashboard_config.env
-cp /path/to/ash-thrash/.env $BACKUP_DIR/testing_config.env
-
-# Compress entire backup
-tar -czf "$BACKUP_DIR.tar.gz" $BACKUP_DIR
-rm -rf $BACKUP_DIR
-
-echo "Backup completed: $BACKUP_DIR.tar.gz"
+DATABASE_URL=postgresql://username:password@localhost:5432/ash_bot
+DATABASE_POOL_SIZE=20
+DATABASE_MAX_OVERFLOW=30
+DATABASE_POOL_TIMEOUT=30
 ```
 
-### Rollback Procedures
-
-**Emergency Rollback Script:**
+**MySQL (Alternative):**
 ```bash
-#!/bin/bash
-# save as rollback_ash_ecosystem.sh
+DATABASE_URL=mysql://username:password@localhost:3306/ash_bot
+DATABASE_CHARSET=utf8mb4
+DATABASE_POOL_SIZE=15
+```
 
-BACKUP_FILE=$1
+### Security Configuration
 
-if [ -z "$BACKUP_FILE" ]; then
-    echo "Usage: $0 <backup_file.tar.gz>"
-    echo "Available backups:"
-    ls -la /backups/ash_ecosystem_*.tar.gz
-    exit 1
-fi
+**API Security:**
+```bash
+# API authentication
+ENABLE_API_AUTHENTICATION=true
+API_KEY=secure_randomly_generated_key_here
+API_RATE_LIMIT=100  # Requests per minute
 
-echo "Rolling back to: $BACKUP_FILE"
+# Webhook security
+WEBHOOK_SECRET=secure_webhook_secret_here
+ENABLE_WEBHOOK_VALIDATION=true
 
-# Stop all services
-cd /opt/ash && docker-compose down
-cd /path/to/ash-nlp && docker-compose down
-cd /path/to/ash-dash && docker-compose down
-cd /path/to/ash-thrash && docker-compose down
+# Discord security
+VERIFY_GUILD_MEMBERSHIP=true
+REQUIRE_ROLE_FOR_COMMANDS=true
+ADMIN_ONLY_COMMANDS=true
+```
 
-# Extract backup
-tar -xzf $BACKUP_FILE -C /tmp/
+**Data Protection:**
+```bash
+# Privacy settings
+ANONYMIZE_USER_DATA=true
+DATA_RETENTION_DAYS=30
+ENABLE_GDPR_COMPLIANCE=true
+LOG_PERSONAL_DATA=false
 
-# Restore data
-docker-compose up -d ash  # Start bot first
-docker cp /tmp/ash_ecosystem_*/ash_data.tar.gz ash:/tmp/
-docker-compose exec ash tar -xzf /tmp/ash_data.tar.gz -C /app/
+# Encryption
+ENCRYPT_SENSITIVE_DATA=true
+ENCRYPTION_KEY=base64_encoded_encryption_key
+```
 
-# Restore other services similarly...
-# [Add restoration steps for each service]
+### Performance Configuration
 
-# Restart all services
-cd /opt/ash && docker-compose up -d
-cd /path/to/ash-nlp && docker-compose up -d
-cd /path/to/ash-dash && docker-compose up -d
-cd /path/to/ash-thrash && docker-compose up -d
+**Bot Performance:**
+```bash
+# Discord.py settings
+MAX_MESSAGES_CACHED=1000
+HEARTBEAT_TIMEOUT=60
+GUILD_READY_TIMEOUT=30
 
-# Verify rollback
-./check_ash_health.sh
+# Processing settings
+MAX_CONCURRENT_ANALYSES=10
+MESSAGE_QUEUE_SIZE=1000
+BATCH_PROCESSING_SIZE=50
 
-echo "Rollback completed"
+# Caching
+ENABLE_REDIS_CACHE=false
+REDIS_URL=redis://localhost:6379/0
+CACHE_TTL=3600  # 1 hour
 ```
 
 ---
 
-## 🛡️ Security Configuration
+## 🧪 Testing and Validation
 
-### SSL/TLS Setup
+### Pre-Deployment Testing
 
-**Generate Production SSL Certificates:**
+**Configuration Validation:**
 ```bash
-# For production use, get certificates from Let's Encrypt
-sudo apt install certbot
-sudo certbot certonly --standalone -d your-domain.com
+# Test configuration file
+python scripts/validate_config.py
 
-# Copy certificates to dashboard
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem /path/to/ash-dash/certs/cert.pem
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem /path/to/ash-dash/certs/key.pem
-sudo chown $USER:$USER /path/to/ash-dash/certs/*
+# Test Discord connection
+python scripts/test_discord_connection.py
+
+# Test NLP integration
+python scripts/test_nlp_integration.py
+
+# Test database connection
+python scripts/test_database.py
 ```
 
-### Access Control
-
-**API Security Configuration:**
+**Integration Testing:**
 ```bash
-# Generate secure API keys
-INTERNAL_API_KEY=$(openssl rand -hex 32)
-DASHBOARD_SECRET=$(openssl rand -hex 32)
+# Test complete workflow
+python scripts/test_crisis_workflow.py
 
-# Add to all .env files
-echo "INTERNAL_API_KEY=$INTERNAL_API_KEY" >> .env
-echo "DASHBOARD_SECRET_KEY=$DASHBOARD_SECRET" >> .env
+# Test API endpoints
+python scripts/test_api_endpoints.py
+
+# Test webhook integration
+python scripts/test_webhook_integration.py
 ```
 
-**User Authentication Setup:**
+### Post-Deployment Validation
+
+**Health Checks:**
 ```bash
-# Configure dashboard authentication
-# Edit ash-dash/.env
-ENABLE_AUTHENTICATION=true
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=$(openssl rand -base64 32)
-SESSION_SECRET=$(openssl rand -hex 32)
+# Bot health check
+curl http://10.20.30.253:8882/health
+
+# Detailed status
+curl http://10.20.30.253:8882/api/status
+
+# Integration status
+curl http://10.20.30.253:8882/api/integrations/status
 ```
 
-### Network Security
-
-**VPN Setup (Optional but Recommended):**
+**Functional Testing:**
 ```bash
-# Install WireGuard VPN for secure access
-sudo apt install wireguard
+# Test crisis detection in test channel
+# Send test message: "I'm feeling really depressed today"
+# Verify bot responds appropriately
 
-# Generate VPN configuration
-# [Follow WireGuard setup guide for secure remote access]
+# Test team notification
+# Send high-priority test message
+# Verify crisis team gets notified
+
+# Test API endpoints
+curl -X POST http://10.20.30.253:8882/api/analyze \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{"message": "test crisis message", "user_id": "123", "channel_id": "456"}'
 ```
 
-**IP Whitelisting:**
+### Monitoring and Logs
+
+**Log Analysis:**
 ```bash
-# Restrict dashboard access to specific IPs
-# Edit ash-dash/.env
-ALLOWED_IPS=192.168.1.0/24,10.0.0.0/8
-ENABLE_IP_WHITELIST=true
+# View real-time logs
+docker-compose logs -f ash-bot
+
+# Check for errors
+docker-compose logs ash-bot | grep -i error
+
+# Monitor crisis detections
+docker-compose logs ash-bot | grep -i "crisis detected"
+
+# Check NLP integration
+docker-compose logs ash-bot | grep -i "nlp"
 ```
 
----
-
-## 📊 Monitoring & Alerting
-
-### Log Management
-
-**Centralized Logging Setup:**
-```yaml
-# Add to all docker-compose.yml files
-logging:
-  driver: "json-file"
-  options:
-    max-size: "100m"
-    max-file: "5"
-    labels: "service,environment"
-```
-
-**Log Rotation:**
+**Performance Monitoring:**
 ```bash
-# Create logrotate configuration
-sudo tee /etc/logrotate.d/ash-ecosystem << EOF
-/opt/ash/logs/*.log {
-    daily
-    missingok
-    rotate 30
-    compress
-    delaycompress
-    notifempty
-    create 644 $USER $USER
-    postrotate
-        docker-compose -f /opt/ash/docker-compose.yml restart ash
-    endscript
-}
-EOF
-```
+# Monitor Docker stats
+docker stats ash-bot
 
-### Health Monitoring
+# Check memory usage
+docker exec ash-bot ps aux
 
-**Automated Health Monitoring:**
-```bash
-# Create systemd service for health monitoring
-sudo tee /etc/systemd/system/ash-health-monitor.service << EOF
-[Unit]
-Description=Ash Ecosystem Health Monitor
-After=docker.service
-
-[Service]
-Type=oneshot
-User=$USER
-ExecStart=/opt/ash/check_ash_health.sh
-WorkingDirectory=/opt/ash
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Create timer for regular health checks
-sudo tee /etc/systemd/system/ash-health-monitor.timer << EOF
-[Unit]
-Description=Run Ash Health Monitor every 5 minutes
-Requires=ash-health-monitor.service
-
-[Timer]
-OnCalendar=*:0/5
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-# Enable and start timer
-sudo systemctl enable ash-health-monitor.timer
-sudo systemctl start ash-health-monitor.timer
-```
-
-### Alerting Setup
-
-**Discord Webhook Alerts:**
-```bash
-# Configure webhook for system alerts
-# Add to testing suite .env
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_webhook_url
-
-# Configure alert thresholds
-ACCURACY_ALERT_THRESHOLD=0.85
-RESPONSE_TIME_ALERT_THRESHOLD=5000
-UPTIME_ALERT_THRESHOLD=0.99
+# Monitor API response times
+curl -w "@curl-format.txt" http://10.20.30.253:8882/health
 ```
 
 ---
 
 ## 🚨 Troubleshooting
 
-### Common Deployment Issues
+### Common Issues
 
-**Issue: Docker Permission Denied**
+**Bot Not Connecting to Discord:**
 ```bash
-# Solution: Add user to docker group
-sudo usermod -aG docker $USER
-newgrp docker
-# Or restart your session
+# Check token validity
+# Verify bot permissions in Discord server
+# Check firewall settings
+# Review logs for connection errors
+
+# Debug steps:
+docker-compose logs ash-bot | grep -i "discord\|connection\|token"
+python scripts/test_discord_connection.py
 ```
 
-**Issue: GPU Not Available in NLP Container**
-```powershell
-# Solution: Install NVIDIA Container Toolkit
-# Download from: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
-
-# Verify GPU access
-docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-```
-
-**Issue: SSL Certificate Errors**
+**NLP Integration Failing:**
 ```bash
-# Solution: Regenerate certificates
-cd /path/to/ash-dash/certs
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+# Check NLP server status
+curl http://10.20.30.253:8881/health
 
-# Or disable SSL temporarily
-echo "ENABLE_SSL=false" >> .env
+# Test network connectivity
+docker exec ash-bot ping ash-nlp
+
+# Check API key configuration
+docker exec ash-bot env | grep NLP
+
+# Review integration logs
+docker-compose logs ash-bot | grep -i nlp
 ```
 
-**Issue: Service Communication Failures**
+**Crisis Detection Not Working:**
 ```bash
-# Solution: Check network connectivity
-ping 10.20.30.16
-telnet 10.20.30.16 8881
+# Verify keyword configuration
+# Check crisis detection thresholds
+# Test with known trigger phrases
+# Review detection logs
 
-# Check firewall rules
-sudo ufw status
-netsh advfirewall show allprofiles
+# Debug commands:
+python scripts/test_crisis_detection.py
+docker-compose logs ash-bot | grep -i "crisis\|detection"
 ```
 
-### Performance Optimization
-
-**Memory Optimization:**
-```yaml
-# Add to docker-compose.yml
-deploy:
-  resources:
-    limits:
-      memory: 2G
-    reservations:
-      memory: 1G
-```
-
-**CPU Optimization:**
-```yaml
-# Add CPU limits
-deploy:
-  resources:
-    limits:
-      cpus: '2.0'
-    reservations:
-      cpus: '1.0'
-```
-
-### Emergency Recovery
-
-**Complete System Recovery:**
+**Performance Issues:**
 ```bash
-#!/bin/bash
-# save as emergency_recovery.sh
+# Check resource usage
+docker stats ash-bot
 
-echo "=== Emergency Recovery Procedure ==="
+# Analyze slow queries
+# Review caching configuration
+# Check database performance
 
-# Stop all services
-docker-compose down  # In each service directory
+# Optimization steps:
+# Increase cache TTL
+# Optimize database queries
+# Adjust processing batch sizes
+```
 
-# Clean Docker system
-docker system prune -af
-docker volume prune -f
+### Recovery Procedures
 
-# Pull fresh images
-docker-compose pull  # In each service directory
+**Service Recovery:**
+```bash
+# Restart bot only
+docker-compose restart ash-bot
 
-# Restore from backup
-LATEST_BACKUP=$(ls -t /backups/ash_ecosystem_*.tar.gz | head -1)
-echo "Restoring from: $LATEST_BACKUP"
-tar -xzf $LATEST_BACKUP -C /tmp/
+# Full restart with cleanup
+docker-compose down
+docker-compose up -d
 
-# Restart services with backup data
-# [Add specific restoration steps]
+# Reset database (CAUTION)
+docker-compose down -v
+docker-compose up -d
+```
 
-# Verify recovery
-./check_ash_health.sh
+**Configuration Reset:**
+```bash
+# Backup current configuration
+cp .env .env.backup
+
+# Reset to template
+cp .env.template .env
+# Reconfigure with correct values
+
+# Restart with new configuration
+docker-compose down
+docker-compose up -d
 ```
 
 ---
 
-## 📋 Post-Deployment Checklist
+## 📚 Additional Resources
 
-### Immediate Verification (First 24 Hours)
+### Documentation Links
+- **[API Documentation](docs/tech/API_v2_1.md)** - Complete API reference
+- **[Architecture Guide](docs/tech/architecture_v2_1.md)** - System design details
+- **[Implementation Guide](docs/tech/implementation_v2_1.md)** - Technical implementation
+- **[Team Guide](docs/team/team_guide_v2_1.md)** - Crisis response procedures
+- **[Troubleshooting Guide](docs/tech/troubleshooting_v2_1.md)** - Detailed problem resolution
 
-- [ ] **All Services Online** - Verify health endpoints respond
-- [ ] **Discord Bot Active** - Bot appears online and responds to commands
-- [ ] **Crisis Detection Working** - Test with safe crisis language
-- [ ] **Dashboard Accessible** - Can access analytics dashboard via HTTPS
-- [ ] **Learning System Active** - `/learning_stats` shows system enabled
-- [ ] **Testing Suite Running** - Quick validation test passes
-- [ ] **Team Commands Working** - Crisis Response team can use slash commands
-- [ ] **Mobile Access** - Dashboard works on mobile devices
-- [ ] **SSL Certificates Valid** - No certificate warnings
-- [ ] **Backup System Working** - Automated backups completing
+### External Resources
+- **[Discord.py Documentation](https://discordpy.readthedocs.io/)** - Discord library reference
+- **[Docker Documentation](https://docs.docker.com/)** - Containerization guide
+- **[FastAPI Documentation](https://fastapi.tiangolo.com/)** - API framework reference
 
-### Week 1 Validation
-
-- [ ] **Detection Accuracy** - Accuracy meets targets (>85% overall)
-- [ ] **False Positive Rate** - Under 8% inappropriate alerts
-- [ ] **Response Times** - Under 3 seconds end-to-end
-- [ ] **Learning System** - Community corrections improving accuracy
-- [ ] **Team Training** - Crisis Response team trained on new dashboard
-- [ ] **Daily Testing** - Automated testing running at 6 AM daily
-- [ ] **Performance Monitoring** - All metrics within expected ranges
-- [ ] **Cost Tracking** - API usage within budget expectations
-- [ ] **Community Feedback** - Positive reception from community members
-- [ ] **Documentation Current** - All team guides reflect actual deployment
-
-### Month 1 Assessment
-
-- [ ] **System Stability** - 99%+ uptime achieved
-- [ ] **Learning Effectiveness** - Measurable accuracy improvements
-- [ ] **Team Efficiency** - Faster crisis response times
-- [ ] **Cost Optimization** - 80%+ reduction in AI costs achieved
-- [ ] **Quality Assurance** - Testing suite catching regressions
-- [ ] **Community Adaptation** - LGBTQIA+-specific patterns recognized
-- [ ] **Performance Trends** - Improving metrics over time
-- [ ] **Security Audit** - No security incidents or vulnerabilities
-- [ ] **Backup Validation** - Recovery procedures tested successfully
-- [ ] **Team Satisfaction** - Crisis Response team satisfied with tools
+### Support Channels
+- **Discord Community**: https://discord.gg/alphabetcartel (#tech-support)
+- **GitHub Issues**: https://github.com/the-alphabet-cartel/ash-bot/issues
+- **Documentation**: Complete guides in docs/ directory
 
 ---
 
-## 📞 Support & Next Steps
+**Deployment successful! Your ASH-BOT is now ready to help keep your community safe and supported.**
 
-### Getting Help
-
-**Technical Support:**
-- **GitHub Issues** - Report bugs and technical problems
-- **Discord #tech-support** - Community assistance
-- **Documentation** - Comprehensive guides for troubleshooting
-
-**Training Resources:**
-- **Team Guide v2.1** - Complete usage instructions for Crisis Response team
-- **Video Tutorials** - Available in Discord resources channel
-- **Best Practices** - Community-tested optimization strategies
-
-### Ongoing Maintenance
-
-**Daily Tasks:**
-- Check system health dashboard
-- Review crisis response metrics
-- Monitor learning system progress
-
-**Weekly Tasks:**
-- Review testing suite results
-- Update security patches
-- Analyze performance trends
-
-**Monthly Tasks:**
-- Comprehensive system review
-- Team training updates
-- Documentation updates
-
-### Future Enhancements
-
-**Planned v2.2 Features:**
-- Enhanced mobile application
-- Advanced team management tools
-- External service integrations
-- Multi-language support
-
-**Long-term Roadmap:**
-- Voice channel integration
-- Predictive analytics
-- Professional service APIs
-- Advanced AI capabilities
-
----
-
-**Deployment completed! Your Ash v2.1 ecosystem is now providing comprehensive crisis detection and response capabilities for [The Alphabet Cartel Discord community](https://discord.gg/alphabetcartel).**
-
-**Built with 🖤 for chosen family everywhere.**
-
----
-
-**Document Version:** 1.0  
-**Last Updated:** July 27, 2025  
-**Next Review:** Monthly with major updates  
-**Support Contact:** Technical Team Lead  
-**Community:** [The Alphabet Cartel Discord](https://discord.gg/alphabetcartel)
+🌈 **Discord**: https://discord.gg/alphabetcartel | 🌐 **Website**: https://alphabetcartel.org

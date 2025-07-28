@@ -1,384 +1,127 @@
-# API Documentation - Ash System
+# 🔌 ASH-BOT API Documentation v2.1
 
-**Complete API Reference for The Alphabet Cartel's Mental Health Crisis Detection System**
+**Complete API reference for ASH-BOT Discord crisis detection system**
 
-This documentation covers all API endpoints for the Ash system components, providing developers and integrators with comprehensive technical reference material.
+**Base URL**: `http://10.20.30.253:8882`  
+**API Version**: v2.1  
+**Repository**: https://github.com/the-alphabet-cartel/ash-bot  
 
 ---
 
-## 🎯 API Overview
+## 📋 API Overview
 
-### System APIs
+The ASH-BOT API provides programmatic access to crisis detection, team management, and analytics functionality. It serves as the integration point for the dashboard, testing suite, and external monitoring systems.
 
-The Ash system exposes four primary APIs across different services:
+### Core Features
 
-- **Ash Bot API (8882):** Main Discord bot coordination and status
-- **NLP Server API (8881):** Natural language processing and crisis analysis  
-- **Dashboard API (8883):** Analytics dashboard and crisis management
-- **Testing Suite API (8884):** Automated testing and validation
+🚨 **Crisis Management**: Analyze messages, manage alerts, track interventions  
+📊 **Analytics**: Performance metrics, trend analysis, response effectiveness  
+👥 **Team Operations**: Team status, availability, assignment management  
+🔧 **System Health**: Service monitoring, integration status, diagnostics  
+🛡️ **Security**: Authentication, rate limiting, audit logging  
 
-### Authentication
+### Integration Points
 
-**API Key Authentication:**
-```http
-Authorization: Bearer your-api-key-here
 ```
-
-**Service-to-Service Authentication:**
-```http
-X-Service-Key: internal-service-key
-X-Service-Name: requesting-service-name
-```
-
-### Rate Limiting
-
-**Standard Rate Limits:**
-- **Public APIs:** 100 requests/hour per API key
-- **Internal APIs:** 1000 requests/hour per service
-- **Critical APIs:** No rate limit (health checks, alerts)
-
-**Rate Limit Headers:**
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1627847400
+┌─────────────────┐    API Calls    ┌─────────────────┐
+│   ASH-DASH      │◄──────────────►│    ASH-BOT      │
+│   Dashboard     │                 │   API Server    │
+└─────────────────┘                 └─────────────────┘
+                                            ▲
+                                            │ API Calls
+                                            ▼
+┌─────────────────┐    Webhooks     ┌─────────────────┐
+│  ASH-THRASH     │◄──────────────►│    ASH-NLP      │
+│ Testing Suite   │                 │   AI Analysis   │
+└─────────────────┘                 └─────────────────┘
 ```
 
 ---
 
-## 🤖 Ash Bot API (Port 8882)
+## 🔐 Authentication
 
-**Base URL:** `http://10.20.30.253:8882/api/v1`
+### API Key Authentication
 
-### Health and Status
+All API requests require authentication using API keys:
 
-#### GET /health
-**Description:** Check bot health and operational status
+```bash
+# Include API key in header
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     http://10.20.30.253:8882/api/v2/health
+```
 
-**Response:**
-```json
+### Authentication Endpoints
+
+#### Generate API Key
+```http
+POST /api/v2/auth/generate-key
+Content-Type: application/json
+
 {
-  "status": "healthy",
-  "version": "2.0.0",
-  "uptime": 3600,
-  "discord_connected": true,
-  "nlp_server_connected": true,
-  "database_connected": true,
-  "last_message_processed": "2025-07-27T10:30:00Z",
-  "message_processing_rate": 45.2,
-  "alerts_sent_today": 12,
-  "response_time_ms": 150
+  "name": "Dashboard Integration",
+  "permissions": ["read", "write"],
+  "expires_in": 86400
 }
 ```
 
-**Status Codes:**
-- `200 OK`: Service healthy
-- `503 Service Unavailable`: Service degraded or offline
+**Response:**
+```json
+{
+  "api_key": "ash_bot_ak_1234567890abcdef",
+  "permissions": ["read", "write"],
+  "expires_at": "2025-07-28T12:00:00Z",
+  "created_at": "2025-07-27T12:00:00Z"
+}
+```
 
-#### GET /status/detailed
-**Description:** Comprehensive system status information
-
-**Authentication:** Required
+#### Validate API Key
+```http
+GET /api/v2/auth/validate
+Authorization: Bearer YOUR_API_KEY
+```
 
 **Response:**
 ```json
 {
-  "service": "ash-bot",
-  "version": "2.0.0", 
-  "environment": "production",
-  "uptime_seconds": 86400,
-  "connections": {
-    "discord": {
-      "status": "connected",
-      "latency_ms": 45,
-      "guilds_connected": 1,
-      "last_heartbeat": "2025-07-27T10:30:00Z"
-    },
-    "nlp_server": {
-      "status": "connected",
-      "url": "http://10.20.30.16:8881",
-      "response_time_ms": 234,
-      "last_request": "2025-07-27T10:29:45Z"
-    },
-    "database": {
-      "status": "connected",
-      "type": "postgresql",
-      "connection_pool_active": 8,
-      "connection_pool_max": 20
-    }
-  },
-  "performance": {
-    "messages_processed_24h": 2847,
-    "average_processing_time_ms": 125,
-    "crisis_alerts_generated_24h": 5,
-    "false_positive_rate_24h": 0.023
-  },
-  "resources": {
-    "cpu_usage_percent": 15.6,
-    "memory_usage_mb": 512,
-    "memory_total_mb": 2048,
-    "disk_usage_percent": 35.2
+  "valid": true,
+  "permissions": ["read", "write"],
+  "expires_at": "2025-07-28T12:00:00Z",
+  "rate_limit": {
+    "requests_per_minute": 100,
+    "remaining": 95
   }
 }
 ```
 
-### Crisis Detection
+---
 
-#### POST /analyze/message
-**Description:** Submit a message for crisis analysis
+## 🚨 Crisis Detection API
 
-**Authentication:** Required
+### Analyze Message
 
-**Request Body:**
-```json
+Analyze a message for crisis indicators using both keyword detection and AI analysis.
+
+```http
+POST /api/v2/analyze
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
 {
-  "message_id": "123456789012345678",
-  "user_id": "987654321098765432",
-  "channel_id": "456789012345678901", 
-  "content": "I've been feeling really down lately",
-  "timestamp": "2025-07-27T10:30:00Z",
+  "message": "I'm feeling really hopeless today and don't know what to do",
+  "user_id": "123456789012345678",
+  "channel_id": "987654321098765432",
   "context": {
-    "previous_messages": [
-      {
-        "content": "How was your day?",
-        "timestamp": "2025-07-27T10:25:00Z"
-      }
-    ],
+    "previous_messages": ["I've been struggling lately", "Nothing seems to help"],
     "user_history": {
-      "previous_alerts": 0,
-      "last_interaction": "2025-07-26T14:20:00Z"
-    }
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "analysis_id": "uuid-string",
-  "message_id": "123456789012345678",
-  "crisis_detected": false,
-  "priority_level": "none",
-  "confidence_score": 0.23,
-  "analysis": {
-    "keyword_matches": [],
-    "nlp_analysis": {
-      "sentiment": "negative",
-      "intent": "expression_of_sadness",
-      "urgency": "low",
-      "context_score": 0.15
-    },
-    "recommendation": "monitor",
-    "threshold_analysis": {
-      "high_priority": 0.8,
-      "medium_priority": 0.6,
-      "low_priority": 0.4,
-      "current_score": 0.23
-    }
-  },
-  "processing_time_ms": 1250,
-  "timestamp": "2025-07-27T10:30:02Z"
-}
-```
-
-#### POST /analyze/batch
-**Description:** Batch process multiple messages for efficiency
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "messages": [
-    {
-      "message_id": "123456789012345678",
-      "content": "Message content here",
-      "user_id": "987654321098765432",
-      "timestamp": "2025-07-27T10:30:00Z"
-    }
-  ],
-  "options": {
-    "include_context": true,
-    "priority_only": false,
-    "async_processing": false
-  }
-}
-```
-
-### Alert Management
-
-#### POST /alerts/send
-**Description:** Send crisis alert to response team
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "alert_type": "high_priority",
-  "message_id": "123456789012345678",
-  "user_id": "987654321098765432",
-  "analysis_summary": {
-    "confidence_score": 0.85,
-    "detected_indicators": ["explicit_self_harm", "urgency_keywords"],
-    "recommended_response": "immediate_intervention"
-  },
-  "responder_assignments": ["crisis_team_lead", "available_responders"],
-  "escalation_rules": {
-    "auto_escalate_after_minutes": 15,
-    "escalation_targets": ["senior_crisis_responder"]
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "alert_id": "uuid-string",
-  "status": "sent",
-  "recipients": [
-    {
-      "type": "discord_role",
-      "target": "crisis_response_team",
-      "notification_sent": true,
-      "timestamp": "2025-07-27T10:30:05Z"
-    },
-    {
-      "type": "dashboard_alert", 
-      "target": "ash_dashboard",
-      "notification_sent": true,
-      "timestamp": "2025-07-27T10:30:05Z"
-    }
-  ],
-  "estimated_response_time": "2-5 minutes",
-  "alert_reference": "ALERT-20250727-001"
-}
-```
-
-### Configuration
-
-#### GET /config/detection-settings
-**Description:** Retrieve current crisis detection configuration
-
-**Authentication:** Required
-
-**Response:**
-```json
-{
-  "thresholds": {
-    "high_priority": 0.8,
-    "medium_priority": 0.6,
-    "low_priority": 0.4
-  },
-  "keywords": {
-    "high_crisis_count": 45,
-    "medium_crisis_count": 78,
-    "low_crisis_count": 123,
-    "last_updated": "2025-07-20T09:00:00Z"
-  },
-  "detection_settings": {
-    "nlp_enabled": true,
-    "keyword_detection_enabled": true,
-    "context_analysis_enabled": true,
-    "learning_mode": false
-  },
-  "response_settings": {
-    "auto_alert_enabled": true,
-    "response_timeout_minutes": 30,
-    "escalation_enabled": true
-  }
-}
-```
-
----
-
-## 🧠 NLP Server API (Port 8881)
-
-**Base URL:** `http://10.20.30.16:8881/api/v1`
-
-### Health and Performance
-
-#### GET /health
-**Description:** NLP server health check
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "version": "1.5.2",
-  "uptime": 7200,
-  "gpu_available": true,
-  "model_loaded": true,
-  "processing_queue_size": 0,
-  "average_response_time_ms": 1850,
-  "total_analyses_today": 1247,
-  "gpu_utilization_percent": 34.5,
-  "memory_usage_gb": 12.8
-}
-```
-
-#### GET /performance/metrics
-**Description:** Detailed performance metrics
-
-**Authentication:** Required
-
-**Response:**
-```json
-{
-  "processing_stats": {
-    "total_requests_24h": 2847,
-    "average_response_time_ms": 1650,
-    "p95_response_time_ms": 2800,
-    "p99_response_time_ms": 4200,
-    "error_rate_percent": 0.12
-  },
-  "model_performance": {
-    "model_name": "crisis-detection-v2.1",
-    "model_size_gb": 3.2,
-    "inference_time_ms": 1450,
-    "batch_processing_enabled": true,
-    "max_batch_size": 32
-  },
-  "resource_usage": {
-    "cpu_cores": 8,
-    "cpu_usage_percent": 45.2,
-    "ram_total_gb": 64,
-    "ram_used_gb": 18.7,
-    "gpu_model": "RTX 3050",
-    "gpu_memory_used_mb": 6144,
-    "gpu_memory_total_mb": 8192
-  }
-}
-```
-
-### Text Analysis
-
-#### POST /analyze
-**Description:** Analyze text for crisis indicators
-
-**Request Body:**
-```json
-{
-  "text": "I've been having a really hard time lately and don't know what to do",
-  "context": {
-    "user_id": "user123",
-    "conversation_history": [
-      {
-        "text": "How are you feeling today?",
-        "timestamp": "2025-07-27T10:25:00Z",
-        "speaker": "friend"
-      }
-    ],
-    "metadata": {
-      "channel_type": "private_message",
-      "time_of_day": "evening",
-      "user_timezone": "America/Los_Angeles"
+      "previous_alerts": 1,
+      "last_interaction": "2025-07-20T10:30:00Z"
     }
   },
   "options": {
-    "include_explanations": true,
-    "detailed_analysis": true,
-    "sentiment_analysis": true
+    "include_ai_analysis": true,
+    "include_context_analysis": true,
+    "generate_response": true
   }
 }
 ```
@@ -386,851 +129,912 @@ X-RateLimit-Reset: 1627847400
 **Response:**
 ```json
 {
-  "analysis_id": "uuid-string",
-  "timestamp": "2025-07-27T10:30:02Z",
-  "processing_time_ms": 1650,
-  "results": {
+  "analysis_id": "crisis_analysis_abc123",
+  "timestamp": "2025-07-27T12:30:45Z",
+  "message": "I'm feeling really hopeless today and don't know what to do",
+  "user_id": "123456789012345678",
+  "channel_id": "987654321098765432",
+  
+  "detection_results": {
     "crisis_detected": true,
-    "priority_level": "medium",
-    "confidence_score": 0.72,
-    "detailed_scores": {
-      "self_harm_risk": 0.15,
-      "suicide_ideation": 0.08,
-      "emotional_distress": 0.78,
-      "help_seeking": 0.65,
-      "urgency": 0.42
-    }
+    "severity_level": "medium",
+    "confidence_score": 0.78,
+    "risk_factors": [
+      "hopelessness_expression",
+      "help_seeking_behavior",
+      "emotional_distress"
+    ]
   },
-  "analysis": {
-    "sentiment": {
-      "overall": "negative",
-      "polarity": -0.6,
-      "subjectivity": 0.8,
-      "emotions": {
-        "sadness": 0.72,
-        "fear": 0.23,
-        "anger": 0.05
+  
+  "keyword_analysis": {
+    "triggered_keywords": ["hopeless", "don't know what to do"],
+    "keyword_score": 0.65,
+    "category_matches": ["depression", "general_distress"]
+  },
+  
+  "ai_analysis": {
+    "nlp_score": 0.82,
+    "sentiment": "negative",
+    "emotional_indicators": ["hopelessness", "uncertainty", "distress"],
+    "context_relevance": 0.71,
+    "response_recommendation": "supportive_outreach"
+  },
+  
+  "context_analysis": {
+    "message_history_considered": 3,
+    "escalation_pattern": false,
+    "user_risk_profile": "moderate",
+    "environmental_factors": ["isolated_expression"]
+  },
+  
+  "recommended_actions": {
+    "immediate_response": true,
+    "team_notification": true,
+    "escalation_required": false,
+    "follow_up_needed": true,
+    "suggested_response": "I hear that you're going through a really difficult time..."
+  },
+  
+  "generated_response": {
+    "type": "supportive_outreach",
+    "message": "I hear that you're going through a really difficult time right now. Feeling hopeless can be incredibly overwhelming, but please know that you're not alone. There are people who care about you and resources that can help. Would it be okay if someone from our support team reached out to you?",
+    "resources": [
+      {
+        "type": "crisis_line",
+        "name": "988 Suicide & Crisis Lifeline",
+        "contact": "988",
+        "available": "24/7"
       }
-    },
-    "intent_classification": {
-      "primary_intent": "seeking_support",
-      "secondary_intent": "expressing_distress",
-      "confidence": 0.85
-    },
-    "linguistic_features": {
-      "negation_count": 1,
-      "first_person_pronouns": 3,
-      "emotional_intensity": "high",
-      "temporal_references": ["lately"]
-    },
-    "context_analysis": {
-      "conversation_flow": "help_seeking_response",
-      "relationship_indicators": "supportive_environment",
-      "environmental_factors": ["evening_timing"]
-    }
+    ]
   },
-  "recommendations": {
-    "response_urgency": "moderate",
-    "suggested_approach": "empathetic_outreach",
-    "escalation_indicators": ["monitor_for_worsening"],
-    "followup_timeline": "within_2_hours"
-  },
-  "model_info": {
-    "model_version": "crisis-detection-v2.1",
-    "training_date": "2025-06-15",
-    "model_confidence": 0.94
+  
+  "metadata": {
+    "processing_time_ms": 245,
+    "nlp_server_response_time": 180,
+    "keyword_processing_time": 12,
+    "context_analysis_time": 53
   }
 }
 ```
 
-#### POST /analyze/batch
-**Description:** Batch analysis for multiple texts
+### Get Crisis Alert
 
-**Request Body:**
-```json
-{
-  "texts": [
-    {
-      "id": "msg_001",
-      "text": "First message content",
-      "context": {}
-    },
-    {
-      "id": "msg_002", 
-      "text": "Second message content",
-      "context": {}
-    }
-  ],
-  "options": {
-    "parallel_processing": true,
-    "priority_queue": false,
-    "max_processing_time_ms": 5000
-  }
-}
+Retrieve details of a specific crisis alert.
+
+```http
+GET /api/v2/crisis/{alert_id}
+Authorization: Bearer YOUR_API_KEY
 ```
-
-### Model Management
-
-#### GET /models/info
-**Description:** Information about loaded models
-
-**Authentication:** Required
 
 **Response:**
 ```json
 {
-  "active_models": [
+  "alert_id": "crisis_alert_xyz789",
+  "analysis_id": "crisis_analysis_abc123",
+  "created_at": "2025-07-27T12:30:45Z",
+  "updated_at": "2025-07-27T12:35:22Z",
+  "status": "active",
+  
+  "crisis_details": {
+    "severity_level": "medium",
+    "confidence_score": 0.78,
+    "user_id": "123456789012345678",
+    "channel_id": "987654321098765432",
+    "original_message": "I'm feeling really hopeless today..."
+  },
+  
+  "team_response": {
+    "assigned_responder": "456789012345678901",
+    "response_time": 120,
+    "initial_contact_made": true,
+    "contact_method": "direct_message",
+    "response_status": "in_progress"
+  },
+  
+  "interventions": [
     {
-      "name": "crisis-detection-v2.1",
-      "type": "transformer",
-      "size_gb": 3.2,
-      "loaded_date": "2025-07-27T08:00:00Z",
-      "performance": {
-        "accuracy": 0.94,
-        "precision": 0.91,
-        "recall": 0.97,
-        "f1_score": 0.94
-      },
-      "specializations": [
-        "suicide_ideation",
-        "self_harm_detection", 
-        "emotional_distress",
-        "help_seeking_behavior"
-      ]
+      "timestamp": "2025-07-27T12:32:15Z",
+      "type": "automated_response",
+      "responder": "ash_bot",
+      "action": "supportive_message_sent"
+    },
+    {
+      "timestamp": "2025-07-27T12:33:45Z",
+      "type": "team_notification",
+      "responder": "system",
+      "action": "crisis_team_alerted"
+    },
+    {
+      "timestamp": "2025-07-27T12:35:22Z",
+      "type": "human_intervention",
+      "responder": "456789012345678901",
+      "action": "direct_message_initiated"
     }
   ],
-  "available_models": [
-    {
-      "name": "crisis-detection-v2.0",
-      "status": "standby",
-      "can_load": true
-    }
-  ],
-  "model_capabilities": {
-    "max_text_length": 2048,
-    "supported_languages": ["en"],
-    "context_window": 512,
-    "batch_processing": true
+  
+  "outcome": {
+    "status": "ongoing",
+    "user_responsive": true,
+    "safety_confirmed": false,
+    "resources_provided": true,
+    "follow_up_scheduled": true
   }
 }
 ```
 
-#### POST /models/reload
-**Description:** Reload or switch models
+### List Active Crises
 
-**Authentication:** Required
+Get all currently active crisis alerts.
 
-**Request Body:**
+```http
+GET /api/v2/crisis/active
+Authorization: Bearer YOUR_API_KEY
+
+# Optional query parameters:
+# ?severity=high,medium
+# ?assigned_to=456789012345678901
+# ?limit=50
+# ?offset=0
+```
+
+**Response:**
 ```json
 {
-  "model_name": "crisis-detection-v2.1",
-  "reload_reason": "configuration_update",
-  "preserve_cache": true
+  "active_crises": [
+    {
+      "alert_id": "crisis_alert_xyz789",
+      "severity_level": "medium",
+      "created_at": "2025-07-27T12:30:45Z",
+      "user_id": "123456789012345678",
+      "assigned_responder": "456789012345678901",
+      "status": "in_progress",
+      "response_time": 120
+    }
+  ],
+  "total_count": 1,
+  "high_priority_count": 0,
+  "medium_priority_count": 1,
+  "low_priority_count": 0,
+  "unassigned_count": 0
+}
+```
+
+### Update Crisis Status
+
+Update the status or assignment of a crisis alert.
+
+```http
+PUT /api/v2/crisis/{alert_id}
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "status": "resolved",
+  "assigned_responder": "456789012345678901",
+  "resolution_notes": "User connected with local mental health resources. Follow-up scheduled for next week.",
+  "outcome": {
+    "user_safe": true,
+    "professional_referral": true,
+    "follow_up_needed": true,
+    "follow_up_date": "2025-08-03T12:00:00Z"
+  }
 }
 ```
 
 ---
 
-## 📊 Dashboard API (Port 8883)
+## 👥 Team Management API
 
-**Base URL:** `http://10.20.30.16:8883/api/v1`
+### Get Team Status
 
-### Authentication
+Get current status of all crisis response team members.
 
-#### POST /auth/login
-**Description:** Authenticate dashboard user
-
-**Request Body:**
-```json
-{
-  "username": "crisis_responder",
-  "password": "secure_password",
-  "remember_me": true
-}
+```http
+GET /api/v2/team/status
+Authorization: Bearer YOUR_API_KEY
 ```
-
-**Response:**
-```json
-{
-  "success": true,
-  "token": "jwt-token-string",
-  "expires_at": "2025-07-28T10:30:00Z",
-  "user": {
-    "id": "user123",
-    "username": "crisis_responder",
-    "role": "crisis_team",
-    "permissions": ["view_alerts", "respond_to_crisis", "view_analytics"],
-    "last_login": "2025-07-27T09:15:00Z"
-  },
-  "preferences": {
-    "dashboard_layout": "crisis_focused",
-    "notification_settings": {
-      "high_priority_sound": true,
-      "desktop_notifications": true
-    }
-  }
-}
-```
-
-### Crisis Alert Management
-
-#### GET /alerts/active
-**Description:** Retrieve active crisis alerts
-
-**Authentication:** Required
-
-**Query Parameters:**
-- `priority`: Filter by priority level (high, medium, low)
-- `assignee`: Filter by assigned responder
-- `limit`: Number of results (default: 50)
-- `offset`: Pagination offset
-
-**Response:**
-```json
-{
-  "alerts": [
-    {
-      "alert_id": "uuid-string",
-      "created_at": "2025-07-27T10:30:00Z",
-      "priority": "high",
-      "status": "active",
-      "user_info": {
-        "user_id": "discord_user_id",
-        "username": "anonymized_user",
-        "display_name": "User#1234"
-      },
-      "message_info": {
-        "channel": "general-chat",
-        "timestamp": "2025-07-27T10:29:45Z",
-        "content_summary": "Expressed explicit self-harm thoughts"
-      },
-      "analysis": {
-        "confidence_score": 0.89,
-        "detected_indicators": ["explicit_self_harm", "urgent_help_seeking"],
-        "risk_assessment": "immediate_intervention_needed"
-      },
-      "response_info": {
-        "assigned_responder": "crisis_team_lead",
-        "response_time_target": "5_minutes",
-        "escalation_timer": "12_minutes_remaining",
-        "status": "initial_contact_made"
-      },
-      "actions_available": [
-        "respond_directly",
-        "escalate_to_professional",
-        "mark_resolved",
-        "request_backup"
-      ]
-    }
-  ],
-  "pagination": {
-    "total": 3,
-    "limit": 50,
-    "offset": 0,
-    "has_more": false
-  },
-  "summary": {
-    "total_active": 3,
-    "high_priority": 1,
-    "medium_priority": 2,
-    "low_priority": 0,
-    "unassigned": 0,
-    "overdue_response": 0
-  }
-}
-```
-
-#### POST /alerts/{alert_id}/respond
-**Description:** Record crisis response action
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "response_type": "direct_contact",
-  "action_taken": "sent_supportive_dm",
-  "outcome": "user_responded_positively",
-  "notes": "User expressed gratitude for outreach. Provided crisis resources. Will follow up in 2 hours.",
-  "next_actions": [
-    {
-      "action": "follow_up_contact",
-      "scheduled_time": "2025-07-27T12:30:00Z",
-      "assigned_to": "crisis_team_lead"
-    }
-  ],
-  "status_update": "monitoring",
-  "escalation_needed": false,
-  "resources_provided": [
-    "crisis_text_line",
-    "local_counseling_services"
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "alert_id": "uuid-string",
-  "response_id": "response-uuid",
-  "updated_status": "monitoring",
-  "next_review": "2025-07-27T12:30:00Z",
-  "response_recorded_at": "2025-07-27T10:45:00Z",
-  "response_time_minutes": 15,
-  "alert_timeline": [
-    {
-      "timestamp": "2025-07-27T10:30:00Z",
-      "event": "alert_created",
-      "details": "High priority crisis detected"
-    },
-    {
-      "timestamp": "2025-07-27T10:32:00Z", 
-      "event": "responder_assigned",
-      "details": "Assigned to crisis_team_lead"
-    },
-    {
-      "timestamp": "2025-07-27T10:45:00Z",
-      "event": "initial_response",
-      "details": "Direct contact made, positive response"
-    }
-  ]
-}
-```
-
-### Analytics and Reporting
-
-#### GET /analytics/dashboard
-**Description:** Dashboard analytics overview
-
-**Authentication:** Required
-
-**Query Parameters:**
-- `timeframe`: Time period (24h, 7d, 30d, 90d)
-- `include_trends`: Include trend analysis (true/false)
-
-**Response:**
-```json
-{
-  "timeframe": "24h",
-  "generated_at": "2025-07-27T10:30:00Z",
-  "system_health": {
-    "overall_status": "healthy",
-    "uptime_percent": 99.8,
-    "average_response_time_ms": 1650,
-    "error_rate_percent": 0.05
-  },
-  "crisis_detection": {
-    "total_messages_processed": 2847,
-    "alerts_generated": 12,
-    "alert_breakdown": {
-      "high_priority": 3,
-      "medium_priority": 6,
-      "low_priority": 3
-    },
-    "detection_accuracy": {
-      "true_positive_rate": 0.94,
-      "false_positive_rate": 0.06,
-      "precision": 0.91,
-      "recall": 0.97
-    }
-  },
-  "response_performance": {
-    "average_response_time_minutes": 4.2,
-    "response_rate_percent": 100,
-    "escalation_rate_percent": 8.3,
-    "resolution_rate_percent": 91.7,
-    "responder_activity": {
-      "total_responders": 8,
-      "active_responders": 6,
-      "average_caseload": 2.0
-    }
-  },
-  "community_insights": {
-    "peak_activity_hours": ["18:00-22:00"],
-    "common_crisis_types": [
-      {"type": "emotional_distress", "percentage": 45},
-      {"type": "anxiety_panic", "percentage": 23},
-      {"type": "depression_symptoms", "percentage": 32}
-    ],
-    "support_effectiveness": {
-      "positive_outcomes": 89,
-      "neutral_outcomes": 8,
-      "escalated_cases": 3
-    }
-  },
-  "trends": {
-    "crisis_volume_trend": "stable",
-    "response_time_trend": "improving",
-    "accuracy_trend": "stable_high",
-    "team_performance_trend": "excellent"
-  }
-}
-```
-
-### Team Management
-
-#### GET /team/status
-**Description:** Crisis response team status
-
-**Authentication:** Required
 
 **Response:**
 ```json
 {
   "team_overview": {
-    "total_members": 12,
-    "currently_active": 8,
-    "on_duty": 6,
-    "available": 4,
-    "busy": 2,
-    "offline": 4
+    "total_members": 15,
+    "currently_available": 8,
+    "on_duty": 3,
+    "in_crisis_response": 2,
+    "off_duty": 7
   },
-  "shift_coverage": {
-    "current_shift": "day_shift",
-    "shift_lead": "crisis_team_lead",
-    "coverage_level": "full",
-    "next_shift_change": "2025-07-27T18:00:00Z"
-  },
+  
   "team_members": [
     {
-      "user_id": "responder_001",
-      "display_name": "Crisis Responder 1",
-      "role": "senior_responder",
-      "status": "available",
-      "current_caseload": 1,
-      "max_caseload": 3,
-      "shift_hours": "08:00-16:00",
-      "last_activity": "2025-07-27T10:15:00Z",
-      "response_stats": {
-        "responses_today": 3,
-        "average_response_time_minutes": 3.2,
-        "success_rate_percent": 95
-      }
+      "user_id": "456789012345678901",
+      "username": "CrisisResponder1",
+      "status": "on_duty",
+      "availability": "available",
+      "current_cases": 1,
+      "max_concurrent_cases": 3,
+      "shift_start": "2025-07-27T08:00:00Z",
+      "shift_end": "2025-07-27T16:00:00Z",
+      "certifications": ["mental_health_first_aid", "suicide_prevention"],
+      "specializations": ["lgbtq_support", "youth_crisis"]
     }
   ],
-  "coverage_gaps": [],
-  "alerts_waiting_assignment": 0,
-  "team_performance": {
-    "overall_rating": "excellent",
-    "response_time_rating": "excellent", 
-    "resolution_rate_rating": "good",
-    "community_feedback_rating": "excellent"
+  
+  "coverage": {
+    "timezone_coverage": {
+      "PST": 3,
+      "EST": 2,
+      "GMT": 2,
+      "AEST": 1
+    },
+    "specialty_coverage": {
+      "lgbtq_support": 5,
+      "youth_crisis": 3,
+      "substance_abuse": 2,
+      "trauma_support": 4
+    }
   }
+}
+```
+
+### Assign Crisis to Team Member
+
+Assign a crisis alert to a specific team member.
+
+```http
+POST /api/v2/team/assign
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "alert_id": "crisis_alert_xyz789",
+  "responder_id": "456789012345678901",
+  "priority": "high",
+  "notes": "User has previous history with this responder"
+}
+```
+
+### Update Team Member Status
+
+Update a team member's availability and status.
+
+```http
+PUT /api/v2/team/member/{user_id}/status
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "status": "on_duty",
+  "availability": "available",
+  "max_concurrent_cases": 3,
+  "specializations": ["lgbtq_support", "youth_crisis"],
+  "notes": "Available for high-priority cases"
 }
 ```
 
 ---
 
-## 🧪 Testing Suite API (Port 8884)
+## 📊 Analytics API
 
-**Base URL:** `http://10.20.30.16:8884/api/v1`
+### Get System Metrics
 
-### Test Execution
+Retrieve comprehensive system performance metrics.
 
-#### POST /test/comprehensive
-**Description:** Run comprehensive 350-phrase test suite
+```http
+GET /api/v2/analytics/metrics
+Authorization: Bearer YOUR_API_KEY
 
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "test_type": "comprehensive",
-  "options": {
-    "include_performance_metrics": true,
-    "save_detailed_results": true,
-    "notify_on_completion": true,
-    "test_categories": ["all"],
-    "parallel_execution": true
-  },
-  "configuration": {
-    "target_accuracy": 0.95,
-    "max_processing_time_ms": 5000,
-    "retry_failed_tests": true
-  }
-}
+# Query parameters:
+# ?timeframe=1h,24h,7d,30d
+# ?include=response_times,accuracy,team_performance
 ```
 
 **Response:**
 ```json
 {
-  "test_id": "test-uuid-string",
-  "status": "running",
-  "started_at": "2025-07-27T10:30:00Z",
-  "estimated_completion": "2025-07-27T10:45:00Z",
-  "progress": {
-    "total_tests": 350,
-    "completed": 0,
-    "remaining": 350,
-    "current_category": "definite_high_priority"
-  },
-  "test_url": "/test/comprehensive/test-uuid-string",
-  "results_url": "/test/comprehensive/test-uuid-string/results",
-  "webhook_notifications": {
-    "progress_updates": true,
-    "completion_notification": true
-  }
-}
-```
-
-#### GET /test/comprehensive/{test_id}
-**Description:** Get comprehensive test status and results
-
-**Authentication:** Required
-
-**Response:**
-```json
-{
-  "test_id": "test-uuid-string",
-  "status": "completed",
-  "started_at": "2025-07-27T10:30:00Z",
-  "completed_at": "2025-07-27T10:42:30Z",
-  "duration_seconds": 750,
-  "overall_results": {
-    "total_tests": 350,
-    "passed": 332,
-    "failed": 18,
-    "accuracy_percent": 94.9,
-    "target_accuracy_met": false
-  },
-  "category_breakdown": {
-    "definite_high_priority": {
-      "total": 45,
-      "passed": 44,
-      "failed": 1,
-      "accuracy_percent": 97.8,
-      "target_met": true
+  "timeframe": "24h",
+  "generated_at": "2025-07-27T12:00:00Z",
+  
+  "crisis_detection": {
+    "total_analyses": 1247,
+    "crises_detected": 23,
+    "detection_rate": 1.84,
+    "severity_breakdown": {
+      "high": 3,
+      "medium": 12,
+      "low": 8
     },
-    "definite_medium_priority": {
-      "total": 78,
-      "passed": 75,
-      "failed": 3,
-      "accuracy_percent": 96.2,
-      "target_met": true
-    },
-    "definite_low_priority": {
-      "total": 67,
-      "passed": 63,
-      "failed": 4,
-      "accuracy_percent": 94.0,
-      "target_met": false
-    },
-    "maybe_categories": {
-      "total": 95,
-      "passed": 85,
-      "failed": 10,
-      "accuracy_percent": 89.5,
-      "acceptable_range": true
-    },
-    "false_positive_prevention": {
-      "total": 65,
-      "passed": 65,
-      "failed": 0,
-      "accuracy_percent": 100.0,
-      "target_met": true
+    "accuracy_metrics": {
+      "true_positives": 21,
+      "false_positives": 2,
+      "false_negatives": 1,
+      "precision": 0.913,
+      "recall": 0.955,
+      "f1_score": 0.933
     }
   },
-  "performance_metrics": {
-    "average_processing_time_ms": 1650,
-    "p95_processing_time_ms": 2800,
-    "max_processing_time_ms": 4200,
-    "timeout_count": 0,
-    "nlp_server_uptime_percent": 100
+  
+  "response_performance": {
+    "average_response_time": {
+      "high_priority": 89,
+      "medium_priority": 284,
+      "low_priority": 1247
+    },
+    "response_targets_met": {
+      "high_priority": 0.96,
+      "medium_priority": 0.87,
+      "low_priority": 0.94
+    },
+    "resolution_times": {
+      "average_minutes": 42,
+      "median_minutes": 28,
+      "95th_percentile": 156
+    }
   },
-  "failure_analysis": {
-    "common_failure_patterns": [
-      {
-        "pattern": "ambiguous_metaphorical_language",
-        "count": 8,
-        "examples": ["walking on thin ice", "drowning in work"]
-      },
-      {
-        "pattern": "context_dependent_expressions",
-        "count": 6,
-        "examples": ["I'm dying to see that movie"]
-      }
-    ],
-    "recommended_improvements": [
-      "enhance_context_analysis",
-      "improve_metaphor_detection",
-      "update_cultural_language_patterns"
-    ]
+  
+  "team_performance": {
+    "active_responders": 8,
+    "total_interventions": 23,
+    "successful_resolutions": 21,
+    "escalations_required": 2,
+    "user_satisfaction": 4.7,
+    "follow_up_completion": 0.91
   },
-  "detailed_results_available": true,
-  "export_formats": ["json", "csv", "pdf_report"]
-}
-```
-
-#### POST /test/quick-validation
-**Description:** Run quick 10-phrase validation test
-
-**Request Body:**
-```json
-{
-  "test_type": "quick_validation",
-  "options": {
-    "random_sample": true,
-    "include_all_priorities": true
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "test_id": "quick-test-uuid",
-  "status": "completed",
-  "duration_seconds": 25,
-  "results": {
-    "total_tests": 10,
-    "passed": 9,
-    "failed": 1,
-    "accuracy_percent": 90.0
-  },
+  
   "system_health": {
-    "nlp_server_responsive": true,
-    "average_response_time_ms": 1450,
-    "all_services_operational": true
-  },
-  "recommendation": "system_operational_with_minor_issues",
-  "next_action": "monitor_accuracy_trends"
-}
-```
-
-### Test Results and Analytics
-
-#### GET /test/results/latest
-**Description:** Get latest test results summary
-
-**Authentication:** Required
-
-**Response:**
-```json
-{
-  "latest_comprehensive": {
-    "test_id": "test-uuid-string",
-    "completed_at": "2025-07-27T10:42:30Z",
-    "accuracy_percent": 94.9,
-    "status": "passed_with_warnings"
-  },
-  "latest_quick_validation": {
-    "test_id": "quick-test-uuid",
-    "completed_at": "2025-07-27T10:30:00Z", 
-    "accuracy_percent": 90.0,
-    "status": "passed"
-  },
-  "trend_analysis": {
-    "accuracy_trend_7d": "stable",
-    "performance_trend_7d": "improving",
-    "failure_pattern_trends": ["metaphorical_language_increasing"]
-  },
-  "health_indicators": {
-    "overall_system_health": "good",
-    "detection_accuracy_health": "good",
-    "performance_health": "excellent",
-    "reliability_health": "excellent"
+    "uptime_percentage": 99.97,
+    "nlp_integration_uptime": 99.89,
+    "dashboard_integration_uptime": 99.95,
+    "average_processing_time": 187,
+    "error_rate": 0.003
   }
 }
 ```
 
-#### GET /test/analytics/accuracy-trends
-**Description:** Historical accuracy trend analysis
+### Get Crisis Trends
 
-**Authentication:** Required
+Analyze crisis patterns and trends over time.
 
-**Query Parameters:**
-- `timeframe`: Analysis period (7d, 30d, 90d)
-- `category`: Specific test category or "all"
+```http
+GET /api/v2/analytics/trends
+Authorization: Bearer YOUR_API_KEY
+
+# Query parameters:
+# ?timeframe=7d,30d,90d,1y
+# ?group_by=day,week,month
+# ?include=severity,keywords,outcomes
+```
 
 **Response:**
 ```json
 {
   "timeframe": "30d",
-  "category": "all",
+  "group_by": "day",
   "data_points": [
     {
-      "date": "2025-07-01",
-      "overall_accuracy": 94.2,
-      "high_priority_accuracy": 97.8,
-      "medium_priority_accuracy": 95.1,
-      "low_priority_accuracy": 92.3,
-      "false_positive_rate": 0.058
+      "date": "2025-07-27",
+      "total_crises": 23,
+      "severity_breakdown": {
+        "high": 3,
+        "medium": 12,
+        "low": 8
+      },
+      "resolution_rate": 0.913,
+      "average_response_time": 156
     }
   ],
-  "trends": {
-    "overall_direction": "stable_high",
-    "significant_changes": [],
-    "accuracy_variance": 0.023,
-    "performance_correlation": "positive"
+  
+  "trend_analysis": {
+    "crisis_frequency_trend": "stable",
+    "severity_trend": "decreasing",
+    "response_time_trend": "improving",
+    "resolution_rate_trend": "stable"
   },
-  "insights": {
-    "best_performing_category": "high_priority_detection",
-    "improvement_opportunities": ["context_dependent_detection"],
-    "stability_rating": "excellent"
-  }
+  
+  "seasonal_patterns": {
+    "day_of_week_patterns": {
+      "monday": 1.2,
+      "tuesday": 0.9,
+      "wednesday": 0.8,
+      "thursday": 1.1,
+      "friday": 1.3,
+      "saturday": 1.1,
+      "sunday": 1.4
+    },
+    "time_of_day_patterns": {
+      "00-06": 0.7,
+      "06-12": 1.1,
+      "12-18": 1.3,
+      "18-24": 1.2
+    }
+  },
+  
+  "keyword_trends": [
+    {
+      "keyword": "hopeless",
+      "frequency": 45,
+      "trend": "increasing",
+      "severity_correlation": 0.78
+    },
+    {
+      "keyword": "suicidal",
+      "frequency": 12,
+      "trend": "stable",
+      "severity_correlation": 0.95
+    }
+  ]
 }
 ```
 
-### Configuration and Management
+### Get User Interaction History
 
-#### GET /test/configuration
-**Description:** Get testing suite configuration
+Retrieve interaction history for analytics (anonymized).
 
-**Authentication:** Required
+```http
+GET /api/v2/analytics/interactions
+Authorization: Bearer YOUR_API_KEY
+
+# Query parameters:
+# ?user_id=hash_or_anonymized_id
+# ?timeframe=30d
+# ?include_outcomes=true
+```
 
 **Response:**
 ```json
 {
-  "test_suite_version": "2.1.0",
-  "total_test_phrases": 350,
-  "test_categories": {
-    "definite_high_priority": 45,
-    "definite_medium_priority": 78,
-    "definite_low_priority": 67,
-    "maybe_high_priority": 32,
-    "maybe_medium_priority": 38,
-    "maybe_low_priority": 25,
-    "false_positive_prevention": 65
+  "user_id": "anonymized_hash_abc123",
+  "interaction_count": 3,
+  "first_interaction": "2025-07-01T14:30:00Z",
+  "last_interaction": "2025-07-27T12:30:45Z",
+  
+  "interactions": [
+    {
+      "date": "2025-07-27T12:30:45Z",
+      "severity": "medium",
+      "response_time": 120,
+      "resolution_status": "resolved",
+      "outcome": "positive",
+      "follow_up_completed": true
+    }
+  ],
+  
+  "patterns": {
+    "crisis_frequency": "occasional",
+    "severity_trend": "stable",
+    "response_effectiveness": "high",
+    "engagement_level": "responsive"
   },
-  "accuracy_targets": {
-    "overall_minimum": 0.95,
-    "high_priority_minimum": 0.98,
-    "medium_priority_minimum": 0.95,
-    "low_priority_minimum": 0.90,
-    "false_positive_maximum": 0.05
-  },
-  "performance_targets": {
-    "max_processing_time_ms": 3000,
-    "average_target_ms": 2000,
-    "timeout_threshold_ms": 5000
-  },
-  "scheduling": {
-    "quick_validation_frequency": "hourly",
-    "comprehensive_test_frequency": "daily",
-    "performance_analysis_frequency": "weekly"
+  
+  "risk_assessment": {
+    "current_risk_level": "low",
+    "risk_factors": [],
+    "protective_factors": ["responsive_to_intervention", "utilizes_resources"]
   }
 }
 ```
 
 ---
 
-## 🔄 Webhooks and Real-time Updates
+## 🔧 System Management API
 
-### Webhook Configuration
+### Health Check
 
-**Webhook Registration:**
+Check overall system health and service connectivity.
+
 ```http
-POST /webhooks/register
-Content-Type: application/json
-Authorization: Bearer api-key
-
-{
-  "url": "https://your-service.com/webhook/ash-alerts",
-  "events": ["crisis_alert_created", "crisis_alert_resolved"],
-  "secret": "webhook-verification-secret",
-  "active": true
-}
+GET /api/v2/health
 ```
 
-**Webhook Payload Example:**
+**Response:**
 ```json
 {
-  "event": "crisis_alert_created",
-  "timestamp": "2025-07-27T10:30:00Z",
-  "data": {
-    "alert_id": "uuid-string",
-    "priority": "high",
-    "confidence_score": 0.89,
-    "user_info": {
-      "user_id": "anonymized_id",
-      "channel": "general"
+  "status": "healthy",
+  "timestamp": "2025-07-27T12:00:00Z",
+  "version": "2.1.1",
+  "uptime": 2847392,
+  
+  "services": {
+    "discord_connection": {
+      "status": "connected",
+      "latency": 45,
+      "last_heartbeat": "2025-07-27T11:59:58Z"
     },
-    "response_required": true,
-    "estimated_response_time": "5_minutes"
+    "nlp_server": {
+      "status": "connected",
+      "url": "http://10.20.30.253:8881",
+      "response_time": 187,
+      "last_health_check": "2025-07-27T11:59:45Z"
+    },
+    "dashboard_integration": {
+      "status": "connected",
+      "webhook_url": "http://10.20.30.253:8883/webhook/bot_events",
+      "last_webhook_sent": "2025-07-27T11:58:23Z"
+    },
+    "database": {
+      "status": "connected",
+      "connection_pool": "8/20",
+      "last_query": "2025-07-27T12:00:00Z"
+    }
   },
-  "signature": "sha256=webhook-verification-signature"
+  
+  "performance": {
+    "memory_usage": "245MB",
+    "cpu_usage": "12%",
+    "disk_usage": "8.2GB",
+    "active_connections": 23,
+    "requests_per_minute": 47
+  },
+  
+  "recent_errors": []
 }
 ```
 
-### WebSocket Connections
+### Get System Configuration
 
-**Dashboard Real-time Updates:**
-```javascript
-// WebSocket connection for real-time dashboard updates
-const socket = new WebSocket('wss://10.20.30.16:8883/ws/dashboard');
+Retrieve current system configuration (sanitized).
 
-socket.onmessage = function(event) {
-  const update = JSON.parse(event.data);
-  
-  if (update.type === 'new_alert') {
-    // Handle new crisis alert
-    displayAlert(update.data);
-  } else if (update.type === 'alert_update') {
-    // Handle alert status update  
-    updateAlertStatus(update.data);
-  }
-};
+```http
+GET /api/v2/system/config
+Authorization: Bearer YOUR_API_KEY
 ```
 
-**Message Types:**
-- `new_alert`: New crisis alert created
-- `alert_update`: Alert status or assignment changed
-- `system_status`: System health status change
-- `team_update`: Crisis team member status change
+**Response:**
+```json
+{
+  "bot_configuration": {
+    "crisis_thresholds": {
+      "high_priority": 0.8,
+      "medium_priority": 0.6,
+      "low_priority": 0.4
+    },
+    "response_settings": {
+      "auto_respond_enabled": true,
+      "team_notification_enabled": true,
+      "analytics_export_enabled": true
+    },
+    "detection_methods": {
+      "keyword_detection": true,
+      "ai_analysis": true,
+      "context_analysis": true
+    }
+  },
+  
+  "integration_settings": {
+    "nlp_server_timeout": 30,
+    "dashboard_webhook_enabled": true,
+    "testing_integration_enabled": true
+  },
+  
+  "team_settings": {
+    "max_concurrent_cases": 3,
+    "response_time_targets": {
+      "high_priority": 120,
+      "medium_priority": 600,
+      "low_priority": 1800
+    }
+  }
+}
+```
+
+### Update System Configuration
+
+Update system configuration parameters.
+
+```http
+PUT /api/v2/system/config
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "crisis_thresholds": {
+    "high_priority": 0.85,
+    "medium_priority": 0.65,
+    "low_priority": 0.45
+  },
+  "response_settings": {
+    "auto_respond_enabled": true,
+    "team_notification_enabled": true
+  }
+}
+```
 
 ---
 
-## 🔒 Security and Best Practices
+## 📡 Webhook Integration
 
-### API Security
+### Outgoing Webhooks
 
-**Authentication Best Practices:**
-- **Secure API Keys:** Use strong, randomly generated API keys
-- **Key Rotation:** Rotate API keys quarterly or after security incidents
-- **Scope Limitation:** Use minimum necessary permissions for each API key
-- **Secure Storage:** Store API keys in secure environment variables
+ASH-BOT sends webhooks to integrated services for real-time updates.
 
-**Rate Limiting:**
-- **Implement Backoff:** Use exponential backoff for failed requests
-- **Monitor Usage:** Track API usage patterns for anomaly detection
-- **Cache Responses:** Cache non-sensitive responses to reduce API calls
-- **Batch Operations:** Use batch endpoints for bulk operations
+#### Crisis Alert Webhook
 
-### Error Handling
+Sent to dashboard when new crisis is detected:
 
-**Standard Error Response:**
+```json
+{
+  "event": "crisis_detected",
+  "timestamp": "2025-07-27T12:30:45Z",
+  "alert_id": "crisis_alert_xyz789",
+  "severity": "medium",
+  "user_id": "123456789012345678",
+  "channel_id": "987654321098765432",
+  "confidence_score": 0.78,
+  "assigned_responder": null,
+  "requires_immediate_attention": true
+}
+```
+
+#### Crisis Resolution Webhook
+
+Sent when crisis is resolved:
+
+```json
+{
+  "event": "crisis_resolved",
+  "timestamp": "2025-07-27T13:15:22Z",
+  "alert_id": "crisis_alert_xyz789",
+  "resolution_time": 2677,
+  "outcome": "positive",
+  "responder": "456789012345678901",
+  "follow_up_scheduled": true
+}
+```
+
+### Incoming Webhooks
+
+Accept webhooks from external systems.
+
+#### Team Status Update
+
+```http
+POST /api/v2/webhooks/team-status
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "event": "member_status_change",
+  "user_id": "456789012345678901",
+  "status": "on_duty",
+  "availability": "available",
+  "timestamp": "2025-07-27T12:00:00Z"
+}
+```
+
+#### External Alert
+
+```http
+POST /api/v2/webhooks/external-alert
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "source": "external_monitoring",
+  "alert_type": "potential_crisis",
+  "user_id": "123456789012345678",
+  "message": "User posted concerning content on external platform",
+  "severity": "medium",
+  "timestamp": "2025-07-27T12:30:00Z"
+}
+```
+
+---
+
+## 🚫 Error Handling
+
+### Error Response Format
+
+All API errors follow a consistent format:
+
 ```json
 {
   "error": {
-    "code": "CRISIS_ANALYSIS_FAILED",
-    "message": "Unable to analyze text for crisis indicators",
-    "details": "NLP server temporarily unavailable",
-    "timestamp": "2025-07-27T10:30:00Z",
-    "request_id": "req-uuid-string",
-    "retry_after": 30
-  },
-  "support": {
-    "documentation": "https://docs.alphabetcartel.org/ash/api",
-    "contact": "https://discord.gg/alphabetcartel"
+    "code": "INVALID_REQUEST",
+    "message": "The request payload is invalid",
+    "details": {
+      "field": "message",
+      "issue": "Message content cannot be empty"
+    },
+    "request_id": "req_abc123def456",
+    "timestamp": "2025-07-27T12:30:45Z"
   }
 }
 ```
 
-**Error Codes:**
-- `INVALID_API_KEY`: Authentication failed
-- `RATE_LIMIT_EXCEEDED`: Too many requests
-- `CRISIS_ANALYSIS_FAILED`: NLP processing error
-- `SERVICE_UNAVAILABLE`: Dependent service offline
-- `VALIDATION_ERROR`: Invalid request parameters
+### Common Error Codes
 
-### Data Privacy
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `INVALID_REQUEST` | 400 | Malformed request payload |
+| `UNAUTHORIZED` | 401 | Invalid or missing API key |
+| `FORBIDDEN` | 403 | Insufficient permissions |
+| `NOT_FOUND` | 404 | Resource not found |
+| `RATE_LIMITED` | 429 | Rate limit exceeded |
+| `NLP_SERVICE_UNAVAILABLE` | 503 | NLP server connection failed |
+| `INTERNAL_ERROR` | 500 | Unexpected server error |
 
-**Privacy Safeguards:**
-- **Data Minimization:** Process only necessary text content
-- **Anonymization:** Remove or hash personal identifiers
-- **Retention Limits:** Automatic deletion of processed data
-- **Access Logging:** Log all API access for audit purposes
+### Rate Limiting
+
+API requests are rate limited per API key:
+
+- **Standard**: 100 requests per minute
+- **Burst**: Up to 200 requests in any 10-second window
+- **Daily**: 10,000 requests per day
+
+Rate limit headers are included in all responses:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1627392000
+X-RateLimit-Burst-Remaining: 198
+```
+
+---
+
+## 📚 SDK and Code Examples
+
+### Python SDK Example
+
+```python
+import requests
+from datetime import datetime
+
+class AshBotAPI:
+    def __init__(self, api_key, base_url="http://10.20.30.253:8882"):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+    
+    def analyze_message(self, message, user_id, channel_id, include_ai=True):
+        """Analyze a message for crisis indicators"""
+        payload = {
+            "message": message,
+            "user_id": user_id,
+            "channel_id": channel_id,
+            "options": {
+                "include_ai_analysis": include_ai,
+                "include_context_analysis": True,
+                "generate_response": True
+            }
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/api/v2/analyze",
+            headers=self.headers,
+            json=payload
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            response.raise_for_status()
+    
+    def get_active_crises(self, severity=None):
+        """Get list of active crisis alerts"""
+        params = {}
+        if severity:
+            params['severity'] = severity
+            
+        response = requests.get(
+            f"{self.base_url}/api/v2/crisis/active",
+            headers=self.headers,
+            params=params
+        )
+        
+        return response.json()
+    
+    def get_team_status(self):
+        """Get current crisis response team status"""
+        response = requests.get(
+            f"{self.base_url}/api/v2/team/status",
+            headers=self.headers
+        )
+        
+        return response.json()
+
+# Usage example
+api = AshBotAPI("your_api_key_here")
+
+# Analyze a message
+result = api.analyze_message(
+    message="I'm feeling really hopeless today",
+    user_id="123456789012345678",
+    channel_id="987654321098765432"
+)
+
+print(f"Crisis detected: {result['detection_results']['crisis_detected']}")
+print(f"Severity: {result['detection_results']['severity_level']}")
+print(f"Confidence: {result['detection_results']['confidence_score']}")
+
+# Get active crises
+active_crises = api.get_active_crises(severity="high,medium")
+print(f"Active crises: {len(active_crises['active_crises'])}")
+
+# Check team status
+team_status = api.get_team_status()
+print(f"Available responders: {team_status['team_overview']['currently_available']}")
+```
+
+### JavaScript SDK Example
+
+```javascript
+class AshBotAPI {
+  constructor(apiKey, baseUrl = 'http://10.20.30.253:8882') {
+    this.apiKey = apiKey;
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async analyzeMessage(message, userId, channelId, includeAI = true) {
+    const payload = {
+      message,
+      user_id: userId,
+      channel_id: channelId,
+      options: {
+        include_ai_analysis: includeAI,
+        include_context_analysis: true,
+        generate_response: true
+      }
+    };
+
+    const response = await fetch(`${this.baseUrl}/api/v2/analyze`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async getActiveCrises(severity = null) {
+    const params = new URLSearchParams();
+    if (severity) params.append('severity', severity);
+
+    const response = await fetch(
+      `${this.baseUrl}/api/v2/crisis/active?${params}`,
+      { headers: this.headers }
+    );
+
+    return await response.json();
+  }
+
+  async getSystemHealth() {
+    const response = await fetch(`${this.baseUrl}/api/v2/health`);
+    return await response.json();
+  }
+}
+
+// Usage example
+const api = new AshBotAPI('your_api_key_here');
+
+// Analyze message
+api.analyzeMessage(
+  "I'm feeling really hopeless today",
+  "123456789012345678",
+  "987654321098765432"
+).then(result => {
+  console.log('Crisis detected:', result.detection_results.crisis_detected);
+  console.log('Severity:', result.detection_results.severity_level);
+  console.log('Confidence:', result.detection_results.confidence_score);
+});
+
+// Check system health
+api.getSystemHealth().then(health => {
+  console.log('System status:', health.status);
+  console.log('NLP server:', health.services.nlp_server.status);
+});
+```
 
 ---
 
@@ -1238,37 +1042,42 @@ socket.onmessage = function(event) {
 
 ### API Support
 
-**Getting Help:**
-- **GitHub Issues:** https://github.com/The-Alphabet-Cartel/ash/issues
-- **Discord Community:** [The Alphabet Cartel Discord](https://discord.gg/alphabetcartel) #tech-support
-- **Documentation:** Complete API reference and guides
+**Technical Documentation:**
+- **Repository**: https://github.com/the-alphabet-cartel/ash-bot
+- **Issues**: https://github.com/the-alphabet-cartel/ash-bot/issues
+- **API Changelog**: View releases for API updates
 
-**Response Times:**
-- **Critical Issues:** Within 4 hours during business hours
-- **General Support:** Within 24 hours
-- **Feature Requests:** Reviewed weekly in team meetings
+**Community Support:**
+- **Discord**: https://discord.gg/alphabetcartel (#tech-support)
+- **Email**: For urgent API integration issues
 
-### Development Resources
+### Related APIs
 
-**SDKs and Libraries:**
-- **Python SDK:** `pip install ash-client` (coming soon)
-- **JavaScript SDK:** `npm install @alphabet-cartel/ash-client` (coming soon)
-- **Postman Collection:** Available in repository `/docs/postman/`
+**Ecosystem Integration:**
+- **[ASH-NLP API](https://github.com/the-alphabet-cartel/ash-nlp)** - AI analysis service
+- **[ASH-DASH API](https://github.com/the-alphabet-cartel/ash-dash)** - Dashboard and analytics
+- **[ASH-THRASH API](https://github.com/the-alphabet-cartel/ash-thrash)** - Testing and validation
 
-**Code Examples:**
-- **Crisis Detection Integration:** `/examples/crisis-detection/`
-- **Dashboard Integration:** `/examples/dashboard-integration/`
-- **Webhook Handling:** `/examples/webhook-handlers/`
+### Best Practices
+
+**Rate Limiting:**
+- Implement exponential backoff for rate limit errors
+- Cache results where appropriate
+- Use batch operations when available
+
+**Error Handling:**
+- Always check response status codes
+- Implement retry logic for transient errors
+- Log API errors for debugging
+
+**Security:**
+- Store API keys securely
+- Use HTTPS for all requests
+- Validate webhook signatures
+- Implement proper authentication in your applications
 
 ---
 
-*This API documentation supports the mental health crisis detection mission of [The Alphabet Cartel Discord community](https://discord.gg/alphabetcartel). Our APIs enable compassionate, technology-assisted crisis response for LGBTQIA+ individuals and chosen family networks.*
+**The ASH-BOT API is designed for reliability, security, and ease of integration. It provides the foundation for building powerful crisis intervention and community support tools.**
 
-**Built with 🖤 for chosen family everywhere.**
-
----
-
-**Document Version:** 1.0  
-**Last Updated:** July 27, 2025  
-**API Version:** v1  
-**Next Review:** August 27, 2025
+🌈 **Discord**: https://discord.gg/alphabetcartel | 🌐 **Website**: https://alphabetcartel.org

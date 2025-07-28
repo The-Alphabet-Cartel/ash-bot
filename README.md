@@ -1,301 +1,424 @@
-# Ash-Bot - Discord Crisis Detection Bot
+# 🤖 ASH-BOT: Discord Crisis Detection and Community Support
 
-**Part of the Ash Ecosystem** | **Main Repository:** https://github.com/the-alphabet-cartel/ash
+**Advanced Discord bot for crisis detection and community mental health support**
 
-This repository contains **only the Discord bot component** of the Ash crisis detection system. For the complete ecosystem including NLP server, dashboard, and testing suite, see the [main Ash repository](https://github.com/the-alphabet-cartel/ash).
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://docker.com)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://python.org)
+[![Discord.py](https://img.shields.io/badge/Discord.py-2.3+-purple?logo=discord)](https://discordpy.readthedocs.io/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-**Discord Community:** https://discord.gg/alphabetcartel  
-**Website:** http://alphabetcartel.org  
-**Organization:** https://github.com/the-alphabet-cartel
+**Repository**: https://github.com/the-alphabet-cartel/ash-bot  
+**Main Project**: https://github.com/the-alphabet-cartel/ash  
+**Discord Community**: https://discord.gg/alphabetcartel  
+**Website**: https://alphabetcartel.org  
 
-## 🤖 About Ash-Bot
+---
 
-Ash-Bot is the Discord interface for The Alphabet Cartel's crisis detection and community support system. It monitors Discord conversations, detects potential crisis situations, and coordinates appropriate support responses within LGBTQIA+ gaming communities.
+## 🌟 Overview
 
-### 🏗️ Architecture Position
+ASH-BOT is the core Discord bot component of The Alphabet Cartel's comprehensive crisis detection and community support ecosystem. It monitors Discord conversations in real-time, detects potential mental health crises, and provides immediate support while alerting trained response teams.
+
+### Key Features
+
+🔍 **Real-Time Crisis Detection**
+- Advanced keyword and phrase detection
+- Integration with AI-powered NLP analysis
+- Multi-level crisis severity assessment
+- Context-aware message analysis
+
+🚨 **Immediate Response System**
+- Automated crisis intervention messages
+- Crisis response team notifications
+- Escalation management
+- Safe space creation and moderation
+
+🤝 **Community Support Tools**
+- Mental health resource distribution
+- Supportive response suggestions
+- Community wellness monitoring
+- Anonymous reporting systems
+
+📊 **Analytics and Insights**
+- Real-time dashboard integration
+- Crisis pattern analysis
+- Response effectiveness tracking
+- Community health metrics
+
+## 🏗️ Architecture
+
+ASH-BOT operates as part of the integrated Ash ecosystem on dedicated server infrastructure:
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Discord Bot   │◄──►│   NLP Server    │◄──►│   Dashboard     │
-│   (THIS REPO)   │    │   (ash-nlp)     │    │   (ash-dash)    │
-│                 │    │                 │    │                 │
-│ 10.20.30.253    │    │ 10.20.30.16     │    │ 10.20.30.16     │
-│ Port: 8882      │    │ Port: 8881      │    │ Port: 8883      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                 ▲
-                                 │
-                       ┌─────────────────┐
-                       │  Testing Suite  │
-                       │  (ash-thrash)   │
-                       │                 │
-                       │ 10.20.30.16     │
-                       │ Port: 8884      │
-                       └─────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEDICATED SERVER                            │
+│                  IP: 10.20.30.253                              │
+│                Debian 12 Linux Server                          │
+│            AMD Ryzen 7 5800X | 64GB RAM | RTX 3060            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+         ┌──────────────────────┼──────────────────────┐
+         │                      │                      │
+         ▼                      ▼                      ▼
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│    ASH-BOT       │  │    ASH-NLP       │  │   ASH-DASH       │
+│  Port: 8882      │◄─│  Port: 8881      │─►│  Port: 8883      │
+│  Discord Bot     │  │  AI Analysis     │  │  Dashboard       │
+│  API Server      │  │  Crisis Scoring  │  │  Analytics       │
+└──────────────────┘  └──────────────────┘  └──────────────────┘
+         │                      │                      │
+         └──────────────────────┼──────────────────────┘
+                                ▼
+                   ┌──────────────────────┐
+                   │     ASH-THRASH       │
+                   │    Port: 8884        │
+                   │   Testing Suite      │
+                   │   Quality Assurance  │
+                   └──────────────────────┘
 ```
+
+### System Integration
+
+- **NLP Integration**: Sends messages to ASH-NLP for advanced AI analysis
+- **Dashboard Reporting**: Real-time metrics and alerts to ASH-DASH
+- **Quality Validation**: Continuous testing via ASH-THRASH
+- **API Endpoints**: RESTful API for external integrations
 
 ## 🚀 Quick Start
 
-### For Development
-If you're working on the bot specifically:
+### Production Deployment (Docker - Recommended)
 
 ```bash
-# Clone this repository
+# Clone the repository
 git clone https://github.com/the-alphabet-cartel/ash-bot.git
 cd ash-bot
 
-# Setup development environment
+# Configure environment
+cp .env.template .env
+# Edit .env with your Discord token and configuration
+
+# Deploy with Docker
+docker-compose up -d
+
+# Verify deployment
+curl http://10.20.30.253:8882/health
+```
+
+### Development Setup
+
+```bash
+# Clone and setup development environment
+git clone https://github.com/the-alphabet-cartel/ash-bot.git
+cd ash-bot
+
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements-dev.txt
 
 # Configure environment
 cp .env.template .env
-# Edit .env with your Discord token and API keys
+# Edit .env for development settings
 
-# Run development server
-python -m bot
+# Run bot
+python main.py
 ```
 
-### For Complete Ecosystem
-If you need the full Ash system (recommended):
+### Integration with Full Ecosystem
 
 ```bash
-# Clone the main ecosystem repository
+# Deploy complete ecosystem (recommended)
 git clone --recursive https://github.com/the-alphabet-cartel/ash.git
 cd ash
 
-# Follow setup instructions in main repository
-# This includes ash-bot as a submodule along with all other components
+# Configure all components
+for component in ash-bot ash-nlp ash-dash ash-thrash; do
+  cd $component && cp .env.template .env && cd ..
+done
+
+# Deploy all services
+docker-compose up -d
+
+# Verify ecosystem health
+curl http://10.20.30.253:8882/health  # Bot
+curl http://10.20.30.253:8881/health  # NLP
+curl http://10.20.30.253:8883/health  # Dashboard
+curl http://10.20.30.253:8884/health  # Testing
 ```
 
-## 🔧 Core Features
+## ⚙️ Configuration
 
-### Discord Integration
-- **Message Monitoring**: Real-time processing of Discord messages across channels
-- **Command System**: Slash commands for bot management and user interaction
-- **Permission Management**: Role-based access control for administrative functions
-- **Rate Limiting**: Discord API compliance and respectful usage patterns
+### Environment Variables
 
-### Crisis Detection Pipeline
-- **Initial Filtering**: Keyword-based pre-screening to optimize performance
-- **NLP Integration**: Seamless communication with ash-nlp server for advanced analysis
-- **Context Awareness**: Understanding conversation flow and user interaction patterns
-- **Alert Generation**: Immediate notification system for crisis situations
-
-### Community Support
-- **Privacy-First Design**: Processes only necessary text, no permanent personal data storage
-- **Configurable Responses**: Customizable bot responses for different crisis levels
-- **Team Coordination**: Integration with moderation workflows and support team alerts
-- **Learning System**: Continuous improvement through feedback and testing integration
-
-## 📦 Repository Structure
-
-```
-ash-bot/                          # THIS REPOSITORY
-├── bot/                          # Main bot application
-│   ├── core/                     # Core bot functionality
-│   │   ├── bot.py               # Main bot client and event handlers
-│   │   ├── config.py            # Configuration management
-│   │   └── database.py          # Data storage and management
-│   ├── handlers/                 # Message and event handlers
-│   │   ├── message_handler.py   # Message processing logic
-│   │   ├── crisis_handler.py    # Crisis detection coordination
-│   │   └── command_handler.py   # Slash command implementations
-│   ├── utils/                    # Utility functions
-│   │   ├── helpers.py           # General helper functions
-│   │   ├── logger.py            # Logging configuration
-│   │   └── validators.py        # Input validation utilities
-│   ├── keywords/                 # Crisis detection keywords
-│   │   ├── high_crisis.py       # High-priority crisis terms
-│   │   ├── medium_crisis.py     # Medium-priority crisis terms
-│   │   └── low_crisis.py        # Low-priority crisis terms
-│   ├── data/                     # Data storage
-│   └── logs/                     # Log files
-├── tests/                        # Unit tests for bot functionality
-├── docs/                         # Bot-specific documentation
-├── docker/                       # Docker configuration
-├── scripts/                      # Utility scripts
-├── .env.template                 # Environment configuration template
-├── docker-compose.yml            # Docker deployment configuration
-├── requirements.txt              # Production dependencies
-├── requirements-dev.txt          # Development dependencies
-└── README.md                     # This file
-```
-
-## 🛠️ Development
-
-### Prerequisites
-- Python 3.9+
-- Discord Bot Token (from Discord Developer Portal)
-- Access to ash-nlp server (for full functionality)
-- Docker (for containerized deployment)
-
-### Environment Configuration
-
-Create `.env` file from template:
-```bash
-cp .env.template .env
-```
-
-Required environment variables:
 ```bash
 # Discord Configuration
-DISCORD_TOKEN=your_discord_bot_token_here
-GUILD_ID=your_discord_server_id_here
+DISCORD_TOKEN=your_discord_bot_token
+DISCORD_GUILD_ID=your_server_id
+CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
+CRISIS_RESPONSE_ROLE_ID=your_crisis_team_role_id
 
-# NLP Server Integration
-NLP_SERVER_URL=http://10.20.30.16:8881
-NLP_API_TIMEOUT=30
+# Server Configuration
+BOT_API_HOST=0.0.0.0
+BOT_API_PORT=8882
 
-# Bot Configuration
-API_PORT=8882
-ENVIRONMENT=development
-DEBUG_MODE=true
+# NLP Integration
+NLP_SERVER_URL=http://10.20.30.253:8881
+NLP_SERVER_API_KEY=secure_api_key_here
+ENABLE_NLP_INTEGRATION=true
 
-# Claude API (for enhanced responses)
-CLAUDE_API_KEY=your_claude_api_key_here
+# Database Configuration
+DATABASE_URL=sqlite:///data/ash_bot.db
+
+# Crisis Detection Settings
+HIGH_PRIORITY_THRESHOLD=0.8
+MEDIUM_PRIORITY_THRESHOLD=0.6
+LOW_PRIORITY_THRESHOLD=0.4
+ENABLE_KEYWORD_DETECTION=true
+ENABLE_AI_ANALYSIS=true
+
+# Analytics Integration
+DASHBOARD_WEBHOOK_URL=http://10.20.30.253:8883/webhook/bot_events
+ENABLE_ANALYTICS_EXPORT=true
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=logs/ash_bot.log
+
+# Security
+API_KEY=secure_api_key_for_external_access
+ENABLE_API_AUTHENTICATION=true
 ```
 
-### Testing
+### Discord Permissions
+
+The bot requires the following Discord permissions:
+
+- **Read Messages/View Channels**: Monitor conversations
+- **Send Messages**: Provide crisis responses
+- **Manage Messages**: Moderate harmful content
+- **Manage Roles**: Assign crisis support roles
+- **Kick Members**: Remove disruptive users during crises
+- **Ban Members**: Handle severe cases
+- **Manage Channels**: Create safe spaces
+- **View Audit Log**: Track moderation actions
+
+## 📊 API Reference
+
+### Health Check
+```bash
+GET /health
+# Returns bot status and connectivity to other services
+```
+
+### Crisis Detection
+```bash
+POST /api/analyze
+{
+  "message": "text to analyze",
+  "user_id": "discord_user_id",
+  "channel_id": "discord_channel_id"
+}
+```
+
+### Statistics
+```bash
+GET /api/stats
+# Returns crisis detection statistics and bot metrics
+```
+
+### Team Alerts
+```bash
+POST /api/alert
+{
+  "level": "high|medium|low",
+  "message": "alert message",
+  "user_id": "discord_user_id",
+  "channel_id": "discord_channel_id"
+}
+```
+
+For complete API documentation, see [docs/tech/API_v2_1.md](docs/tech/API_v2_1.md)
+
+## 🧪 Testing
+
+### Automated Testing
 
 ```bash
 # Run unit tests
 pytest tests/
 
-# Run with coverage
-pytest --cov=bot tests/
-
-# Run integration tests (requires NLP server)
+# Run integration tests
 pytest tests/integration/
+
+# Test with full ecosystem
+cd ../ash-thrash
+python src/comprehensive_testing.py
 ```
 
-### Docker Deployment
+### Manual Testing
 
 ```bash
-# Build and run locally
-docker-compose up --build
+# Test crisis detection
+python scripts/test_crisis_detection.py
 
-# Production deployment
-docker-compose -f docker-compose.prod.yml up -d
+# Test NLP integration
+python scripts/test_nlp_connection.py
+
+# Test Discord connectivity
+python scripts/test_discord_connection.py
 ```
 
-## 🔗 Integration with Ash Ecosystem
+## 📚 Documentation
 
-### NLP Server Communication
-- **Endpoint**: `http://10.20.30.16:8881/analyze`
-- **Protocol**: REST API with JSON payloads
-- **Fallback**: Keyword-only detection if NLP server unavailable
-- **Caching**: Local caching of recent NLP results for performance
+### Core Documentation
+- **[Deployment Guide](docs/deployment_v2_1.md)** - Complete deployment instructions
+- **[API Documentation](docs/tech/API_v2_1.md)** - Full API reference
+- **[Architecture Guide](docs/tech/architecture_v2_1.md)** - System design and integration
+- **[Implementation Guide](docs/tech/implementation_v2_1.md)** - Technical implementation details
+- **[Troubleshooting Guide](docs/tech/troubleshooting_v2_1.md)** - Common issues and solutions
 
-### Dashboard Integration
-- **Metrics Reporting**: Real-time statistics to ash-dash
-- **Alert Coordination**: Crisis alerts displayed in dashboard
-- **Performance Monitoring**: Bot health and response time metrics
+### Team Resources
+- **[Team Guide](docs/team/team_guide_v2_1.md)** - Crisis response team procedures
+- **[GitHub Release Guide](docs/github_release_v2_1.md)** - Release management
 
-### Testing Integration
-- **Validation**: Tested by ash-thrash 350-phrase test suite
-- **Quality Assurance**: Continuous validation of detection accuracy
-- **Performance Benchmarking**: Response time and reliability metrics
+### External Documentation
+- **[Ecosystem Overview](https://github.com/the-alphabet-cartel/ash)** - Complete system documentation
+- **[Dashboard Guide](https://github.com/the-alphabet-cartel/ash-dash)** - Analytics and monitoring
+- **[Testing Suite](https://github.com/the-alphabet-cartel/ash-thrash)** - Quality assurance
 
-## 📊 Bot Performance
+## 🛠️ Development
 
-### Specifications
-- **Server**: Linux (10.20.30.253)
-- **Resources**: 1GB RAM, 0.5 CPU cores
-- **Uptime Target**: 99.9%
-- **Response Time**: <500ms for standard messages
-- **Crisis Detection**: <2s end-to-end including NLP analysis
+### Development Environment
 
-### Monitoring
-- **Health Endpoint**: `http://10.20.30.253:8882/health`
-- **Metrics**: Available via ash-dash dashboard
-- **Logging**: Comprehensive logs in `/bot/logs/`
-- **Alerts**: Automated alerting for service disruptions
+**Prerequisites**:
+- Python 3.9+
+- Docker and Docker Compose
+- Discord bot application
+- Access to The Alphabet Cartel GitHub organization
 
-## 🧪 Testing
+**Recommended Development Setup**:
+- **Editor**: Atom (or VS Code)
+- **Git**: GitHub Desktop (or command line)
+- **Docker**: Docker Desktop
+- **Operating System**: Windows 11 (development) / Debian 12 (production)
 
-This repository includes unit tests for bot-specific functionality. For comprehensive system testing including crisis detection accuracy, see [ash-thrash](https://github.com/the-alphabet-cartel/ash-thrash).
+### Development Workflow
 
 ```bash
-# Bot-specific testing
-python -m pytest tests/unit/
+# 1. Fork and clone
+git clone https://github.com/YourUsername/ash-bot.git
+cd ash-bot
 
-# Integration testing (requires full ecosystem)
-python -m pytest tests/integration/
+# 2. Create development branch
+git checkout -b feature/your-feature-name
+
+# 3. Set up development environment
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements-dev.txt
+
+# 4. Configure for development
+cp .env.template .env.development
+# Edit .env.development with development settings
+
+# 5. Run tests
+pytest tests/
+
+# 6. Run bot in development mode
+ENVIRONMENT=development python main.py
+
+# 7. Test integration with other services
+python scripts/test_ecosystem_integration.py
+
+# 8. Submit pull request
+git push origin feature/your-feature-name
+# Create PR on GitHub
 ```
 
-## 🚨 Crisis Detection Logic
+### Code Standards
 
-### Detection Pipeline
-1. **Message Reception**: Discord message received via event handler
-2. **Initial Filtering**: Fast keyword-based pre-screening
-3. **NLP Analysis**: Advanced analysis via ash-nlp server (if needed)
-4. **Risk Assessment**: Combined scoring from keywords and NLP
-5. **Response Coordination**: Alert generation and response execution
+- **Python Style**: Follow PEP 8
+- **Testing**: Minimum 80% code coverage
+- **Documentation**: Update docs for any API changes
+- **Security**: No hardcoded credentials
+- **Logging**: Comprehensive logging for debugging
 
-### Keywords Management
-Crisis detection keywords are maintained in `/bot/keywords/`:
-- `high_crisis.py`: Immediate intervention required
-- `medium_crisis.py`: Close monitoring and support needed
-- `low_crisis.py`: Wellness check and resource sharing
+## 🔐 Security & Privacy
 
-These keyword files are synchronized with ash-thrash testing suite to ensure consistent detection logic.
+### Privacy Protection
+- **No Personal Data Storage**: Messages analyzed in memory only
+- **Anonymized Analytics**: User identifiers stripped from metrics
+- **Consent-Based**: Clear opt-out mechanisms
+- **Data Retention**: Minimal necessary data only
 
-## 🤝 Contributing
+### Security Features
+- **API Authentication**: Secure API key management
+- **Rate Limiting**: Protection against abuse
+- **Input Validation**: Sanitized message processing
+- **Audit Logging**: Complete action tracking
 
-### Development Process
-1. **Fork this repository** (ash-bot specifically)
-2. **Create feature branch** for your changes
-3. **Write tests** for new functionality
-4. **Test integration** with ash-nlp server
-5. **Update documentation** as needed
-6. **Submit pull request** to this repository
-
-### Integration Testing
-Changes to crisis detection logic should be validated with the complete ecosystem:
-1. Test with ash-thrash comprehensive suite
-2. Verify dashboard integration works correctly
-3. Confirm NLP server communication functions properly
-
-### Main Ecosystem
-For changes affecting multiple components, work with the [main ash repository](https://github.com/the-alphabet-cartel/ash) which includes this repository as a submodule.
+### Crisis Data Handling
+- **Encrypted Communication**: TLS for all API calls
+- **Secure Storage**: Crisis alerts encrypted at rest
+- **Access Controls**: Role-based team access
+- **Compliance**: GDPR and privacy law adherence
 
 ## 📞 Support
 
-### Bot-Specific Issues
-- **GitHub Issues**: [ash-bot/issues](https://github.com/the-alphabet-cartel/ash-bot/issues)
-- **Discord Support**: #ash-bot-support in https://discord.gg/alphabetcartel
+### Community Support
+- **Discord**: https://discord.gg/alphabetcartel (#tech-support)
+- **Issues**: [GitHub Issues](https://github.com/the-alphabet-cartel/ash-bot/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/the-alphabet-cartel/ash-bot/discussions)
 
-### Ecosystem-Wide Issues
-- **Main Repository**: [ash/issues](https://github.com/the-alphabet-cartel/ash/issues)
-- **General Discussion**: #tech-help in https://discord.gg/alphabetcartel
+### Documentation
+- **Implementation Guide**: Step-by-step technical setup
+- **Troubleshooting**: Common problems and solutions
+- **API Reference**: Complete endpoint documentation
+- **Team Procedures**: Crisis response protocols
 
-### Security Issues
-Report security vulnerabilities privately to repository maintainers.
+### Crisis Response Training
+- **Team Onboarding**: Crisis response team training
+- **Best Practices**: Community mental health guidelines
+- **Escalation Procedures**: When and how to escalate
+- **Legal Compliance**: Understanding your obligations
 
-## 📜 License
+## 🤝 Contributing
 
-This project is part of The Alphabet Cartel's open-source initiatives. See [LICENSE](LICENSE) file for details.
+We welcome contributions from the community! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+
+- **Code of Conduct**: Community standards
+- **Development Process**: How to contribute code
+- **Issue Reporting**: Bug reports and feature requests
+- **Testing Requirements**: Quality assurance standards
+
+### Key Contribution Areas
+- **Crisis Detection Accuracy**: Improve keyword and AI models
+- **Response Templates**: Better crisis intervention messages
+- **Integration Features**: New platform integrations
+- **Documentation**: User guides and technical docs
+- **Testing**: Quality assurance and validation
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+### Technical Contributors
+- **The Alphabet Cartel Community**: Testing, feedback, and continuous improvement
+- **Crisis Response Team**: Real-world validation and training
+- **Open Source Community**: Libraries and frameworks that make this possible
+
+### Mental Health Advocates
+- **Crisis Intervention Specialists**: Guidance on best practices
+- **LGBTQIA+ Community Leaders**: Cultural sensitivity and inclusivity
+- **Mental Health Professionals**: Clinical guidance and validation
 
 ---
 
-## ⚠️ Important Notes
+**The Alphabet Cartel** - Building inclusive gaming communities through technology.
 
-### Repository Scope
-This repository contains **ONLY the Discord bot component**. For:
-- **NLP Server**: See [ash-nlp](https://github.com/the-alphabet-cartel/ash-nlp)
-- **Analytics Dashboard**: See [ash-dash](https://github.com/the-alphabet-cartel/ash-dash)
-- **Testing Suite**: See [ash-thrash](https://github.com/the-alphabet-cartel/ash-thrash)
-- **Complete System**: See [main ash repository](https://github.com/the-alphabet-cartel/ash)
+🌈 **Discord**: https://discord.gg/alphabetcartel | 🌐 **Website**: https://alphabetcartel.org
 
-### Development Recommendations
-- **New Contributors**: Start with the [main ash repository](https://github.com/the-alphabet-cartel/ash) for complete system overview
-- **Bot-Specific Work**: Use this repository for Discord integration and bot logic
-- **System Integration**: Test changes against the full ecosystem using ash-thrash
-
-### Deployment
-While this repository can be deployed standalone for development, **production deployment should use the main ash repository** with Docker Compose orchestration for all components.
-
----
-
-**Built with 🖤 for LGBTQIA+ gaming communities by [The Alphabet Cartel](https://discord.gg/alphabetcartel)**
+*Together, we create safer, more supportive communities for everyone.*
