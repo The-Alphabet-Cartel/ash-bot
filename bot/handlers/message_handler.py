@@ -34,13 +34,13 @@ class MessageHandler:
         
         # Conversation tracking (enhanced)
         self.active_conversations = {}
-        self.conversation_timeout = config.get_int('CONVERSATION_TIMEOUT', 300)
+        self.conversation_timeout = config.get_int('BOT_CONVERSATION_TIMEOUT', 300)
         
         # Rate limiting (enhanced)
         self.user_cooldowns = {}
         self.daily_call_count = 0
-        self.max_daily_calls = config.get_int('MAX_DAILY_CALLS', 1000)
-        self.rate_limit_per_user = config.get_int('RATE_LIMIT_PER_USER', 10)
+        self.max_daily_calls = config.get_int('BOT_MAX_DAILY_CALLS', 1000)
+        self.rate_limit_per_user = config.get_int('BOT_RATE_LIMIT_PER_USER', 10)
         
         # Enhanced statistics
         self.message_stats = {
@@ -61,14 +61,14 @@ class MessageHandler:
             }
         }
         
-        self.guild_id = config.get_int('GUILD_ID')
+        self.guild_id = config.get_int('BOT_GUILD_ID')
         
         logger.info("📨 Enhanced message handler with crisis override initialized")
         logger.info(f"   🎯 Guild ID: {self.guild_id}")
         logger.info(f"   📊 Rate limits: {self.rate_limit_per_user}/hour per user, {self.max_daily_calls}/day total")
         logger.info(f"   💬 Conversation timeout: {self.conversation_timeout}s")
         logger.info(f"   🔐 Security manager: {'✅ Enabled' if self.security_manager else '❌ Disabled'}")
-        logger.info(f"   🚨 Crisis override levels: {config.get('CRISIS_OVERRIDE_LEVELS', 'medium,high')}")
+        logger.info(f"   🚨 Crisis override levels: {config.get('BOT_CRISIS_OVERRIDE_LEVELS', 'medium,high')}")
 
     async def handle_message(self, message: Message):
         """Enhanced message handling with crisis override and strict conversation isolation"""
@@ -131,7 +131,7 @@ class MessageHandler:
             crisis_level = detection_result.get('crisis_level', 'none')
             
             # Only override for medium and high crises (configurable)
-            override_levels = self.config.get('CRISIS_OVERRIDE_LEVELS', 'medium,high').split(',')
+            override_levels = self.config.get('BOT_CRISIS_OVERRIDE_LEVELS', 'medium,high').split(',')
             override_levels = [level.strip().lower() for level in override_levels]
             
             should_override = crisis_level in override_levels
@@ -198,7 +198,7 @@ class MessageHandler:
             return True
         
         # Check for configurable trigger phrases (case-insensitive)
-        trigger_phrases = self.config.get('CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash,ash help,ash please').split(',')
+        trigger_phrases = self.config.get('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash,ash help,ash please').split(',')
         message_lower = message.content.lower().strip()
         
         for trigger in trigger_phrases:
@@ -208,7 +208,7 @@ class MessageHandler:
                 return True
         
         # Check if message starts with common conversation starters (if enabled in config)
-        if self.config.get_bool('CONVERSATION_ALLOW_STARTERS', True):
+        if self.config.get_bool('BOT_CONVERSATION_ALLOW_STARTERS', True):
             conversation_starters = [
                 "i'm still", "i still", "but i", "what if", "can you", 
                 "help me", "i need", "it's getting", "i feel", "this is"

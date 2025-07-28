@@ -42,9 +42,9 @@ def get_crisis_response_additions():
     """Get crisis response additions with current environment variables"""
     
     # Get environment variables with fallbacks
-    resources_channel = os.getenv('RESOURCES_CHANNEL_NAME', 'resources')
-    crisis_role = os.getenv('CRISIS_RESPONSE_ROLE_NAME', 'CrisisResponse') 
-    staff_member = os.getenv('STAFF_PING_NAME', 'Staff')
+    resources_channel = os.getenv('BOT_RESOURCES_CHANNEL_NAME', 'resources')
+    crisis_role = os.getenv('BOT_CRISIS_RESPONSE_ROLE_NAME', 'CrisisResponse') 
+    staff_member = os.getenv('BOT_STAFF_PING_NAME', 'Staff')
     
     return {
         'low': "",
@@ -56,7 +56,7 @@ def get_crisis_response_additions():
 def get_response_templates():
     """Get response templates with current environment variables"""
     
-    resources_channel = os.getenv('RESOURCES_CHANNEL_NAME', 'resources')
+    resources_channel = os.getenv('BOT_RESOURCES_CHANNEL_NAME', 'resources')
     
     return {
         'rate_limited': f"I hear you, and I want to help. I'm at my response limit right now, but check #{resources_channel} or reach out to our staff if you need immediate support.",
@@ -78,9 +78,9 @@ def format_ash_prompt(user_message, crisis_level='low', username='friend'):
     """
     
     # Get environment-specific references
-    resources_channel = os.getenv('RESOURCES_CHANNEL_NAME', 'resources')
-    crisis_role = os.getenv('CRISIS_RESPONSE_ROLE_NAME', 'CrisisResponse')
-    staff_member = os.getenv('STAFF_PING_NAME', 'Staff')
+    resources_channel = os.getenv('BOT_RESOURCES_CHANNEL_NAME', 'resources')
+    crisis_role = os.getenv('BOT_CRISIS_RESPONSE_ROLE_NAME', 'CrisisResponse')
+    staff_member = os.getenv('BOT_STAFF_PING_NAME', 'Staff')
     
     # Create dynamic character prompt with environment variables
     dynamic_prompt = ASH_CHARACTER_PROMPT.replace(

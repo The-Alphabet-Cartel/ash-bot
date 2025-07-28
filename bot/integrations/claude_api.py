@@ -24,12 +24,12 @@ class ClaudeAPI:
         """
         if config:
             # Use config manager (preferred)
-            self.model = config.get('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
-            self.api_key = config.get('CLAUDE_API_KEY')
+            self.model = config.get('GLOBAL_CLAUDE_MODEL', 'claude-sonnet-4-20250514')
+            self.api_key = config.get('GLOBAL_CLAUDE_API_KEY')
         else:
             # Fallback to environment variables (legacy)
-            self.model = os.getenv('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
-            self.api_key = os.getenv('CLAUDE_API_KEY')
+            self.model = os.getenv('GLOBAL_CLAUDE_MODEL', 'claude-sonnet-4-20250514')
+            self.api_key = os.getenv('GLOBAL_CLAUDE_API_KEY')
             
         self.base_url = "https://api.anthropic.com/v1/messages"
         self.max_tokens = 300  # Keep responses concise
@@ -46,7 +46,7 @@ class ClaudeAPI:
         self._cleanup_mixin.register_cleanup(self.close)
 
         if not self.api_key:
-            logger.error("CLAUDE_API_KEY not found in configuration or environment variables")
+            logger.error("GLOBAL_CLAUDE_API_KEY not found in configuration or environment variables")
             raise ValueError("Claude API key is required")
 
         logger.info(f"🤖 Claude API initialized with model: {self.model}")

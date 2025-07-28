@@ -82,8 +82,8 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         """Initialize and start the API server"""
         try:
             # Get API server configuration
-            api_host = self.config.get('API_HOST', '0.0.0.0')
-            api_port = int(self.config.get('API_PORT', '8882'))
+            api_host = self.config.get('GLOBAL_BOT_API_HOST', '0.0.0.0')
+            api_port = int(self.config.get('GLOBAL_BOT_API_PORT', '8882'))
             
             logger.info(f"🌐 Initializing API server on {api_host}:{api_port}...")
             
@@ -180,7 +180,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             if nlp_ok:
                 self.security_manager.log_security_event(
                     "nlp_connection_success", 0, 0, 0,
-                    {"service": "nlp_server", "host": self.config.get('NLP_SERVICE_HOST')}, "info"
+                    {"service": "nlp_server", "host": self.config.get('GLOBAL_NLP_API_HOST')}, "info"
                 )
                 
         except Exception as e:
@@ -297,10 +297,10 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Log service status
         logger.info(f"📊 API Server: {'Running' if self.api_server else 'Not Available'}")
         logger.info(f"🧠 NLP Server: {'Connected' if self.nlp_client else 'Not Connected'}")
-        logger.info(f"🔍 Learning System: {'Enabled' if self.config.get_bool('ENABLE_LEARNING_SYSTEM') else 'Disabled'}")
+        logger.info(f"🔍 Learning System: {'Enabled' if self.config.get_bool('GLOBAL_ENABLE_LEARNING_SYSTEM') else 'Disabled'}")
         
         # Log guild information with security context
-        guild = discord.utils.get(self.guilds, id=self.config.get_int('GUILD_ID'))
+        guild = discord.utils.get(self.guilds, id=self.config.get_int('BOT_GUILD_ID'))
         if guild:
             logger.info(f'Connected to guild: {guild.name}')
             

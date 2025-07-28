@@ -20,7 +20,7 @@ class FalsePositiveLearningCommands(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
-        self.crisis_response_role_id = int(os.getenv('CRISIS_RESPONSE_ROLE_ID', '0'))
+        self.crisis_response_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID', '0'))
         self.false_positives_file = './data/false_positives.json'
         self.nlp_client = getattr(bot, 'nlp_client', None)
         
@@ -199,7 +199,7 @@ class FalsePositiveLearningCommands(commands.Cog):
         """Extract message content and details from Discord message link"""
         try:
             # Parse Discord message link format:
-            # https://discord.com/channels/GUILD_ID/CHANNEL_ID/MESSAGE_ID
+            # https://discord.com/channels/BOT_GUILD_ID/CHANNEL_ID/MESSAGE_ID
             parts = message_link.split('/')
             if len(parts) < 7 or 'discord.com' not in message_link:
                 return None
@@ -280,8 +280,8 @@ class FalsePositiveLearningCommands(commands.Cog):
                 return {'status': 'no_nlp_server', 'patterns_discovered': 0, 'confidence_adjustments': 0}
             
             # Send to NLP server for pattern analysis
-            nlp_host = os.getenv('NLP_SERVICE_HOST', '10.20.30.253')
-            nlp_port = os.getenv('NLP_SERVICE_PORT', '8881')
+            nlp_host = os.getenv('GLOBAL_NLP_API_HOST', '10.20.30.253')
+            nlp_port = os.getenv('GLOBAL_NLP_API_PORT', '8881')
             nlp_url = f"http://{nlp_host}:{nlp_port}/analyze_false_positive"
             
             # FIXED: Ensure context is sent as dictionary
@@ -314,8 +314,8 @@ class FalsePositiveLearningCommands(commands.Cog):
     async def _send_learning_update_to_nlp(self, record: Dict):
         """Send learning update to NLP server for model adjustment"""
         try:
-            nlp_host = os.getenv('NLP_SERVICE_HOST', '10.20.30.253')
-            nlp_port = os.getenv('NLP_SERVICE_PORT', '8881')
+            nlp_host = os.getenv('GLOBAL_NLP_API_HOST', '10.20.30.253')
+            nlp_port = os.getenv('GLOBAL_NLP_API_PORT', '8881')
             nlp_url = f"http://{nlp_host}:{nlp_port}/update_learning_model"
             
             # FIXED: Send proper field names and ensure context_data is dictionary

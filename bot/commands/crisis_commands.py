@@ -19,7 +19,7 @@ class CrisisKeywordCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.custom_keywords_file = './data/custom_keywords.json'
-        self.crisis_response_role_id = int(os.getenv('CRISIS_RESPONSE_ROLE_ID', '0'))
+        self.crisis_response_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID', '0'))
         
         # Ensure custom keywords file exists
         self._ensure_custom_keywords_file()
@@ -126,7 +126,7 @@ class CrisisKeywordCommands(commands.Cog):
     async def _crisis_role_check(self, interaction: discord.Interaction) -> bool:
         """Enhanced crisis role check with security logging"""
         try:
-            crisis_role_id = int(os.getenv('CRISIS_RESPONSE_ROLE_ID'))
+            crisis_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID'))
             
             # Validate user has required role using security manager
             if self.security_manager:

@@ -110,16 +110,16 @@ class ConfigManager:
         
         # Debug logging for token troubleshooting
         if not token:
-            logger.error("🔴 DISCORD_TOKEN is completely missing/empty")
+            logger.error("🔴 BOT_DISCORD_TOKEN is completely missing/empty")
             return False
         
-        logger.info(f"🔍 DISCORD_TOKEN Debug Information:")
+        logger.info(f"🔍 BOT_DISCORD_TOKEN Debug Information:")
         logger.info(f"   📏 Token length: {len(token)} characters")
         logger.info(f"   🎯 Token format preview: {token[:20]}...{token[-10:] if len(token) > 30 else ''}")
         
         # Check minimum length
         if len(token) < 59:
-            logger.error(f"🔴 DISCORD_TOKEN too short: {len(token)} chars (minimum 59 required)")
+            logger.error(f"🔴 BOT_DISCORD_TOKEN too short: {len(token)} chars (minimum 59 required)")
             logger.error(f"   📋 Current token: '{token}'")
             logger.error(f"   💡 Expected format: 'MTxxxxxxxxxxxxxxxxxx.Yxxxxx.zzzzzzzzzzzzzzzzzzzzzzzzzz'")
             return False
@@ -127,7 +127,7 @@ class ConfigManager:
         # Check for proper bot token format (3 parts separated by dots)
         parts = token.split('.')
         if len(parts) != 3:
-            logger.error(f"🔴 DISCORD_TOKEN invalid format: expected 3 parts separated by dots, got {len(parts)}")
+            logger.error(f"🔴 BOT_DISCORD_TOKEN invalid format: expected 3 parts separated by dots, got {len(parts)}")
             logger.error(f"   📋 Token parts: {[f'{part[:10]}...' for part in parts]}")
             logger.error(f"   💡 Expected format: 'part1.part2.part3'")
             return False
@@ -138,14 +138,14 @@ class ConfigManager:
         
         for i, part in enumerate(parts):
             if not base64_pattern.match(part):
-                logger.error(f"🔴 DISCORD_TOKEN part {i+1} contains invalid characters")
+                logger.error(f"🔴 BOT_DISCORD_TOKEN part {i+1} contains invalid characters")
                 logger.error(f"   📋 Part {i+1}: '{part}'")
                 logger.error(f"   💡 Should only contain: A-Z, a-z, 0-9, _, -")
                 return False
             
             logger.info(f"   ✅ Part {i+1}: {len(part)} chars - valid base64 format")
         
-        logger.info("✅ DISCORD_TOKEN format validation passed")
+        logger.info("✅ BOT_DISCORD_TOKEN format validation passed")
         return True
 
     def _load_and_validate_config(self) -> ConfigValidationResult:
@@ -158,7 +158,7 @@ class ConfigManager:
         
         try:
             # Enhanced Discord Token Loading with Debug Info
-            logger.info("🔍 Loading DISCORD_TOKEN with debug information...")
+            logger.info("🔍 Loading BOT_DISCORD_TOKEN with debug information...")
             
             # Try multiple sources and log each attempt
             discord_token = None
@@ -189,61 +189,61 @@ class ConfigManager:
             
             # 2. Check environment variable if no secret file found
             if not discord_token:
-                logger.info("🔍 Checking DISCORD_TOKEN environment variable...")
-                env_token = os.getenv('DISCORD_TOKEN')
+                logger.info("🔍 Checking BOT_DISCORD_TOKEN environment variable...")
+                env_token = os.getenv('BOT_DISCORD_TOKEN')
                 if env_token:
-                    logger.info("✅ Found DISCORD_TOKEN in environment")
+                    logger.info("✅ Found BOT_DISCORD_TOKEN in environment")
                     logger.info(f"   📏 Environment token length: {len(env_token)} chars")
                     discord_token = env_token
                 else:
-                    logger.warning("⚠️ DISCORD_TOKEN not found in environment")
+                    logger.warning("⚠️ BOT_DISCORD_TOKEN not found in environment")
             
             # 3. Validate the token we found
             if discord_token:
                 logger.info("🔍 Validating Discord token...")
                 if self._validate_discord_token(discord_token):
-                    self._config['DISCORD_TOKEN'] = discord_token
+                    self._config['BOT_DISCORD_TOKEN'] = discord_token
                     logger.info("✅ Discord token validated and stored")
                 else:
-                    errors.append("🔴 DISCORD_TOKEN validation failed - see logs above for details")
+                    errors.append("🔴 BOT_DISCORD_TOKEN validation failed - see logs above for details")
             else:
                 logger.error("🔴 No Discord token found in any location!")
                 logger.error("🔍 Checked locations:")
                 for path in secret_paths:
                     logger.error(f"   📁 {path}")
-                logger.error("   🌍 Environment variable: DISCORD_TOKEN")
-                errors.append("🔴 DISCORD_TOKEN not found in any location")
+                logger.error("   🌍 Environment variable: BOT_DISCORD_TOKEN")
+                errors.append("🔴 BOT_DISCORD_TOKEN not found in any location")
             
             # Continue with other configuration loading...
             logger.info("🔍 Loading other configuration values...")
             
             # Claude API Key (with similar debugging if needed)
-            self._config['CLAUDE_API_KEY'] = self._get_config_value(
-                'CLAUDE_API_KEY',
-                secret_file_suffix='claude_api_key'
+            self._config['GLOBAL_CLAUDE_API_KEY'] = self._get_config_value(
+                'GLOBAL_CLAUDE_API_KEY',
+                secret_file_suffix='GLOBAL_CLAUDE_API_KEY'
             )
             
             # Validate Claude API key exists
-            if not self._config['CLAUDE_API_KEY']:
-                errors.append("🔴 CLAUDE_API_KEY not found")
+            if not self._config['GLOBAL_CLAUDE_API_KEY']:
+                errors.append("🔴 GLOBAL_CLAUDE_API_KEY not found")
             else:
-                claude_key = self._config['CLAUDE_API_KEY']
+                claude_key = self._config['GLOBAL_CLAUDE_API_KEY']
                 logger.info(f"✅ Claude API key found: {len(claude_key)} chars")
             
             # Load other required configuration...
-            self._config['GUILD_ID'] = self._get_config_value('GUILD_ID', secret_file_suffix='guild_id')
-            self._config['CLAUDE_MODEL'] = self._get_config_value('CLAUDE_MODEL', default='claude-sonnet-4-20250514')
+            self._config['BOT_GUILD_ID'] = self._get_config_value('BOT_GUILD_ID', secret_file_suffix='guild_id')
+            self._config['GLOBAL_CLAUDE_MODEL'] = self._get_config_value('GLOBAL_CLAUDE_MODEL', default='claude-sonnet-4-20250514')
             
             # Basic validation for other required fields
-            required_fields = ['GUILD_ID']
+            required_fields = ['BOT_GUILD_ID']
             for field in required_fields:
                 if not self._config.get(field):
                     errors.append(f"🔴 Required field {field} is missing")
             
             logger.info("📊 Configuration Loading Summary:")
             logger.info(f"   🔐 Discord Token: {'✅ VALID' if discord_token and self._validate_discord_token(discord_token) else '❌ INVALID'}")
-            logger.info(f"   🧠 Claude API Key: {'✅ SET' if self._config.get('CLAUDE_API_KEY') else '❌ MISSING'}")
-            logger.info(f"   🏠 Guild ID: {'✅ SET' if self._config.get('GUILD_ID') else '❌ MISSING'}")
+            logger.info(f"   🧠 Claude API Key: {'✅ SET' if self._config.get('GLOBAL_CLAUDE_API_KEY') else '❌ MISSING'}")
+            logger.info(f"   🏠 Guild ID: {'✅ SET' if self._config.get('BOT_GUILD_ID') else '❌ MISSING'}")
             
         except Exception as e:
             error_msg = f"🔴 Unexpected error during configuration loading: {e}"
@@ -263,150 +263,150 @@ class ConfigManager:
         
         try:
             # Core Discord Bot Configuration (sensitive - use secrets)
-            self._config['DISCORD_TOKEN'] = self._get_config_value(
-                'DISCORD_TOKEN', 
+            self._config['BOT_DISCORD_TOKEN'] = self._get_config_value(
+                'BOT_DISCORD_TOKEN', 
                 secret_file_suffix='discord_token'
             )
             
-            self._config['CLAUDE_API_KEY'] = self._get_config_value(
-                'CLAUDE_API_KEY',
-                secret_file_suffix='claude_api_key'
+            self._config['GLOBAL_CLAUDE_API_KEY'] = self._get_config_value(
+                'GLOBAL_CLAUDE_API_KEY',
+                secret_file_suffix='GLOBAL_CLAUDE_API_KEY'
             )
             
             # Validate required secrets
-            if not self._config.get('DISCORD_TOKEN'):
-                errors.append("🔴 DISCORD_TOKEN is required (environment variable or secret file)")
-            elif len(str(self._config.get('DISCORD_TOKEN', ''))) < 50:
-                errors.append("🔴 DISCORD_TOKEN appears to be invalid (too short)")
+            if not self._config.get('BOT_DISCORD_TOKEN'):
+                errors.append("🔴 BOT_DISCORD_TOKEN is required (environment variable or secret file)")
+            elif len(str(self._config.get('BOT_DISCORD_TOKEN', ''))) < 50:
+                errors.append("🔴 BOT_DISCORD_TOKEN appears to be invalid (too short)")
             
-            if not self._config.get('CLAUDE_API_KEY'):
-                errors.append("🔴 CLAUDE_API_KEY is required (environment variable or secret file)")
-            elif not str(self._config.get('CLAUDE_API_KEY', '')).startswith(('sk-ant-', 'claude-')):
-                warnings.append("⚠️ CLAUDE_API_KEY format may be incorrect")
+            if not self._config.get('GLOBAL_CLAUDE_API_KEY'):
+                errors.append("🔴 GLOBAL_CLAUDE_API_KEY is required (environment variable or secret file)")
+            elif not str(self._config.get('GLOBAL_CLAUDE_API_KEY', '')).startswith(('sk-ant-', 'claude-')):
+                warnings.append("⚠️ GLOBAL_CLAUDE_API_KEY format may be incorrect")
             
             # Regular configuration (non-sensitive)
-            self._config['GUILD_ID'] = self._get_config_value('GUILD_ID')
-            if self._config['GUILD_ID']:
+            self._config['BOT_GUILD_ID'] = self._get_config_value('BOT_GUILD_ID')
+            if self._config['BOT_GUILD_ID']:
                 try:
-                    self._config['GUILD_ID'] = int(self._config['GUILD_ID'])
+                    self._config['BOT_GUILD_ID'] = int(self._config['BOT_GUILD_ID'])
                 except ValueError:
-                    errors.append("🔴 GUILD_ID must be a valid integer")
+                    errors.append("🔴 BOT_GUILD_ID must be a valid integer")
             else:
-                errors.append("🔴 GUILD_ID is required")
+                errors.append("🔴 BOT_GUILD_ID is required")
             
             # Claude Model Configuration
-            self._config['CLAUDE_MODEL'] = self._get_config_value(
-                'CLAUDE_MODEL', 
+            self._config['GLOBAL_CLAUDE_MODEL'] = self._get_config_value(
+                'GLOBAL_CLAUDE_MODEL', 
                 'claude-sonnet-4-20250514'
             )
             
             # Channel Configuration
-            self._config['RESOURCES_CHANNEL_ID'] = self._get_config_value('RESOURCES_CHANNEL_ID')
-            self._config['CRISIS_RESPONSE_CHANNEL_ID'] = self._get_config_value('CRISIS_RESPONSE_CHANNEL_ID')
-            self._config['ALLOWED_CHANNELS'] = self._get_config_value('ALLOWED_CHANNELS')
+            self._config['BOT_RESOURCES_CHANNEL_ID'] = self._get_config_value('BOT_RESOURCES_CHANNEL_ID')
+            self._config['BOT_CRISIS_RESPONSE_CHANNEL_ID'] = self._get_config_value('BOT_CRISIS_RESPONSE_CHANNEL_ID')
+            self._config['BOT_ALLOWED_CHANNELS'] = self._get_config_value('BOT_ALLOWED_CHANNELS')
             
             # Parse allowed channels
-            if self._config['ALLOWED_CHANNELS']:
+            if self._config['BOT_ALLOWED_CHANNELS']:
                 try:
-                    self._config['ALLOWED_CHANNELS_LIST'] = [
-                        int(ch.strip()) for ch in self._config['ALLOWED_CHANNELS'].split(',') 
+                    self._config['BOT_ALLOWED_CHANNELS_LIST'] = [
+                        int(ch.strip()) for ch in self._config['BOT_ALLOWED_CHANNELS'].split(',') 
                         if ch.strip()
                     ]
                 except ValueError:
-                    warnings.append("⚠️ Invalid ALLOWED_CHANNELS format")
-                    self._config['ALLOWED_CHANNELS_LIST'] = []
+                    warnings.append("⚠️ Invalid BOT_ALLOWED_CHANNELS format")
+                    self._config['BOT_ALLOWED_CHANNELS_LIST'] = []
             else:
-                self._config['ALLOWED_CHANNELS_LIST'] = []
+                self._config['BOT_ALLOWED_CHANNELS_LIST'] = []
             
             # Staff and Crisis Team Configuration
-            self._config['STAFF_PING_USER'] = self._get_config_value('STAFF_PING_USER')
-            self._config['CRISIS_RESPONSE_ROLE_ID'] = self._get_config_value('CRISIS_RESPONSE_ROLE_ID')
-            self._config['RESOURCES_CHANNEL_NAME'] = self._get_config_value('RESOURCES_CHANNEL_NAME', 'resources')
-            self._config['CRISIS_RESPONSE_ROLE_NAME'] = self._get_config_value('CRISIS_RESPONSE_ROLE_NAME', 'CrisisResponse')
-            self._config['STAFF_PING_NAME'] = self._get_config_value('STAFF_PING_NAME', 'Staff')
+            self._config['BOT_STAFF_PING_USER'] = self._get_config_value('BOT_STAFF_PING_USER')
+            self._config['BOT_CRISIS_RESPONSE_ROLE_ID'] = self._get_config_value('BOT_CRISIS_RESPONSE_ROLE_ID')
+            self._config['BOT_RESOURCES_CHANNEL_NAME'] = self._get_config_value('BOT_RESOURCES_CHANNEL_NAME', 'resources')
+            self._config['BOT_CRISIS_RESPONSE_ROLE_NAME'] = self._get_config_value('BOT_CRISIS_RESPONSE_ROLE_NAME', 'CrisisResponse')
+            self._config['BOT_STAFF_PING_NAME'] = self._get_config_value('BOT_STAFF_PING_NAME', 'Staff')
             
             # Learning System Configuration
-            self._config['ENABLE_LEARNING_SYSTEM'] = self._get_config_value('ENABLE_LEARNING_SYSTEM', 'true').lower() == 'true'
+            self._config['GLOBAL_ENABLE_LEARNING_SYSTEM'] = self._get_config_value('GLOBAL_ENABLE_LEARNING_SYSTEM', 'true').lower() == 'true'
             
             try:
-                self._config['LEARNING_CONFIDENCE_THRESHOLD'] = float(self._get_config_value('LEARNING_CONFIDENCE_THRESHOLD', '0.6'))
-                if not 0.0 <= self._config['LEARNING_CONFIDENCE_THRESHOLD'] <= 1.0:
-                    errors.append("🔴 LEARNING_CONFIDENCE_THRESHOLD must be between 0.0 and 1.0")
+                self._config['BOT_LEARNING_CONFIDENCE_THRESHOLD'] = float(self._get_config_value('BOT_LEARNING_CONFIDENCE_THRESHOLD', '0.6'))
+                if not 0.0 <= self._config['BOT_LEARNING_CONFIDENCE_THRESHOLD'] <= 1.0:
+                    errors.append("🔴 BOT_LEARNING_CONFIDENCE_THRESHOLD must be between 0.0 and 1.0")
             except ValueError:
-                errors.append("🔴 LEARNING_CONFIDENCE_THRESHOLD must be a valid float")
+                errors.append("🔴 BOT_LEARNING_CONFIDENCE_THRESHOLD must be a valid float")
             
             try:
-                self._config['MAX_LEARNING_ADJUSTMENTS_PER_DAY'] = int(self._get_config_value('MAX_LEARNING_ADJUSTMENTS_PER_DAY', '50'))
-                if self._config['MAX_LEARNING_ADJUSTMENTS_PER_DAY'] < 1:
-                    errors.append("🔴 MAX_LEARNING_ADJUSTMENTS_PER_DAY must be positive")
+                self._config['BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY'] = int(self._get_config_value('BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY', '50'))
+                if self._config['BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY'] < 1:
+                    errors.append("🔴 BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY must be positive")
             except ValueError:
-                errors.append("🔴 MAX_LEARNING_ADJUSTMENTS_PER_DAY must be a valid integer")
+                errors.append("🔴 BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY must be a valid integer")
             
             # NLP Service Configuration (pointing to your AI rig)
-            self._config['NLP_SERVICE_HOST'] = self._get_config_value('NLP_SERVICE_HOST', '10.20.30.253')
+            self._config['GLOBAL_NLP_API_HOST'] = self._get_config_value('GLOBAL_NLP_API_HOST', '10.20.30.253')
             
             try:
-                self._config['NLP_SERVICE_PORT'] = int(self._get_config_value('NLP_SERVICE_PORT', '8881'))
-                if not 1 <= self._config['NLP_SERVICE_PORT'] <= 65535:
-                    errors.append("🔴 NLP_SERVICE_PORT must be between 1 and 65535")
+                self._config['GLOBAL_NLP_API_PORT'] = int(self._get_config_value('GLOBAL_NLP_API_PORT', '8881'))
+                if not 1 <= self._config['GLOBAL_NLP_API_PORT'] <= 65535:
+                    errors.append("🔴 GLOBAL_NLP_API_PORT must be between 1 and 65535")
             except ValueError:
-                errors.append("🔴 NLP_SERVICE_PORT must be a valid integer")
+                errors.append("🔴 GLOBAL_NLP_API_PORT must be a valid integer")
             
             try:
-                self._config['REQUEST_TIMEOUT'] = int(self._get_config_value('REQUEST_TIMEOUT', '30'))
-                if self._config['REQUEST_TIMEOUT'] < 1:
-                    errors.append("🔴 REQUEST_TIMEOUT must be positive")
+                self._config['GLOBAL_REQUEST_TIMEOUT'] = int(self._get_config_value('GLOBAL_REQUEST_TIMEOUT', '30'))
+                if self._config['GLOBAL_REQUEST_TIMEOUT'] < 1:
+                    errors.append("🔴 GLOBAL_REQUEST_TIMEOUT must be positive")
             except ValueError:
-                errors.append("🔴 REQUEST_TIMEOUT must be a valid integer")
+                errors.append("🔴 GLOBAL_REQUEST_TIMEOUT must be a valid integer")
             
             # Bot Performance Configuration
-            self._config['LOG_LEVEL'] = self._get_config_value('LOG_LEVEL', 'INFO').upper()
-            if self._config['LOG_LEVEL'] not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-                warnings.append("⚠️ LOG_LEVEL should be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL")
+            self._config['GLOBAL_LOG_LEVEL'] = self._get_config_value('GLOBAL_LOG_LEVEL', 'INFO').upper()
+            if self._config['GLOBAL_LOG_LEVEL'] not in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+                warnings.append("⚠️ GLOBAL_LOG_LEVEL should be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL")
             
             try:
-                self._config['MAX_DAILY_CALLS'] = int(self._get_config_value('MAX_DAILY_CALLS', '1000'))
-                if self._config['MAX_DAILY_CALLS'] < 1:
-                    errors.append("🔴 MAX_DAILY_CALLS must be positive")
+                self._config['BOT_MAX_DAILY_CALLS'] = int(self._get_config_value('BOT_MAX_DAILY_CALLS', '1000'))
+                if self._config['BOT_MAX_DAILY_CALLS'] < 1:
+                    errors.append("🔴 BOT_MAX_DAILY_CALLS must be positive")
             except ValueError:
-                errors.append("🔴 MAX_DAILY_CALLS must be a valid integer")
+                errors.append("🔴 BOT_MAX_DAILY_CALLS must be a valid integer")
             
             try:
-                self._config['RATE_LIMIT_PER_USER'] = int(self._get_config_value('RATE_LIMIT_PER_USER', '10'))
-                if self._config['RATE_LIMIT_PER_USER'] < 1:
-                    errors.append("🔴 RATE_LIMIT_PER_USER must be positive")
+                self._config['BOT_RATE_LIMIT_PER_USER'] = int(self._get_config_value('BOT_RATE_LIMIT_PER_USER', '10'))
+                if self._config['BOT_RATE_LIMIT_PER_USER'] < 1:
+                    errors.append("🔴 BOT_RATE_LIMIT_PER_USER must be positive")
             except ValueError:
-                errors.append("🔴 RATE_LIMIT_PER_USER must be a valid integer")
+                errors.append("🔴 BOT_RATE_LIMIT_PER_USER must be a valid integer")
             
             # Conversation Isolation Configuration
-            self._config['CONVERSATION_REQUIRES_MENTION'] = self._get_config_value('CONVERSATION_REQUIRES_MENTION', 'true').lower() == 'true'
-            self._config['CONVERSATION_TRIGGER_PHRASES'] = self._get_config_value('CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash,ash help,@ash')
-            self._config['CONVERSATION_ALLOW_STARTERS'] = self._get_config_value('CONVERSATION_ALLOW_STARTERS', 'true').lower() == 'true'
-            self._config['CONVERSATION_SETUP_INSTRUCTIONS'] = self._get_config_value('CONVERSATION_SETUP_INSTRUCTIONS', 'true').lower() == 'true'
-            self._config['CONVERSATION_LOG_ATTEMPTS'] = self._get_config_value('CONVERSATION_LOG_ATTEMPTS', 'true').lower() == 'true'
+            self._config['BOT_CONVERSATION_REQUIRES_MENTION'] = self._get_config_value('BOT_CONVERSATION_REQUIRES_MENTION', 'true').lower() == 'true'
+            self._config['BOT_CONVERSATION_TRIGGER_PHRASES'] = self._get_config_value('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash,ash help,@ash')
+            self._config['BOT_CONVERSATION_ALLOW_STARTERS'] = self._get_config_value('BOT_CONVERSATION_ALLOW_STARTERS', 'true').lower() == 'true'
+            self._config['BOT_CONVERSATION_SETUP_INSTRUCTIONS'] = self._get_config_value('BOT_CONVERSATION_SETUP_INSTRUCTIONS', 'true').lower() == 'true'
+            self._config['BOT_CONVERSATION_LOG_ATTEMPTS'] = self._get_config_value('BOT_CONVERSATION_LOG_ATTEMPTS', 'true').lower() == 'true'
             
             try:
-                self._config['CONVERSATION_TIMEOUT'] = int(self._get_config_value('CONVERSATION_TIMEOUT', '300'))
-                if self._config['CONVERSATION_TIMEOUT'] < 30:
-                    warnings.append("⚠️ CONVERSATION_TIMEOUT is very short (< 30 seconds)")
+                self._config['BOT_CONVERSATION_TIMEOUT'] = int(self._get_config_value('BOT_CONVERSATION_TIMEOUT', '300'))
+                if self._config['BOT_CONVERSATION_TIMEOUT'] < 30:
+                    warnings.append("⚠️ BOT_CONVERSATION_TIMEOUT is very short (< 30 seconds)")
             except ValueError:
-                errors.append("🔴 CONVERSATION_TIMEOUT must be a valid integer")
+                errors.append("🔴 BOT_CONVERSATION_TIMEOUT must be a valid integer")
             
             # Log configuration summary
             using_secrets = bool(
-                os.getenv('DISCORD_TOKEN') or 
-                os.getenv('CLAUDE_API_KEY') or
+                os.getenv('BOT_DISCORD_TOKEN') or 
+                os.getenv('GLOBAL_CLAUDE_API_KEY') or
                 Path("./secrets/discord_token").exists() or
                 Path("/run/secrets/discord_token").exists()
             )
             
             logger.info("📊 Configuration Summary:")
             logger.info(f"   🔐 Using secrets: {using_secrets}")
-            logger.info(f"   🤖 Discord Guild: {self._config['GUILD_ID']}")
-            logger.info(f"   🧠 Claude Model: {self._config['CLAUDE_MODEL']}")
-            logger.info(f"   📡 NLP Service: {self._config['NLP_SERVICE_HOST']}:{self._config['NLP_SERVICE_PORT']}")
-            logger.info(f"   📚 Learning System: {self._config['ENABLE_LEARNING_SYSTEM']}")
-            logger.info(f"   📝 Log Level: {self._config['LOG_LEVEL']}")
+            logger.info(f"   🤖 Discord Guild: {self._config['BOT_GUILD_ID']}")
+            logger.info(f"   🧠 Claude Model: {self._config['GLOBAL_CLAUDE_MODEL']}")
+            logger.info(f"   📡 NLP Service: {self._config['GLOBAL_NLP_API_HOST']}:{self._config['GLOBAL_NLP_API_PORT']}")
+            logger.info(f"   📚 Learning System: {self._config['GLOBAL_ENABLE_LEARNING_SYSTEM']}")
+            logger.info(f"   📝 Log Level: {self._config['GLOBAL_LOG_LEVEL']}")
             
         except Exception as e:
             errors.append(f"🔴 Unexpected error during configuration loading: {e}")
@@ -463,7 +463,7 @@ class ConfigManager:
     
     def get_allowed_channels(self) -> List[int]:
         """Get list of allowed channel IDs"""
-        return self._config.get('ALLOWED_CHANNELS_LIST', [])
+        return self._config.get('BOT_ALLOWED_CHANNELS_LIST', [])
     
     def is_channel_allowed(self, channel_id: int) -> bool:
         """Check if channel is in allowed list (empty list = all allowed)"""
@@ -472,8 +472,8 @@ class ConfigManager:
     
     def get_nlp_url(self) -> str:
         """Get NLP service URL"""
-        host = self.get('NLP_SERVICE_HOST')
-        port = self.get_int('NLP_SERVICE_PORT')
+        host = self.get('GLOBAL_NLP_API_HOST')
+        port = self.get_int('GLOBAL_NLP_API_PORT')
         return f"http://{host}:{port}"
     
     def get_validation_result(self) -> ConfigValidationResult:
@@ -488,8 +488,8 @@ class ConfigManager:
         """Get all configuration (excluding sensitive values)"""
         safe_config = self._config.copy()
         # Mask sensitive values
-        if 'DISCORD_TOKEN' in safe_config:
-            safe_config['DISCORD_TOKEN'] = f"{safe_config['DISCORD_TOKEN'][:10]}..."
-        if 'CLAUDE_API_KEY' in safe_config:
-            safe_config['CLAUDE_API_KEY'] = f"{safe_config['CLAUDE_API_KEY'][:10]}..."
+        if 'BOT_DISCORD_TOKEN' in safe_config:
+            safe_config['BOT_DISCORD_TOKEN'] = f"{safe_config['BOT_DISCORD_TOKEN'][:10]}..."
+        if 'GLOBAL_CLAUDE_API_KEY' in safe_config:
+            safe_config['GLOBAL_CLAUDE_API_KEY'] = f"{safe_config['GLOBAL_CLAUDE_API_KEY'][:10]}..."
         return safe_config

@@ -80,7 +80,7 @@ def setup_logging(enable_json: bool = False, enable_file_rotation: bool = True) 
     logs_dir.mkdir(exist_ok=True)
     
     # Get log level from environment
-    log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    log_level = os.getenv('GLOBAL_LOG_LEVEL', 'INFO').upper()
     numeric_level = getattr(logging, log_level, logging.INFO)
     
     # Configure root logger

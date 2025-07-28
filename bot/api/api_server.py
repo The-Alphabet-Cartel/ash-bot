@@ -147,41 +147,41 @@ class AshBotAPIServer:
         # Check environment variables
         logger.info("🌍 Checking environment variables...")
         
-        # Try SESSION_TOKEN first (your preference)
-        session_token = os.getenv('SESSION_TOKEN')
-        logger.info(f"🔍 SESSION_TOKEN environment variable: {'SET' if session_token else 'NOT SET'}")
+        # Try GLOBAL_SESSION_TOKEN first (your preference)
+        session_token = os.getenv('GLOBAL_SESSION_TOKEN')
+        logger.info(f"🔍 GLOBAL_SESSION_TOKEN environment variable: {'SET' if session_token else 'NOT SET'}")
         if session_token:
-            logger.info(f"📋 SESSION_TOKEN length: {len(session_token)} chars")
-            logger.info(f"📋 SESSION_TOKEN preview: {session_token[:20]}...")
-            logger.info(f"📋 SESSION_TOKEN ends with: ...{session_token[-5:]}")
-            logger.info(f"📋 SESSION_TOKEN type: {type(session_token)}")
+            logger.info(f"📋 GLOBAL_SESSION_TOKEN length: {len(session_token)} chars")
+            logger.info(f"📋 GLOBAL_SESSION_TOKEN preview: {session_token[:20]}...")
+            logger.info(f"📋 GLOBAL_SESSION_TOKEN ends with: ...{session_token[-5:]}")
+            logger.info(f"📋 GLOBAL_SESSION_TOKEN type: {type(session_token)}")
             
             # Check if it looks like a file path (Docker Secrets reference)
             if session_token.startswith('/') or session_token.startswith('./'):
-                logger.info(f"🐳 SESSION_TOKEN looks like a file path, attempting to read...")
+                logger.info(f"🐳 GLOBAL_SESSION_TOKEN looks like a file path, attempting to read...")
                 try:
                     if os.path.exists(session_token):
-                        logger.info(f"📁 Reading SESSION_TOKEN from file: {session_token}")
+                        logger.info(f"📁 Reading GLOBAL_SESSION_TOKEN from file: {session_token}")
                         with open(session_token, 'r') as f:
                             file_content = f.read().strip()
                         logger.info(f"📋 File content length: {len(file_content)} chars")
                         logger.info(f"📋 File content preview: {file_content[:20]}...")
                         
-                        if self._validate_fernet_key(file_content, f"SESSION_TOKEN file ({session_token})"):
+                        if self._validate_fernet_key(file_content, f"GLOBAL_SESSION_TOKEN file ({session_token})"):
                             import base64
                             decoded_key = base64.urlsafe_b64decode(file_content.encode())
-                            logger.info(f"🔑 Returning SESSION_TOKEN file key as decoded bytes (length: {len(decoded_key)})")
+                            logger.info(f"🔑 Returning GLOBAL_SESSION_TOKEN file key as decoded bytes (length: {len(decoded_key)})")
                             return decoded_key
                     else:
-                        logger.error(f"❌ SESSION_TOKEN file does not exist: {session_token}")
+                        logger.error(f"❌ GLOBAL_SESSION_TOKEN file does not exist: {session_token}")
                 except Exception as e:
-                    logger.error(f"❌ Error reading SESSION_TOKEN file: {e}")
+                    logger.error(f"❌ Error reading GLOBAL_SESSION_TOKEN file: {e}")
             else:
                 # Treat as direct token value
-                if self._validate_fernet_key(session_token, "SESSION_TOKEN environment variable"):
+                if self._validate_fernet_key(session_token, "GLOBAL_SESSION_TOKEN environment variable"):
                     import base64
                     decoded_key = base64.urlsafe_b64decode(session_token.encode())
-                    logger.info(f"🔑 Returning SESSION_TOKEN environment key as decoded bytes (length: {len(decoded_key)})")
+                    logger.info(f"🔑 Returning GLOBAL_SESSION_TOKEN environment key as decoded bytes (length: {len(decoded_key)})")
                     return decoded_key
         
         # Try SESSION_SECRET as fallback
@@ -208,7 +208,7 @@ class AshBotAPIServer:
         logger.warning("🔍 Checked:")
         logger.warning("   • Docker Secrets: /run/secrets/session_*")
         logger.warning("   • Local Secrets: ./bot/secrets/session_*.txt")
-        logger.warning("   • Environment: SESSION_TOKEN")
+        logger.warning("   • Environment: GLOBAL_SESSION_TOKEN")
         logger.warning("   • Environment: SESSION_SECRET")
         
         logger.warning("⚠️ Generating temporary session key...")
@@ -217,8 +217,8 @@ class AshBotAPIServer:
             new_key = Fernet.generate_key()
             logger.info("✅ Generated new Fernet key for session")
             logger.warning("🚨 SECURITY WARNING: Using generated session key - sessions will not persist across restarts!")
-            logger.info("💡 To fix this, set SESSION_TOKEN environment variable to a proper Fernet key")
-            logger.info(f"💡 Example: SESSION_TOKEN={new_key.decode()}")
+            logger.info("💡 To fix this, set GLOBAL_SESSION_TOKEN environment variable to a proper Fernet key")
+            logger.info(f"💡 Example: GLOBAL_SESSION_TOKEN={new_key.decode()}")
             return new_key
         except Exception as e:
             logger.error(f"❌ Failed to generate new session key: {e}")
@@ -693,7 +693,7 @@ class AshBotAPIServer:
     async def _get_learning_system_status(self) -> Dict:
         """Get learning system status"""
         try:
-            learning_enabled = os.getenv('ENABLE_LEARNING_SYSTEM', 'false').lower() == 'true'
+            learning_enabled = os.getenv('GLOBAL_ENABLE_LEARNING_SYSTEM', 'false').lower() == 'true'
             
             if learning_enabled:
                 learning_data = await self._load_learning_data()

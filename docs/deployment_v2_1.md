@@ -124,14 +124,14 @@ cp .env.template .env
 # Edit .env with the following configuration:
 cat > .env << 'EOF'
 # Discord Configuration
-DISCORD_TOKEN=your_discord_bot_token_here
-DISCORD_GUILD_ID=your_server_id_here
-CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
-CRISIS_RESPONSE_ROLE_ID=your_crisis_team_role_id
+BOT_DISCORD_TOKEN=your_discord_bot_token_here
+DISCORD_BOT_GUILD_ID=your_server_id_here
+BOT_CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
+BOT_CRISIS_RESPONSE_ROLE_ID=your_crisis_team_role_id
 
 # Server Configuration
-BOT_API_HOST=0.0.0.0
-BOT_API_PORT=8882
+GLOBAL_BOT_API_HOST=0.0.0.0
+GLOBAL_BOT_API_PORT=8882
 
 # NLP Integration (if available)
 NLP_SERVER_URL=http://10.20.30.253:8881
@@ -153,9 +153,9 @@ DASHBOARD_WEBHOOK_URL=http://10.20.30.253:8883/webhook/bot_events
 ENABLE_ANALYTICS_EXPORT=true
 
 # Logging
-LOG_LEVEL=INFO
+GLOBAL_LOG_LEVEL=INFO
 LOG_FILE=logs/ash_bot.log
-ENABLE_DEBUG_LOGGING=false
+GLOBAL_ENABLE_DEBUG_LOGGING=false
 
 # Security
 API_KEY=secure_api_key_for_external_access
@@ -241,14 +241,14 @@ cp .env.template .env.development
 # Edit .env.development for development settings:
 cat > .env.development << 'EOF'
 # Development Configuration
-ENVIRONMENT=development
+GLOBAL_ENVIRONMENT=development
 DEBUG=true
-LOG_LEVEL=DEBUG
+GLOBAL_LOG_LEVEL=DEBUG
 
 # Discord Configuration (use test server)
-DISCORD_TOKEN=your_development_bot_token
-DISCORD_GUILD_ID=your_test_server_id
-CRISIS_RESPONSE_CHANNEL_ID=your_test_channel_id
+BOT_DISCORD_TOKEN=your_development_bot_token
+DISCORD_BOT_GUILD_ID=your_test_server_id
+BOT_CRISIS_RESPONSE_CHANNEL_ID=your_test_channel_id
 
 # Local Development URLs
 NLP_SERVER_URL=http://localhost:8881
@@ -262,7 +262,7 @@ ENABLE_API_AUTHENTICATION=false
 API_KEY=dev_api_key
 
 # Enhanced Logging for Development
-ENABLE_DEBUG_LOGGING=true
+GLOBAL_ENABLE_DEBUG_LOGGING=true
 LOG_FILE=logs/ash_bot_dev.log
 EOF
 
@@ -282,16 +282,16 @@ pytest tests/
 **Discord Configuration:**
 ```bash
 # Required: Discord bot token from Discord Developer Portal
-DISCORD_TOKEN=your_discord_bot_token_here
+BOT_DISCORD_TOKEN=your_discord_bot_token_here
 
 # Required: Your Discord server ID (enable Developer Mode to copy)
-DISCORD_GUILD_ID=123456789012345678
+DISCORD_BOT_GUILD_ID=123456789012345678
 
 # Required: Channel where crisis alerts are sent
-CRISIS_RESPONSE_CHANNEL_ID=123456789012345678
+BOT_CRISIS_RESPONSE_CHANNEL_ID=123456789012345678
 
 # Required: Role that gets notified for crises (@Crisis Team)
-CRISIS_RESPONSE_ROLE_ID=123456789012345678
+BOT_CRISIS_RESPONSE_ROLE_ID=123456789012345678
 
 # Optional: Admin user IDs (comma-separated)
 ADMIN_USER_IDS=123456789012345678,987654321098765432
@@ -350,8 +350,8 @@ services:
       - ./logs:/app/logs
       - ./config:/app/config
     environment:
-      - DISCORD_TOKEN=${DISCORD_TOKEN}
-      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - BOT_DISCORD_TOKEN=${BOT_DISCORD_TOKEN}
+      - DISCORD_BOT_GUILD_ID=${DISCORD_BOT_GUILD_ID}
       - NLP_SERVER_URL=http://ash-nlp:8881
       - DATABASE_URL=sqlite:///data/ash_bot.db
     networks:

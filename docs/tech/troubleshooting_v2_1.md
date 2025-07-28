@@ -66,7 +66,7 @@ docker ps -a | grep ash-bot
 docker logs ash-bot --tail 50
 
 # Check configuration
-docker exec ash-bot env | grep -E "(DISCORD_TOKEN|GUILD_ID)"
+docker exec ash-bot env | grep -E "(BOT_DISCORD_TOKEN|BOT_GUILD_ID)"
 
 # Test Discord token validity
 curl -H "Authorization: Bot YOUR_TOKEN" https://discord.com/api/v10/users/@me
@@ -77,10 +77,10 @@ curl -H "Authorization: Bot YOUR_TOKEN" https://discord.com/api/v10/users/@me
 #### 1. Invalid Discord Token
 ```bash
 # Solution: Verify and update token
-docker exec ash-bot env | grep DISCORD_TOKEN
+docker exec ash-bot env | grep BOT_DISCORD_TOKEN
 
 # If empty or invalid, update .env file:
-echo "DISCORD_TOKEN=your_new_token_here" >> .env
+echo "BOT_DISCORD_TOKEN=your_new_token_here" >> .env
 docker-compose restart ash-bot
 ```
 
@@ -91,7 +91,7 @@ docker-compose restart ash-bot
 # Includes: Read Messages, Send Messages, Manage Messages, etc.
 
 # Verify guild ID
-docker exec ash-bot env | grep DISCORD_GUILD_ID
+docker exec ash-bot env | grep DISCORD_BOT_GUILD_ID
 ```
 
 #### 3. Network Connectivity Issues
@@ -613,7 +613,7 @@ docker exec ash-bot python scripts/revoke_api_key.py OLD_KEY
 API_RATE_LIMIT=50          # Reduce from 100
 API_BURST_LIMIT=100        # Reduce from 200
 ENABLE_IP_WHITELIST=true
-ALLOWED_IPS=10.20.30.253,127.0.0.1
+GLOBAL_ALLOWED_IPS=10.20.30.253,127.0.0.1
 
 # Enable request logging
 ENABLE_REQUEST_LOGGING=true
@@ -628,7 +628,7 @@ docker-compose restart ash-bot
 # Enhanced security logging
 # Edit .env:
 ENABLE_AUDIT_LOGGING=true
-AUDIT_LOG_LEVEL=INFO
+AUDIT_GLOBAL_LOG_LEVEL=INFO
 SECURITY_ALERT_WEBHOOK=your_security_webhook_url
 
 # Monitor security events
@@ -651,7 +651,7 @@ tail -f logs/security_audit.log
 
 # 2. Update configuration with new token
 # Edit .env:
-DISCORD_TOKEN=new_token_here
+BOT_DISCORD_TOKEN=new_token_here
 
 # 3. Restart bot immediately
 docker-compose restart ash-bot
@@ -764,7 +764,7 @@ docker logs ash-bot | grep "role mention" | tail -5
 
 # 2. Test notification channels
 # Edit .env to verify:
-CRISIS_RESPONSE_CHANNEL_ID=correct_channel_id
+BOT_CRISIS_RESPONSE_CHANNEL_ID=correct_channel_id
 CRISIS_TEAM_ROLE_ID=correct_role_id
 
 # 3. Enable notification debugging
@@ -889,14 +889,14 @@ cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
 cp .env.template .env
 
 # 3. Prompt for essential values
-read -p "Discord Token: " DISCORD_TOKEN
-read -p "Discord Guild ID: " DISCORD_GUILD_ID
-read -p "Crisis Channel ID: " CRISIS_RESPONSE_CHANNEL_ID
+read -p "Discord Token: " BOT_DISCORD_TOKEN
+read -p "Discord Guild ID: " DISCORD_BOT_GUILD_ID
+read -p "Crisis Channel ID: " BOT_CRISIS_RESPONSE_CHANNEL_ID
 
 # 4. Update .env file
-sed -i "s/DISCORD_TOKEN=.*/DISCORD_TOKEN=$DISCORD_TOKEN/" .env
-sed -i "s/DISCORD_GUILD_ID=.*/DISCORD_GUILD_ID=$DISCORD_GUILD_ID/" .env
-sed -i "s/CRISIS_RESPONSE_CHANNEL_ID=.*/CRISIS_RESPONSE_CHANNEL_ID=$CRISIS_RESPONSE_CHANNEL_ID/" .env
+sed -i "s/BOT_DISCORD_TOKEN=.*/BOT_DISCORD_TOKEN=$BOT_DISCORD_TOKEN/" .env
+sed -i "s/DISCORD_BOT_GUILD_ID=.*/DISCORD_BOT_GUILD_ID=$DISCORD_BOT_GUILD_ID/" .env
+sed -i "s/BOT_CRISIS_RESPONSE_CHANNEL_ID=.*/BOT_CRISIS_RESPONSE_CHANNEL_ID=$BOT_CRISIS_RESPONSE_CHANNEL_ID/" .env
 
 # 5. Set safe defaults
 echo "
@@ -907,7 +907,7 @@ LOW_PRIORITY_THRESHOLD=0.4
 ENABLE_KEYWORD_DETECTION=true
 ENABLE_NLP_INTEGRATION=true
 AUTO_RESPOND_TO_CRISIS=true
-LOG_LEVEL=INFO
+GLOBAL_LOG_LEVEL=INFO
 " >> .env
 
 # 6. Restart with new config

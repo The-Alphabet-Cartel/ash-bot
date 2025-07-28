@@ -17,7 +17,7 @@ class MonitoringCommands(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
-        self.crisis_response_role_id = int(os.getenv('CRISIS_RESPONSE_ROLE_ID', '0'))
+        self.crisis_response_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID', '0'))
         
         logger.info("📊 Enhanced monitoring commands loaded")
     
@@ -154,13 +154,13 @@ class MonitoringCommands(commands.Cog):
             
             # Configuration status
             config_status = []
-            if self.bot.config.get('DISCORD_TOKEN'):
+            if self.bot.config.get('BOT_DISCORD_TOKEN'):
                 config_status.append("✅ Discord Token")
-            if self.bot.config.get('CLAUDE_API_KEY'):
+            if self.bot.config.get('GLOBAL_CLAUDE_API_KEY'):
                 config_status.append("✅ Claude API Key")
-            if self.bot.config.get_int('GUILD_ID'):
+            if self.bot.config.get_int('BOT_GUILD_ID'):
                 config_status.append("✅ Guild Configuration")
-            if self.bot.config.get_int('CRISIS_RESPONSE_CHANNEL_ID'):
+            if self.bot.config.get_int('BOT_CRISIS_RESPONSE_CHANNEL_ID'):
                 config_status.append("✅ Crisis Channel")
             
             embed.add_field(
@@ -219,23 +219,23 @@ class MonitoringCommands(commands.Cog):
             
             # Configuration status
             config_status = []
-            if handler.config.get_bool('CONVERSATION_REQUIRES_MENTION', True):
+            if handler.config.get_bool('BOT_CONVERSATION_REQUIRES_MENTION', True):
                 config_status.append("✅ Mention requirement: Enabled")
             else:
                 config_status.append("❌ Mention requirement: Disabled")
                 
-            if handler.config.get_bool('CONVERSATION_SETUP_INSTRUCTIONS', True):
+            if handler.config.get_bool('BOT_CONVERSATION_SETUP_INSTRUCTIONS', True):
                 config_status.append("✅ Setup instructions: Enabled")
             else:
                 config_status.append("❌ Setup instructions: Disabled")
                 
-            if handler.config.get_bool('CONVERSATION_ALLOW_STARTERS', True):
+            if handler.config.get_bool('BOT_CONVERSATION_ALLOW_STARTERS', True):
                 config_status.append("✅ Natural starters: Enabled")
             else:
                 config_status.append("❌ Natural starters: Disabled")
                 
             # Crisis override levels
-            override_levels = handler.config.get('CRISIS_OVERRIDE_LEVELS', 'medium,high')
+            override_levels = handler.config.get('BOT_CRISIS_OVERRIDE_LEVELS', 'medium,high')
             config_status.append(f"🚨 Crisis overrides: {override_levels}")
             
             embed.add_field(
@@ -245,7 +245,7 @@ class MonitoringCommands(commands.Cog):
             )
             
             # Trigger phrases
-            triggers = handler.config.get('CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash')
+            triggers = handler.config.get('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash')
             trigger_list = [f"`{trigger.strip()}`" for trigger in triggers.split(',')[:5]]  # Show first 5
             
             embed.add_field(
@@ -345,7 +345,7 @@ class MonitoringCommands(commands.Cog):
             )
             
             # Check what triggered (or didn't trigger)
-            triggers = handler.config.get('CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash').split(',')
+            triggers = handler.config.get('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash').split(',')
             message_lower = test_message.lower()
             
             matched_triggers = [trigger.strip() for trigger in triggers if trigger.strip().lower() in message_lower]
@@ -358,7 +358,7 @@ class MonitoringCommands(commands.Cog):
                 )
             
             # Check conversation starters
-            if handler.config.get_bool('CONVERSATION_ALLOW_STARTERS', True):
+            if handler.config.get_bool('BOT_CONVERSATION_ALLOW_STARTERS', True):
                 starters = ["i'm still", "i still", "but i", "what if", "can you", "help me", "i need"]
                 matched_starters = [starter for starter in starters if message_lower.startswith(starter)]
                 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Session Token Diagnostic Script
-Helps debug SESSION_TOKEN issues for Ash Bot API server
+Helps debug GLOBAL_SESSION_TOKEN issues for Ash Bot API server
 """
 
 import os
@@ -16,18 +16,18 @@ def load_env_file():
         with open(env_file, 'r') as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
-                if line.startswith('SESSION_TOKEN='):
+                if line.startswith('GLOBAL_SESSION_TOKEN='):
                     token_value = line.split('=', 1)[1]
-                    print(f"📋 Found SESSION_TOKEN on line {line_num}")
+                    print(f"📋 Found GLOBAL_SESSION_TOKEN on line {line_num}")
                     return token_value
-        print("❌ No SESSION_TOKEN found in .env file")
+        print("❌ No GLOBAL_SESSION_TOKEN found in .env file")
     else:
         print("❌ No .env file found")
     return None
 
 def test_session_token(token_value):
     """Test if a session token is valid for Fernet"""
-    print(f"\n🔍 Testing SESSION_TOKEN...")
+    print(f"\n🔍 Testing GLOBAL_SESSION_TOKEN...")
     print(f"📏 Length: {len(token_value)} characters")
     print(f"🔤 First 20 chars: {token_value[:20]}...")
     print(f"🔤 Last 10 chars: ...{token_value[-10:]}")
@@ -44,7 +44,7 @@ def test_session_token(token_value):
     try:
         test_key = token_value.encode() if isinstance(token_value, str) else token_value
         fernet = Fernet(test_key)
-        print("✅ SESSION_TOKEN is valid Fernet key!")
+        print("✅ GLOBAL_SESSION_TOKEN is valid Fernet key!")
         
         # Test encryption/decryption
         test_message = b"test message"
@@ -80,10 +80,10 @@ def generate_new_token():
     try:
         from cryptography.fernet import Fernet
         new_token = Fernet.generate_key()
-        print(f"\n🔑 Generated new SESSION_TOKEN:")
-        print(f"SESSION_TOKEN={new_token.decode()}")
+        print(f"\n🔑 Generated new GLOBAL_SESSION_TOKEN:")
+        print(f"GLOBAL_SESSION_TOKEN={new_token.decode()}")
         print(f"\n📝 Add this to your .env file:")
-        print(f"SESSION_TOKEN={new_token.decode()}")
+        print(f"GLOBAL_SESSION_TOKEN={new_token.decode()}")
         return new_token.decode()
     except Exception as e:
         print(f"❌ Failed to generate new token: {e}")
@@ -94,25 +94,25 @@ def main():
     print("=" * 40)
     
     # Check environment variable
-    env_token = os.getenv('SESSION_TOKEN')
+    env_token = os.getenv('GLOBAL_SESSION_TOKEN')
     if env_token:
-        print(f"🌍 Found SESSION_TOKEN in environment")
+        print(f"🌍 Found GLOBAL_SESSION_TOKEN in environment")
         if test_session_token(env_token):
-            print("\n✅ Your SESSION_TOKEN is working correctly!")
+            print("\n✅ Your GLOBAL_SESSION_TOKEN is working correctly!")
             return
     else:
-        print("❌ No SESSION_TOKEN in environment")
+        print("❌ No GLOBAL_SESSION_TOKEN in environment")
     
     # Check .env file
     file_token = load_env_file()
     if file_token:
         if test_session_token(file_token):
-            print("\n✅ Your .env SESSION_TOKEN is valid!")
+            print("\n✅ Your .env GLOBAL_SESSION_TOKEN is valid!")
             print("💡 Make sure to restart your Docker containers to pick up the change")
             return
     
     # Neither worked, generate new one
-    print("\n❌ No valid SESSION_TOKEN found")
+    print("\n❌ No valid GLOBAL_SESSION_TOKEN found")
     print("🔧 Generating a new one...")
     
     new_token = generate_new_token()
@@ -124,25 +124,25 @@ def main():
             with open(env_file, 'r') as f:
                 lines = f.readlines()
             
-            # Replace or add SESSION_TOKEN
+            # Replace or add GLOBAL_SESSION_TOKEN
             found = False
             for i, line in enumerate(lines):
-                if line.strip().startswith('SESSION_TOKEN='):
-                    lines[i] = f"SESSION_TOKEN={new_token}\n"
+                if line.strip().startswith('GLOBAL_SESSION_TOKEN='):
+                    lines[i] = f"GLOBAL_SESSION_TOKEN={new_token}\n"
                     found = True
                     break
             
             if not found:
-                lines.append(f"SESSION_TOKEN={new_token}\n")
+                lines.append(f"GLOBAL_SESSION_TOKEN={new_token}\n")
             
             with open(env_file, 'w') as f:
                 f.writelines(lines)
             
-            print("✅ Updated .env file with new SESSION_TOKEN")
+            print("✅ Updated .env file with new GLOBAL_SESSION_TOKEN")
             print("🔄 Restart your bot to use the new token:")
             print("   docker-compose down && docker-compose up -d")
         else:
-            print("📝 Create a .env file with this SESSION_TOKEN")
+            print("📝 Create a .env file with this GLOBAL_SESSION_TOKEN")
 
 if __name__ == "__main__":
     main()

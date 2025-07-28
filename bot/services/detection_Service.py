@@ -113,7 +113,7 @@ class DetectionService:
     
     def _get_fallback_response(self, crisis_level: str) -> str:
         """Get fallback response if Claude is unavailable"""
-        resources_channel = self.config.get('RESOURCES_CHANNEL_NAME', 'resources')
+        resources_channel = self.config.get('BOT_RESOURCES_CHANNEL_NAME', 'resources')
         
         if crisis_level == 'high':
             return f"I hear you, and I want you to know that you matter. Please reach out to our crisis team or check #{resources_channel} for immediate support resources."

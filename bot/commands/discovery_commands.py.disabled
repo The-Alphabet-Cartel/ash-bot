@@ -497,7 +497,7 @@ class DiscoveryCommands(commands.Cog):
     async def _check_crisis_role(self, interaction: discord.Interaction) -> bool:
         """Check if user has crisis response role"""
         try:
-            crisis_role_id = int(os.getenv('CRISIS_RESPONSE_ROLE_ID'))
+            crisis_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID'))
             user_role_ids = [role.id for role in interaction.user.roles]
             
             if crisis_role_id not in user_role_ids:

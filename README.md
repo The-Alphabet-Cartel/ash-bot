@@ -153,14 +153,14 @@ curl http://10.20.30.253:8884/health  # Testing
 
 ```bash
 # Discord Configuration
-DISCORD_TOKEN=your_discord_bot_token
-DISCORD_GUILD_ID=your_server_id
-CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
-CRISIS_RESPONSE_ROLE_ID=your_crisis_team_role_id
+BOT_DISCORD_TOKEN=your_discord_bot_token
+DISCORD_BOT_GUILD_ID=your_server_id
+BOT_CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
+BOT_CRISIS_RESPONSE_ROLE_ID=your_crisis_team_role_id
 
 # Server Configuration
-BOT_API_HOST=0.0.0.0
-BOT_API_PORT=8882
+GLOBAL_BOT_API_HOST=0.0.0.0
+GLOBAL_BOT_API_PORT=8882
 
 # NLP Integration
 NLP_SERVER_URL=http://10.20.30.253:8881
@@ -182,7 +182,7 @@ DASHBOARD_WEBHOOK_URL=http://10.20.30.253:8883/webhook/bot_events
 ENABLE_ANALYTICS_EXPORT=true
 
 # Logging
-LOG_LEVEL=INFO
+GLOBAL_LOG_LEVEL=INFO
 LOG_FILE=logs/ash_bot.log
 
 # Security
@@ -326,7 +326,7 @@ cp .env.template .env.development
 pytest tests/
 
 # 6. Run bot in development mode
-ENVIRONMENT=development python main.py
+GLOBAL_ENVIRONMENT=development python main.py
 
 # 7. Test integration with other services
 python scripts/test_ecosystem_integration.py

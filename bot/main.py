@@ -58,7 +58,7 @@ async def main():
         logger.info("🚀 Starting modular bot...")
         
         # Get Discord token
-        token = config.get('DISCORD_TOKEN')
+        token = config.get('BOT_DISCORD_TOKEN')
         if not token:
             logger.error("❌ Discord token missing!")
             return

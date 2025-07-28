@@ -160,20 +160,20 @@ class TestConfigManager:
     def test_valid_config_loading(self):
         """Test loading valid configuration"""
         valid_env = {
-            'DISCORD_TOKEN': 'MTAyNzM4OTQyNzUxNjQzMjQ2Ng.GXxKzQ.' + 'a' * 50,
-            'GUILD_ID': '123456789012345678',
-            'CLAUDE_API_KEY': 'sk-ant-' + 'a' * 50,
-            'RESOURCES_CHANNEL_ID': '987654321098765432',
-            'CRISIS_RESPONSE_CHANNEL_ID': '876543210987654321',
-            'CRISIS_RESPONSE_ROLE_ID': '765432109876543210',
-            'STAFF_PING_USER': '654321098765432109'
+            'BOT_DISCORD_TOKEN': 'MTAyNzM4OTQyNzUxNjQzMjQ2Ng.GXxKzQ.' + 'a' * 50,
+            'BOT_GUILD_ID': '123456789012345678',
+            'GLOBAL_CLAUDE_API_KEY': 'sk-ant-' + 'a' * 50,
+            'BOT_RESOURCES_CHANNEL_ID': '987654321098765432',
+            'BOT_CRISIS_RESPONSE_CHANNEL_ID': '876543210987654321',
+            'BOT_CRISIS_RESPONSE_ROLE_ID': '765432109876543210',
+            'BOT_STAFF_PING_USER': '654321098765432109'
         }
         
         with patch.dict('os.environ', valid_env, clear=True):
             config = ConfigManager()
             assert config.is_valid()
-            assert config.get_int('GUILD_ID') == 123456789012345678
-            assert config.get('CLAUDE_MODEL') == 'claude-sonnet-4-20250514'
+            assert config.get_int('BOT_GUILD_ID') == 123456789012345678
+            assert config.get('GLOBAL_CLAUDE_MODEL') == 'claude-sonnet-4-20250514'
     
     def test_channel_restrictions(self):
         """Test channel restriction functionality"""
@@ -253,14 +253,14 @@ class TestClaudeAPI:
     
     def test_claude_api_initialization(self):
         """Test Claude API initialization"""
-        with patch.dict('os.environ', {'CLAUDE_API_KEY': 'sk-ant-test123'}):
+        with patch.dict('os.environ', {'GLOBAL_CLAUDE_API_KEY': 'sk-ant-test123'}):
             api = ClaudeAPI()
             assert api.api_key == 'sk-ant-test123'
             assert api.model == 'claude-sonnet-4-20250514'
     
     async def test_connection_test(self):
         """Test Claude API connection testing"""
-        with patch.dict('os.environ', {'CLAUDE_API_KEY': 'sk-ant-test123'}):
+        with patch.dict('os.environ', {'GLOBAL_CLAUDE_API_KEY': 'sk-ant-test123'}):
             api = ClaudeAPI()
             
             # Mock successful response

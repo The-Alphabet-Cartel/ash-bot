@@ -16,10 +16,10 @@ class CrisisHandler:
         self.config = config
         
         # Configuration
-        self.resources_channel_id = config.get_int('RESOURCES_CHANNEL_ID')
-        self.crisis_response_channel_id = config.get_int('CRISIS_RESPONSE_CHANNEL_ID')
-        self.crisis_response_role_id = config.get_int('CRISIS_RESPONSE_ROLE_ID')
-        self.staff_ping_user_id = config.get_int('STAFF_PING_USER')
+        self.resources_channel_id = config.get_int('BOT_RESOURCES_CHANNEL_ID')
+        self.crisis_response_channel_id = config.get_int('BOT_CRISIS_RESPONSE_CHANNEL_ID')
+        self.crisis_response_role_id = config.get_int('BOT_CRISIS_RESPONSE_ROLE_ID')
+        self.staff_ping_user_id = config.get_int('BOT_STAFF_PING_USER')
         
         # Enhanced statistics tracking
         self.crisis_stats = {
@@ -57,7 +57,7 @@ class CrisisHandler:
         """Enhanced crisis response that includes conversation continuation instructions"""
         
         # Get configuration for whether to show instructions
-        show_instructions = self.config.get_bool('CONVERSATION_SETUP_INSTRUCTIONS', True)
+        show_instructions = self.config.get_bool('BOT_CONVERSATION_SETUP_INSTRUCTIONS', True)
         
         if show_instructions:
             # Add continuation instructions to the response

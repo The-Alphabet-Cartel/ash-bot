@@ -18,12 +18,12 @@ class RateLimitService:
         
         # User rate limiting
         self.user_cooldowns: Dict[int, List[float]] = {}
-        self.rate_limit_per_user = config.get_int('RATE_LIMIT_PER_USER', 10)
+        self.rate_limit_per_user = config.get_int('BOT_RATE_LIMIT_PER_USER', 10)
         self.cooldown_window = 3600  # 1 hour in seconds
         
         # Daily API call limiting
         self.daily_call_count = 0
-        self.max_daily_calls = config.get_int('MAX_DAILY_CALLS', 1000)
+        self.max_daily_calls = config.get_int('BOT_MAX_DAILY_CALLS', 1000)
         self.last_reset_date = None
         
         # Advanced statistics
