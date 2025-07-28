@@ -610,7 +610,7 @@ docker exec ash-bot python scripts/revoke_api_key.py OLD_KEY
 #### 2. Strengthen Rate Limiting
 ```bash
 # Edit .env for stricter limits:
-API_RATE_LIMIT=50          # Reduce from 100
+THRASH_API_RATE_LIMIT=50          # Reduce from 100
 API_BURST_LIMIT=100        # Reduce from 200
 ENABLE_IP_WHITELIST=true
 GLOBAL_ALLOWED_IPS=10.20.30.253,127.0.0.1
@@ -701,7 +701,6 @@ curl http://10.20.30.253:8883/api/data/recent
 ```bash
 # 1. Enable metrics collection
 # Edit .env:
-ENABLE_METRICS_COLLECTION=true
 METRICS_EXPORT_INTERVAL=60  # seconds
 ENABLE_ANALYTICS_EXPORT=true
 

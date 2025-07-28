@@ -159,7 +159,7 @@ GLOBAL_ENABLE_DEBUG_LOGGING=false
 
 # Security
 API_KEY=secure_api_key_for_external_access
-ENABLE_API_AUTHENTICATION=true
+THRASH_ENABLE_API_AUTHENTICATION=true
 EOF
 
 # 3. Create required directories
@@ -258,7 +258,7 @@ DASHBOARD_WEBHOOK_URL=http://localhost:8883/webhook/bot_events
 DATABASE_URL=sqlite:///data/ash_bot_dev.db
 
 # Development Security (less strict)
-ENABLE_API_AUTHENTICATION=false
+THRASH_ENABLE_API_AUTHENTICATION=false
 API_KEY=dev_api_key
 
 # Enhanced Logging for Development
@@ -441,9 +441,9 @@ DATABASE_POOL_SIZE=15
 **API Security:**
 ```bash
 # API authentication
-ENABLE_API_AUTHENTICATION=true
+THRASH_ENABLE_API_AUTHENTICATION=true
 API_KEY=secure_randomly_generated_key_here
-API_RATE_LIMIT=100  # Requests per minute
+THRASH_API_RATE_LIMIT=100  # Requests per minute
 
 # Webhook security
 WEBHOOK_SECRET=secure_webhook_secret_here

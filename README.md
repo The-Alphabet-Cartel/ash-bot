@@ -187,7 +187,7 @@ LOG_FILE=logs/ash_bot.log
 
 # Security
 API_KEY=secure_api_key_for_external_access
-ENABLE_API_AUTHENTICATION=true
+THRASH_ENABLE_API_AUTHENTICATION=true
 ```
 
 ### Discord Permissions
