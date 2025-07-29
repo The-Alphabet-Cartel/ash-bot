@@ -53,13 +53,9 @@ COPY --chown=botuser:botuser ./bot .
 USER botuser
 
 # Set default environment variables
-## (can be overridden by docker-compose or .env)
-ENV PYTHONPATH="/app"
 ENV GLOBAL_PYTHONUNBUFFERED="1"
-ENV PYTHONDONTWRITEBYTECODE="1"
 
 # Core Bot Configuration
-## (these will be overridden by docker-compose)
 ## Discord Configuration
 ENV BOT_GUILD_ID=""
 
@@ -89,7 +85,6 @@ ENV GLOBAL_NLP_API_PORT="8881"
 ENV GLOBAL_REQUEST_TIMEOUT="30"
 
 ## API Server Configuration
-ENV GLOBAL_BOT_API_HOST="0.0.0.0"
 ENV GLOBAL_BOT_API_PORT="8882"
 
 ## Bot Performance defaults
