@@ -325,13 +325,10 @@ cp .env.template .env.development
 # 5. Run tests
 pytest tests/
 
-# 6. Run bot in development mode
-GLOBAL_ENVIRONMENT=development python main.py
-
-# 7. Test integration with other services
+# 6. Test integration with other services
 python scripts/test_ecosystem_integration.py
 
-# 8. Submit pull request
+# 7. Submit pull request
 git push origin feature/your-feature-name
 # Create PR on GitHub
 ```

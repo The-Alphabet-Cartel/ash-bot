@@ -1,22 +1,24 @@
+# Ash-BOT Docker Compose for Ash Ecosystem
+# Repository: https://github.com/the-alphabet-cartel/ash-bot
+# Discord: https://discord.gg/alphabetcartel
+# Website: http://alphabetcartel.org
 services:
+  # ========================================================================
+  # Discord Bot (ash-bot)
+  # ========================================================================
   ash-bot:
-    #build:
-      #context: .
-      #dockerfile: Dockerfile
     image: ghcr.io/the-alphabet-cartel/ash-bot:latest
     container_name: ash-bot
     restart: unless-stopped
     networks:
-      - ash-network
+      ash-network:
+        ipv4_address: 172.20.0.10
     ports:
-      - 8882:8882  
+      - 8882:8882
     environment:
-      # Core Discord and Claude settings (using Docker Secrets)
       - BOT_DISCORD_TOKEN=${BOT_DISCORD_TOKEN}
       - GLOBAL_SESSION_TOKEN=${GLOBAL_SESSION_TOKEN}
       - GLOBAL_CLAUDE_API_KEY=${GLOBAL_CLAUDE_API_KEY}
-
-      # Claude Configuration
       - GLOBAL_CLAUDE_MODEL=${GLOBAL_CLAUDE_MODEL}
 
       # Discord and Channel Configuration
@@ -33,12 +35,7 @@ services:
       - BOT_STAFF_PING_NAME=${BOT_STAFF_PING_NAME}
 
       # API Server Configuration
-      - GLOBAL_BOT_API_HOST=${GLOBAL_BOT_API_HOST:-0.0.0.0}
       - GLOBAL_BOT_API_PORT=${GLOBAL_BOT_API_PORT:-8882}
-      - BOT_API_RATE_LIMIT_PER_MINUTE=${BOT_API_RATE_LIMIT_PER_MINUTE:-60}
-      - BOT_API_RATE_LIMIT_PER_HOUR=${BOT_API_RATE_LIMIT_PER_HOUR:-1000}
-      - GLOBAL_API_ENABLE_CORS=${GLOBAL_API_ENABLE_CORS:-true}
-      - GLOBAL_API_ALLOWED_ORIGINS=${GLOBAL_API_ALLOWED_ORIGINS:-*}
 
       # Learning System Configuration
       - GLOBAL_ENABLE_LEARNING_SYSTEM=${GLOBAL_ENABLE_LEARNING_SYSTEM}
@@ -61,43 +58,60 @@ services:
       - BOT_CONVERSATION_SETUP_INSTRUCTIONS=${BOT_CONVERSATION_SETUP_INSTRUCTIONS:-true}
       - BOT_CONVERSATION_LOG_ATTEMPTS=${BOT_CONVERSATION_LOG_ATTEMPTS:-true}
       - BOT_CONVERSATION_TIMEOUT=${BOT_CONVERSATION_TIMEOUT:-300}
-
-      # Performance Monitoring
-      - BOT_ENABLE_PERFORMANCE_TRACKING=${BOT_ENABLE_PERFORMANCE_TRACKING:-true}
-      - BOT_TRACK_RESPONSE_TIMES=${BOT_TRACK_RESPONSE_TIMES:-true}
-      - BOT_TRACK_MEMORY_USAGE=${BOT_TRACK_MEMORY_USAGE:-true}
-      - BOT_COLLECT_CRISIS_STATS=${BOT_COLLECT_CRISIS_STATS:-true}
-      - BOT_COLLECT_KEYWORD_STATS=${BOT_COLLECT_KEYWORD_STATS:-true}
-      - BOT_COLLECT_LEARNING_STATS=${BOT_COLLECT_LEARNING_STATS:-true}
-      - BOT_API_RATE_LIMIT_PER_MINUTE=${BOT_API_RATE_LIMIT_PER_MINUTE:-90}
-      - BOT_LOGS_RETENTION_DAYS=${BOT_LOGS_RETENTION_DAYS:-30}
+      - BOT_CRISIS_OVERRIDE_LEVELS=${BOT_CRISIS_OVERRIDE_LEVELS:-medium,high}
     volumes:
-      - ./bot/logs:/app/logs
-      - ./bot/data:/app/data
-      - ./bot/secrets:/run/secrets:ro
-    user: "1001:1001"
+      - ./ash-bot/logs:/app/logs
+      - ./ash-bot/data:/app/data
+      - ./secrets:/run/secrets:ro
     depends_on:
       ash-redis:
         condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
     healthcheck:
-      test: ["CMD", "python", "-c", "import discord; print('OK')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8882/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 40s
 
+  # ========================================================================
+  # Redis Cache
+  # ========================================================================
   ash-redis:
     image: redis:7-alpine
     container_name: ash-redis
     restart: unless-stopped
+    networks:
+      ash-network:
+        ipv4_address: 172.20.0.20
+    ports:
+      - 6379:6379
+    command: redis-server --appendonly yes --requirepass ${GLOBAL_REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    networks:
-      - ash-network
-
-volumes:
-  redis_data:
+      - ./secrets:/run/secrets:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   ash-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis_data:
+    driver: local

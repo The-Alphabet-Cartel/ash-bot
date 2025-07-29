@@ -241,7 +241,6 @@ cp .env.template .env.development
 # Edit .env.development for development settings:
 cat > .env.development << 'EOF'
 # Development Configuration
-GLOBAL_ENVIRONMENT=development
 DEBUG=true
 GLOBAL_LOG_LEVEL=DEBUG
 
