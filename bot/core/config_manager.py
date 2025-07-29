@@ -220,7 +220,7 @@ class ConfigManager:
             # Claude API Key (with similar debugging if needed)
             self._config['GLOBAL_CLAUDE_API_KEY'] = self._get_config_value(
                 'GLOBAL_CLAUDE_API_KEY',
-                secret_file_suffix='GLOBAL_CLAUDE_API_KEY'
+                secret_file_suffix='claude_api_key'
             )
             
             # Validate Claude API key exists
@@ -270,7 +270,7 @@ class ConfigManager:
             
             self._config['GLOBAL_CLAUDE_API_KEY'] = self._get_config_value(
                 'GLOBAL_CLAUDE_API_KEY',
-                secret_file_suffix='GLOBAL_CLAUDE_API_KEY'
+                secret_file_suffix='claude_api_key'
             )
             
             # Validate required secrets
