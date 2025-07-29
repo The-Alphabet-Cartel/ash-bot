@@ -155,7 +155,7 @@ ENABLE_ANALYTICS_EXPORT=true
 # Logging
 GLOBAL_LOG_LEVEL=INFO
 LOG_FILE=logs/ash_bot.log
-GLOBAL_ENABLE_DEBUG_LOGGING=false
+GLOBAL_ENABLE_DEBUG_MODE=false
 
 # Security
 API_KEY=secure_api_key_for_external_access
@@ -261,7 +261,7 @@ THRASH_ENABLE_API_AUTHENTICATION=false
 API_KEY=dev_api_key
 
 # Enhanced Logging for Development
-GLOBAL_ENABLE_DEBUG_LOGGING=true
+GLOBAL_ENABLE_DEBUG_MODE=true
 LOG_FILE=logs/ash_bot_dev.log
 EOF
 
