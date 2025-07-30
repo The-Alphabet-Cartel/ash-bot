@@ -12,6 +12,7 @@ import os
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 import aiohttp
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -798,6 +799,491 @@ class EnhancedLearningCommands(commands.Cog):
                 "❌ Error retrieving statistics",
                 ephemeral=True
             )
+
+    @app_commands.command(name="fp_correction", description="Quick false positive correction (three-model ensemble)")
+    @app_commands.describe(
+        message="The message that was incorrectly flagged as crisis",
+        correct_level="What the crisis level should have been (none, low, medium, high)",
+        reason="Optional reason for the correction"
+    )
+    async def false_positive_correction(
+        self, 
+        interaction: discord.Interaction, 
+        message: str, 
+        correct_level: str,
+        reason: Optional[str] = None
+    ):
+        """Quick false positive correction for three-model ensemble"""
+        
+        if not await self._check_crisis_role(interaction):
+            return
+            
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            # Validate correct_level
+            valid_levels = ['none', 'low', 'medium', 'high']
+            if correct_level.lower() not in valid_levels:
+                await interaction.followup.send(
+                    f"❌ Invalid crisis level. Must be one of: {', '.join(valid_levels)}",
+                    ephemeral=True
+                )
+                return
+            
+            # Get current detection for comparison
+            detected_level = await self._get_current_detection(message)
+            
+            if detected_level is None:
+                await interaction.followup.send(
+                    "❌ Could not analyze the provided message. Please check the NLP service.",
+                    ephemeral=True
+                )
+                return
+            
+            # Send learning feedback to NLP service
+            success = await self._send_false_positive_feedback(
+                message, 
+                detected_level, 
+                correct_level.lower(),
+                {
+                    "staff_user": str(interaction.user.id),
+                    "staff_name": interaction.user.display_name,
+                    "reason": reason,
+                    "timestamp": time.time(),
+                    "source": "fp_correction_command"
+                }
+            )
+            
+            if success:
+                # Create success embed
+                embed = discord.Embed(
+                    title="✅ False Positive Correction Submitted",
+                    description="Thank you for improving the three-model ensemble system!",
+                    color=discord.Color.green()
+                )
+                
+                embed.add_field(
+                    name="📝 Message",
+                    value=f"```{message[:500]}{'...' if len(message) > 500 else ''}```",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="🔄 Correction Details",
+                    value=f"**Previously Detected:** {detected_level}\n"
+                          f"**Should Be:** {correct_level.lower()}\n"
+                          f"**Correction Type:** False Positive (over-detection)",
+                    inline=False
+                )
+                
+                if reason:
+                    embed.add_field(
+                        name="💭 Reason",
+                        value=reason,
+                        inline=False
+                    )
+                
+                embed.add_field(
+                    name="🧠 Three-Model Learning Impact",
+                    value="• Depression model sensitivity may be reduced\n"
+                          "• Emotional distress patterns will be refined\n"
+                          "• Sentiment context analysis improved\n"
+                          "• Ensemble consensus logic enhanced",
+                    inline=False
+                )
+                
+                embed.set_footer(text=f"Correction by {interaction.user.display_name} • Three-Model Ensemble Learning")
+                
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                
+                logger.info(f"✅ FP correction submitted by {interaction.user.display_name}: "
+                           f"'{message[:50]}...' {detected_level} → {correct_level}")
+                
+            else:
+                await interaction.followup.send(
+                    "❌ Failed to submit correction to learning system. Please try again later.",
+                    ephemeral=True
+                )
+            
+        except Exception as e:
+            logger.error(f"❌ Error in false positive correction: {e}")
+            await interaction.followup.send(
+                f"❌ An error occurred while processing the correction: {str(e)}",
+                ephemeral=True
+            )
+
+    @app_commands.command(name="fn_correction", description="Quick false negative correction (three-model ensemble)")
+    @app_commands.describe(
+        message="The message that should have been detected as crisis",
+        should_be_level="What the crisis level should have been (low, medium, high)",
+        reason="Optional reason for the correction"
+    )
+    async def false_negative_correction(
+        self, 
+        interaction: discord.Interaction, 
+        message: str, 
+        should_be_level: str,
+        reason: Optional[str] = None
+    ):
+        """Quick false negative correction for three-model ensemble"""
+        
+        if not await self._check_crisis_role(interaction):
+            return
+            
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            # Validate should_be_level
+            valid_levels = ['low', 'medium', 'high']
+            if should_be_level.lower() not in valid_levels:
+                await interaction.followup.send(
+                    f"❌ Invalid crisis level. Must be one of: {', '.join(valid_levels)}",
+                    ephemeral=True
+                )
+                return
+            
+            # Get current detection for comparison
+            actually_detected = await self._get_current_detection(message)
+            
+            if actually_detected is None:
+                await interaction.followup.send(
+                    "❌ Could not analyze the provided message. Please check the NLP service.",
+                    ephemeral=True
+                )
+                return
+            
+            # Send learning feedback to NLP service
+            success = await self._send_false_negative_feedback(
+                message, 
+                should_be_level.lower(), 
+                actually_detected,
+                {
+                    "staff_user": str(interaction.user.id),
+                    "staff_name": interaction.user.display_name,
+                    "reason": reason,
+                    "timestamp": time.time(),
+                    "source": "fn_correction_command"
+                }
+            )
+            
+            if success:
+                # Create success embed
+                embed = discord.Embed(
+                    title="✅ False Negative Correction Submitted",
+                    description="Thank you for improving the three-model ensemble system!",
+                    color=discord.Color.blue()
+                )
+                
+                embed.add_field(
+                    name="📝 Message",
+                    value=f"```{message[:500]}{'...' if len(message) > 500 else ''}```",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="🔄 Correction Details",
+                    value=f"**Actually Detected:** {actually_detected}\n"
+                          f"**Should Have Been:** {should_be_level.lower()}\n"
+                          f"**Correction Type:** False Negative (under-detection)",
+                    inline=False
+                )
+                
+                if reason:
+                    embed.add_field(
+                        name="💭 Reason",
+                        value=reason,
+                        inline=False
+                    )
+                
+                embed.add_field(
+                    name="🧠 Three-Model Learning Impact",
+                    value="• Depression model sensitivity may be increased\n"
+                          "• Emotional distress detection enhanced\n"
+                          "• Sentiment analysis context improved\n"
+                          "• Ensemble gap detection refined",
+                    inline=False
+                )
+                
+                embed.set_footer(text=f"Correction by {interaction.user.display_name} • Three-Model Ensemble Learning")
+                
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                
+                logger.info(f"✅ FN correction submitted by {interaction.user.display_name}: "
+                           f"'{message[:50]}...' {actually_detected} → {should_be_level}")
+                
+            else:
+                await interaction.followup.send(
+                    "❌ Failed to submit correction to learning system. Please try again later.",
+                    ephemeral=True
+                )
+            
+        except Exception as e:
+            logger.error(f"❌ Error in false negative correction: {e}")
+            await interaction.followup.send(
+                f"❌ An error occurred while processing the correction: {str(e)}",
+                ephemeral=True
+            )
+
+    @app_commands.command(name="ensemble_stats", description="View three-model ensemble performance statistics")
+    async def ensemble_statistics(self, interaction: discord.Interaction):
+        """Display comprehensive ensemble system statistics"""
+        
+        if not await self._check_crisis_role(interaction):
+            return
+            
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            # Get stats from NLP client
+            nlp_stats = {}
+            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
+                if hasattr(self.bot.nlp_client, 'get_ensemble_stats'):
+                    nlp_stats = await self.bot.nlp_client.get_ensemble_stats()
+                else:
+                    nlp_stats = {'client_stats': getattr(self.bot.nlp_client, 'stats', {})}
+            
+            # Get stats from message handler
+            handler_stats = {}
+            if hasattr(self.bot, 'message_handler') and self.bot.message_handler:
+                if hasattr(self.bot.message_handler, 'get_enhanced_stats'):
+                    handler_stats = self.bot.message_handler.get_enhanced_stats()
+                else:
+                    handler_stats = getattr(self.bot.message_handler, 'message_stats', {})
+            
+            # Create comprehensive stats embed
+            embed = discord.Embed(
+                title="📊 Three-Model Ensemble Statistics",
+                description="Performance metrics for the crisis detection system",
+                color=discord.Color.purple()
+            )
+            
+            # Ensemble performance
+            client_stats = nlp_stats.get('client_stats', {})
+            if client_stats:
+                total_requests = client_stats.get('total_requests', 0)
+                successful_requests = client_stats.get('successful_requests', 0)
+                success_rate = (successful_requests / total_requests * 100) if total_requests > 0 else 0
+                
+                embed.add_field(
+                    name="🎯 Ensemble Performance",
+                    value=f"**Total Requests:** {total_requests:,}\n"
+                          f"**Success Rate:** {success_rate:.1f}%\n"
+                          f"**Gap Detections:** {client_stats.get('gap_detections', 0):,}\n"
+                          f"**Staff Reviews Flagged:** {client_stats.get('staff_reviews_flagged', 0):,}",
+                    inline=True
+                )
+            
+            # Ensemble methods breakdown
+            ensemble_methods = client_stats.get('ensemble_methods_used', {})
+            if ensemble_methods:
+                methods_text = ""
+                for method, count in ensemble_methods.items():
+                    methods_text += f"**{method.replace('_', ' ').title()}:** {count:,}\n"
+                
+                embed.add_field(
+                    name="🔄 Ensemble Methods Used",
+                    value=methods_text,
+                    inline=True
+                )
+            
+            # Detection method breakdown from handler
+            detection_breakdown = handler_stats.get('detection_method_breakdown', {})
+            if detection_breakdown:
+                breakdown_text = ""
+                total_detections = sum(detection_breakdown.values())
+                for method, count in detection_breakdown.items():
+                    if count > 0:
+                        percentage = (count / total_detections * 100) if total_detections > 0 else 0
+                        breakdown_text += f"**{method.replace('_', ' ').title()}:** {count:,} ({percentage:.1f}%)\n"
+                
+                if breakdown_text:
+                    embed.add_field(
+                        name="🔍 Detection Methods",
+                        value=breakdown_text,
+                        inline=False
+                    )
+            
+            # Gap detection rates
+            if handler_stats:
+                gap_rate = handler_stats.get('gap_detection_rate', 0) * 100
+                review_rate = handler_stats.get('staff_review_rate', 0) * 100
+                consensus_rate = handler_stats.get('unanimous_consensus_rate', 0) * 100
+                
+                embed.add_field(
+                    name="📈 Detection Quality Metrics",
+                    value=f"**Gap Detection Rate:** {gap_rate:.1f}%\n"
+                          f"**Staff Review Rate:** {review_rate:.1f}%\n"
+                          f"**Unanimous Consensus Rate:** {consensus_rate:.1f}%",
+                    inline=True
+                )
+            
+            # Service health
+            service_healthy = nlp_stats.get('service_healthy', False)
+            ensemble_status = nlp_stats.get('ensemble_status', 'unknown')
+            
+            embed.add_field(
+                name="🏥 Service Health",
+                value=f"**NLP Service:** {'✅ Healthy' if service_healthy else '❌ Unhealthy'}\n"
+                      f"**Ensemble Status:** {ensemble_status.title()}\n"
+                      f"**Three Models:** {'✅ Active' if client_stats else '⚠️ Unknown'}",
+                inline=True
+            )
+            
+            embed.set_footer(text="Three-Model Ensemble • Real-time Statistics")
+            embed.timestamp = discord.utils.utcnow()
+            
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting ensemble stats: {e}")
+            await interaction.followup.send(
+                f"❌ Error retrieving statistics: {str(e)}",
+                ephemeral=True
+            )
+
+    @app_commands.command(name="test_ensemble", description="Test the three-model ensemble with a sample message")
+    @app_commands.describe(
+        message="Test message to analyze with the ensemble",
+        show_details="Whether to show detailed model breakdown"
+    )
+    async def test_ensemble_analysis(
+        self, 
+        interaction: discord.Interaction, 
+        message: str,
+        show_details: bool = True
+    ):
+        """Test ensemble analysis on a sample message"""
+        
+        if not await self._check_crisis_role(interaction):
+            return
+            
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            # Get ensemble analysis
+            if not hasattr(self.bot, 'nlp_client') or not self.bot.nlp_client:
+                await interaction.followup.send(
+                    "❌ NLP client not available",
+                    ephemeral=True
+                )
+                return
+            
+            result = await self.bot.nlp_client.analyze_message(
+                message,
+                str(interaction.user.id),
+                str(interaction.channel_id)
+            )
+            
+            if not result:
+                await interaction.followup.send(
+                    "❌ No result from ensemble analysis",
+                    ephemeral=True
+                )
+                return
+            
+            # Create analysis embed
+            embed = discord.Embed(
+                title="🧪 Three-Model Ensemble Test",
+                description=f"Analysis of: `{message[:100]}{'...' if len(message) > 100 else ''}`",
+                color=discord.Color.blue()
+            )
+            
+            # Final result
+            embed.add_field(
+                name="⚡ Final Result",
+                value=f"**Crisis Level:** {result.get('crisis_level', 'unknown')}\n"
+                      f"**Confidence:** {result.get('confidence_score', 0):.2%}\n"
+                      f"**Needs Response:** {'Yes' if result.get('needs_response') else 'No'}\n"
+                      f"**Method:** {result.get('method', 'unknown')}",
+                inline=False
+            )
+            
+            # Gap detection
+            if result.get('gap_detected'):
+                gap_details = result.get('gap_details', [])
+                embed.add_field(
+                    name="🔍 Gap Detection",
+                    value=f"**Gaps Detected:** {len(gap_details)}\n"
+                          f"**Staff Review Required:** {'Yes' if result.get('requires_staff_review') else 'No'}",
+                    inline=True
+                )
+            
+            # Model breakdown if requested and available
+            if show_details and result.get('model_breakdown'):
+                model_breakdown = result.get('model_breakdown')
+                breakdown_text = ""
+                
+                for model_name, model_data in model_breakdown.items():
+                    prediction = model_data.get('prediction', 'unknown')
+                    confidence = model_data.get('confidence', 0)
+                    breakdown_text += f"**{model_name.title()}:** {prediction} ({confidence:.2%})\n"
+                
+                embed.add_field(
+                    name="🎯 Individual Model Results",
+                    value=breakdown_text,
+                    inline=True
+                )
+            
+            # Processing info
+            processing_time = result.get('processing_time_ms', 0)
+            embed.add_field(
+                name="⏱️ Performance",
+                value=f"**Processing Time:** {processing_time:.1f}ms",
+                inline=True
+            )
+            
+            embed.set_footer(text=f"Test by {interaction.user.display_name} • Three-Model Ensemble")
+            
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            logger.error(f"❌ Error in ensemble test: {e}")
+            await interaction.followup.send(
+                f"❌ Error testing ensemble: {str(e)}",
+                ephemeral=True
+            )
+
+    # ADD THESE HELPER METHODS:
+
+    async def _get_current_detection(self, message: str) -> Optional[str]:
+        """Get current detection level for a message"""
+        try:
+            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
+                result = await self.bot.nlp_client.analyze_message(message)
+                if result:
+                    return result.get('crisis_level', 'none')
+            return None
+        except Exception as e:
+            logger.error(f"Error getting current detection: {e}")
+            return None
+
+    async def _send_false_positive_feedback(self, message: str, detected_level: str, correct_level: str, context: Dict) -> bool:
+        """Send false positive feedback to NLP learning system"""
+        try:
+            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
+                if hasattr(self.bot.nlp_client, 'send_staff_feedback'):
+                    success = await self.bot.nlp_client.send_staff_feedback(
+                        message, correct_level, detected_level, "false_positive"
+                    )
+                    return success
+            return False
+        except Exception as e:
+            logger.error(f"Error sending false positive feedback: {e}")
+            return False
+
+    async def _send_false_negative_feedback(self, message: str, should_be_level: str, actually_detected: str, context: Dict) -> bool:
+        """Send false negative feedback to NLP learning system"""
+        try:
+            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
+                if hasattr(self.bot.nlp_client, 'send_staff_feedback'):
+                    success = await self.bot.nlp_client.send_staff_feedback(
+                        message, should_be_level, actually_detected, "false_negative"
+                    )
+                    return success
+            return False
+        except Exception as e:
+            logger.error(f"Error sending false negative feedback: {e}")
+            return False
 
 async def setup(bot):
     """Setup function for the enhanced learning commands cog"""

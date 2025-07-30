@@ -1,72 +1,102 @@
 """
-NLP Integration Module for Ash Bot
-Connects to remote NLP service running on separate AI rig
+Enhanced NLP Integration Module for Ash Bot
+Connects to three-model ensemble NLP service with gap detection support
 """
 
 import aiohttp
 import asyncio
 import logging
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 logger = logging.getLogger(__name__)
 
-class RemoteNLPClient:
-    """Client for connecting to remote NLP service"""
+class EnhancedNLPClient:
+    """Enhanced client for connecting to three-model ensemble NLP service"""
     
     def __init__(self):
         # Configure the remote NLP service
-        self.nlp_host = os.getenv('GLOBAL_NLP_API_HOST', '10.2030.16')
+        self.nlp_host = os.getenv('GLOBAL_NLP_API_HOST', '10.20.30.253')
         self.nlp_port = os.getenv('GLOBAL_NLP_API_PORT', '8881')
         self.nlp_url = f"http://{self.nlp_host}:{self.nlp_port}"
-        self.timout = int(os.getenv('GLOBAL_REQUEST_TIMEOUT', '30'))
+        self.timeout = int(os.getenv('GLOBAL_REQUEST_TIMEOUT', '30'))
         
-        # Connection settings
-        self.timeout = 5.0  # 5 second timeout
+        # Connection settings optimized for three-model ensemble
+        self.analyze_timeout = 45.0  # Increased for three-model processing
+        self.health_timeout = 5.0
         self.retry_attempts = 2
         
         # Health tracking
         self.service_healthy = False
         self.last_health_check = 0
+        self.ensemble_status = "unknown"
         
-        logger.info(f"🌐 NLP Service configured: {self.nlp_url}")
+        # Performance tracking
+        self.stats = {
+            'total_requests': 0,
+            'successful_requests': 0,
+            'failed_requests': 0,
+            'gap_detections': 0,
+            'staff_reviews_flagged': 0,
+            'ensemble_methods_used': {
+                'unanimous_consensus': 0,
+                'best_of_disagreeing': 0,
+                'majority_vote': 0,
+                'weighted_ensemble': 0
+            }
+        }
+        
+        logger.info(f"🌐 Enhanced NLP Service configured: {self.nlp_url}")
+        logger.info(f"🎯 Three-model ensemble integration ready")
     
     async def test_connection(self):
-        """Test connection to remote NLP service"""
+        """Test connection to three-model ensemble NLP service"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    f"{self.nlp_url}/health",
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
+                    f"{self.nlp_url}/ensemble_health",
+                    timeout=aiohttp.ClientTimeout(total=self.health_timeout)
                 ) as response:
                     
                     if response.status == 200:
                         data = await response.json()
                         self.service_healthy = True
-                        logger.info(f"✅ Remote NLP Service connected: {data.get('status', 'unknown')}")
+                        self.ensemble_status = data.get('ensemble_status', 'unknown')
                         
-                        # Log hardware info if available
-                        if 'hardware_info' in data:
-                            hw = data['hardware_info']
-                            logger.info(f"🖥️ Remote hardware: {hw.get('cpu', 'unknown')} + {hw.get('ram', 'unknown')}")
+                        logger.info(f"✅ Three-Model Ensemble connected: {self.ensemble_status}")
+                        
+                        # Log individual model status
+                        individual_models = data.get('individual_models', {})
+                        for model_name, model_info in individual_models.items():
+                            status = "✅" if model_info.get('loaded') else "❌"
+                            logger.info(f"   {status} {model_name}: {model_info.get('name', 'unknown')}")
+                        
+                        # Log ensemble configuration
+                        ensemble_mode = data.get('ensemble_mode', 'unknown')
+                        gap_detection = data.get('gap_detection', {})
+                        logger.info(f"🎯 Ensemble mode: {ensemble_mode}")
+                        logger.info(f"🔍 Gap detection: {'enabled' if gap_detection.get('enabled') else 'disabled'}")
                         
                         return True
                     else:
-                        logger.warning(f"⚠️ NLP Service unhealthy: HTTP {response.status}")
+                        logger.warning(f"⚠️ Ensemble Service unhealthy: HTTP {response.status}")
                         self.service_healthy = False
                         return False
                         
         except asyncio.TimeoutError:
-            logger.warning(f"⏰ NLP Service timeout: {self.nlp_url}")
+            logger.warning(f"⏰ Ensemble Service timeout: {self.nlp_url}")
             self.service_healthy = False
             return False
         except Exception as e:
-            logger.warning(f"🔌 NLP Service connection failed: {e}")
+            logger.warning(f"🔌 Ensemble Service connection failed: {e}")
             self.service_healthy = False
             return False
     
     async def analyze_message(self, message_content: str, user_id: str = "unknown", channel_id: str = "unknown") -> Optional[Dict]:
-        """Analyze message using remote NLP service"""
+        """
+        Analyze message using three-model ensemble with gap detection
+        Returns enhanced results with ensemble analysis details
+        """
         
         if not self.service_healthy:
             # Try to reconnect
@@ -84,124 +114,282 @@ class RemoteNLPClient:
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f"{self.nlp_url}/analyze",
+                        f"{self.nlp_url}/analyze_ensemble",  # Use new ensemble endpoint
                         json=payload,
-                        timeout=aiohttp.ClientTimeout(total=self.timeout)
+                        timeout=aiohttp.ClientTimeout(total=self.analyze_timeout)
                     ) as response:
                         
                         if response.status == 200:
                             data = await response.json()
+                            self.stats['total_requests'] += 1
+                            self.stats['successful_requests'] += 1
                             
-                            # FIXED: Properly map all fields from NLP response
-                            return {
-                                'needs_response': data.get('needs_response', False),
-                                'crisis_level': data.get('crisis_level', 'none'),
-                                'confidence_score': data.get('confidence_score', 0.0),
-                                'detected_categories': data.get('detected_categories', []),
-                                'method': data.get('method', 'remote_nlp_service'),  # Use actual method from server
-                                'processing_time_ms': data.get('processing_time_ms', 0),  # Correct field name
-                                'model_info': data.get('model_info', 'Unknown'),
-                                'reasoning': data.get('reasoning', ''),
-                                # Legacy field for backward compatibility
-                                'processing_time': data.get('processing_time_ms', 0)
-                            }
+                            # Track ensemble method usage
+                            consensus_method = data.get('consensus_method', 'unknown')
+                            if consensus_method in self.stats['ensemble_methods_used']:
+                                self.stats['ensemble_methods_used'][consensus_method] += 1
+                            
+                            # Track gap detection
+                            if data.get('requires_staff_review', False):
+                                self.stats['gap_detections'] += 1
+                                self.stats['staff_reviews_flagged'] += 1
+                            
+                            # Convert to format expected by ash-bot
+                            result = self._convert_ensemble_to_legacy_format(data)
+                            
+                            logger.info(f"🎯 Ensemble analysis: {result['crisis_level']} "
+                                      f"(method: {consensus_method}, "
+                                      f"confidence: {result['confidence_score']:.2f})")
+                            
+                            if data.get('requires_staff_review'):
+                                gap_summary = data.get('gap_summary', {})
+                                logger.info(f"🔍 Gap detected: {gap_summary.get('total_gaps', 0)} gaps, "
+                                          f"staff review required")
+                            
+                            return result
+                            
                         else:
-                            logger.warning(f"NLP service returned status {response.status}")
-                            if attempt < self.retry_attempts - 1:
-                                await asyncio.sleep(0.5)
-                                continue
-                            return None
-                        
+                            logger.warning(f"⚠️ Ensemble API error: HTTP {response.status}")
+                            self.stats['failed_requests'] += 1
+                            self.service_healthy = False
+                            
             except asyncio.TimeoutError:
-                logger.warning(f"NLP service timeout (attempt {attempt + 1}/{self.retry_attempts})")
-                if attempt < self.retry_attempts - 1:
-                    await asyncio.sleep(0.5)
-                    continue
-                self.service_healthy = False
-                return None
+                logger.warning(f"⏰ Ensemble analysis timeout (attempt {attempt + 1})")
+                self.stats['failed_requests'] += 1
+                if attempt == self.retry_attempts - 1:
+                    self.service_healthy = False
+                    
             except Exception as e:
-                logger.warning(f"NLP service error (attempt {attempt + 1}/{self.retry_attempts}): {e}")
-                if attempt < self.retry_attempts - 1:
-                    await asyncio.sleep(0.5)
-                    continue
-                self.service_healthy = False
-                return None
+                logger.warning(f"🔌 Ensemble analysis failed: {e} (attempt {attempt + 1})")
+                self.stats['failed_requests'] += 1
+                if attempt == self.retry_attempts - 1:
+                    self.service_healthy = False
         
         return None
-
-    async def get_service_stats(self) -> Optional[Dict]:
-        """Get statistics from remote NLP service"""
+    
+    async def analyze_message_legacy(self, message_content: str, user_id: str = "unknown", channel_id: str = "unknown") -> Optional[Dict]:
+        """
+        Fallback to legacy /analyze endpoint if ensemble endpoint fails
+        Maintains compatibility with existing ash-bot code
+        """
+        
+        if not self.service_healthy:
+            await self.test_connection()
+            if not self.service_healthy:
+                return None
+        
         try:
+            payload = {
+                "message": message_content,
+                "user_id": str(user_id),
+                "channel_id": str(channel_id)
+            }
+            
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.nlp_url}/stats",
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
+                async with session.post(
+                    f"{self.nlp_url}/analyze",  # Legacy endpoint
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=self.analyze_timeout)
                 ) as response:
                     
                     if response.status == 200:
-                        return await response.json()
-                    else:
-                        return None
+                        data = await response.json()
+                        self.stats['total_requests'] += 1
+                        self.stats['successful_requests'] += 1
+                        
+                        # Convert to standard format
+                        return {
+                            'needs_response': data.get('needs_response', False),
+                            'crisis_level': data.get('crisis_level', 'none'),
+                            'confidence_score': data.get('confidence_score', 0.0),
+                            'detected_categories': data.get('detected_categories', []),
+                            'method': data.get('method', 'ensemble_legacy'),
+                            'processing_time_ms': data.get('processing_time_ms', 0),
+                            'reasoning': data.get('reasoning', ''),
+                            'ensemble_details': data.get('analysis', {})  # Include full ensemble analysis
+                        }
                         
         except Exception as e:
-            logger.error(f"Error getting NLP stats: {e}")
-            return None
-
-# Integration functions for your existing bot
-
-async def hybrid_crisis_detection(keyword_detector, nlp_client, message):
-    """
-    Run both keyword and remote ML detection for comparison
-    Add this function to your existing bot's main.py
-    """
+            logger.warning(f"🔌 Legacy analysis failed: {e}")
+            self.stats['failed_requests'] += 1
+        
+        return None
     
-    # Method 1: Existing keyword detection (local)
-    keyword_result = keyword_detector.check_message(message.content)
-    
-    # Method 2: Remote NLP service detection
-    nlp_result = await nlp_client.analyze_message(
-        message.content,
-        str(message.author.id),
-        str(message.channel.id)
-    )
-    
-    # Decision logic for which result to use
-    if nlp_result and nlp_result['needs_response']:
-        # Remote ML detected something - use it
-        final_result = {
-            'needs_response': True,
-            'crisis_level': nlp_result['crisis_level'],
-            'method': 'remote_ml_primary',
-            'confidence': nlp_result['confidence_score'],
-            'processing_time': nlp_result.get('processing_time_ms', 0)
-        }
-    elif keyword_result['needs_response']:
-        # Keywords detected something - use it (fallback)
-        final_result = {
-            'needs_response': True,
-            'crisis_level': keyword_result['crisis_level'],
-            'method': 'keyword_fallback',
-            'confidence': 0.9,  # Keywords are high confidence
-            'processing_time': 0  # Keywords are instant
-        }
-    else:
-        # Neither detected anything
-        final_result = {
-            'needs_response': False,
-            'crisis_level': 'none',
-            'method': 'no_detection',
-            'confidence': 0.0,
-            'processing_time': 0
+    def _convert_ensemble_to_legacy_format(self, ensemble_data: Dict) -> Dict:
+        """Convert ensemble response to format expected by existing ash-bot code"""
+        
+        # Extract ensemble analysis details
+        ensemble_analysis = ensemble_data.get('ensemble_analysis', {})
+        consensus = ensemble_analysis.get('consensus', {})
+        
+        return {
+            'needs_response': ensemble_data.get('needs_response', False),
+            'crisis_level': ensemble_data.get('crisis_level', 'none'),
+            'confidence_score': ensemble_data.get('consensus_confidence', 0.0),
+            'detected_categories': self._extract_ensemble_categories(ensemble_analysis),
+            'method': f"ensemble_{ensemble_data.get('consensus_method', 'unknown')}",
+            'processing_time_ms': ensemble_data.get('processing_time_ms', 0),
+            'reasoning': self._build_ensemble_reasoning(ensemble_data),
+            
+            # Enhanced fields for gap detection and learning
+            'requires_staff_review': ensemble_data.get('requires_staff_review', False),
+            'gap_detected': ensemble_analysis.get('gaps_detected', False),
+            'gap_details': ensemble_analysis.get('gap_details', []),
+            'ensemble_details': ensemble_analysis,
+            
+            # Individual model results for debugging
+            'model_breakdown': {
+                'depression': self._extract_model_result(ensemble_analysis, 'depression'),
+                'sentiment': self._extract_model_result(ensemble_analysis, 'sentiment'),
+                'emotional_distress': self._extract_model_result(ensemble_analysis, 'emotional_distress')
+            }
         }
     
-    # Log comparison for analysis
-    logger.info(f"Detection comparison: Keywords={keyword_result['crisis_level']}, RemoteML={nlp_result['crisis_level'] if nlp_result else 'unavailable'}, Final={final_result['crisis_level']} ({final_result['method']})")
+    def _extract_ensemble_categories(self, ensemble_analysis: Dict) -> List[str]:
+        """Extract detected categories from ensemble analysis"""
+        categories = []
+        
+        # Add categories from individual models
+        individual_results = ensemble_analysis.get('individual_results', {})
+        for model_name, results in individual_results.items():
+            if results:
+                top_result = max(results, key=lambda x: x.get('score', 0))
+                label = top_result.get('label', '').lower()
+                if label in ['severe', 'moderate', 'negative']:
+                    categories.append(f"{model_name}_{label}")
+        
+        # Add ensemble-specific categories
+        if ensemble_analysis.get('gaps_detected'):
+            categories.append('model_disagreement')
+        
+        consensus = ensemble_analysis.get('consensus', {})
+        if consensus.get('method') == 'unanimous_consensus':
+            categories.append('unanimous_consensus')
+        
+        return categories
     
-    return final_result
+    def _build_ensemble_reasoning(self, ensemble_data: Dict) -> str:
+        """Build human-readable reasoning from ensemble analysis"""
+        reasoning_parts = []
+        
+        ensemble_analysis = ensemble_data.get('ensemble_analysis', {})
+        consensus_method = ensemble_data.get('consensus_method', 'unknown')
+        
+        # Add consensus method info
+        if consensus_method == 'unanimous_consensus':
+            reasoning_parts.append("All three models agreed on the assessment")
+        elif consensus_method == 'best_of_disagreeing':
+            reasoning_parts.append("Models disagreed; used highest confidence prediction")
+        elif consensus_method == 'majority_vote':
+            reasoning_parts.append("Used majority vote between models")
+        elif consensus_method == 'weighted_ensemble':
+            reasoning_parts.append("Used weighted combination of model predictions")
+        
+        # Add gap detection info
+        if ensemble_data.get('requires_staff_review'):
+            gap_summary = ensemble_data.get('gap_summary', {})
+            total_gaps = gap_summary.get('total_gaps', 0)
+            reasoning_parts.append(f"Gap detected: {total_gaps} model disagreements flagged for review")
+        
+        # Add confidence info
+        confidence = ensemble_data.get('consensus_confidence', 0)
+        if confidence > 0.8:
+            reasoning_parts.append("High confidence in assessment")
+        elif confidence > 0.5:
+            reasoning_parts.append("Moderate confidence in assessment")
+        else:
+            reasoning_parts.append("Low confidence in assessment")
+        
+        return "; ".join(reasoning_parts)
+    
+    def _extract_model_result(self, ensemble_analysis: Dict, model_name: str) -> Dict:
+        """Extract individual model result for debugging"""
+        individual_results = ensemble_analysis.get('individual_results', {})
+        confidence_scores = ensemble_analysis.get('confidence_scores', {})
+        predictions = ensemble_analysis.get('predictions', {})
+        
+        return {
+            'prediction': predictions.get(model_name, 'unknown'),
+            'confidence': confidence_scores.get(model_name, 0.0),
+            'results': individual_results.get(model_name, [])
+        }
+    
+    async def get_ensemble_stats(self) -> Dict:
+        """Get comprehensive statistics from the ensemble service"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.nlp_url}/ensemble_health",
+                    timeout=aiohttp.ClientTimeout(total=self.health_timeout)
+                ) as response:
+                    
+                    if response.status == 200:
+                        server_stats = await response.json()
+                        
+                        # Combine server stats with client stats
+                        return {
+                            'client_stats': self.stats,
+                            'server_stats': server_stats,
+                            'service_healthy': self.service_healthy,
+                            'ensemble_status': self.ensemble_status
+                        }
+        except Exception as e:
+            logger.warning(f"Failed to get ensemble stats: {e}")
+        
+        return {
+            'client_stats': self.stats,
+            'server_stats': {},
+            'service_healthy': self.service_healthy,
+            'ensemble_status': self.ensemble_status
+        }
+    
+    async def send_staff_feedback(self, message_content: str, correct_level: str, detected_level: str, feedback_type: str = "correction") -> bool:
+        """
+        Send staff feedback to the NLP service for learning
+        
+        Args:
+            message_content: The original message
+            correct_level: What the crisis level should have been
+            detected_level: What was actually detected
+            feedback_type: 'false_positive' or 'false_negative'
+        """
+        try:
+            if feedback_type == "false_positive":
+                endpoint = "/analyze_false_positive"
+                payload = {
+                    "message": message_content,
+                    "detected_level": detected_level,
+                    "correct_level": correct_level,
+                    "context": {"source": "ash_bot_staff_correction"},
+                    "severity_score": 1
+                }
+            else:  # false_negative
+                endpoint = "/analyze_false_negative" 
+                payload = {
+                    "message": message_content,
+                    "should_detect_level": correct_level,
+                    "actually_detected": detected_level,
+                    "context": {"source": "ash_bot_staff_correction"},
+                    "severity_score": 1
+                }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.nlp_url}{endpoint}",
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    
+                    if response.status == 200:
+                        logger.info(f"✅ Staff feedback sent: {feedback_type} for '{message_content[:50]}...'")
+                        return True
+                    else:
+                        logger.warning(f"⚠️ Staff feedback failed: HTTP {response.status}")
+                        return False
+                        
+        except Exception as e:
+            logger.error(f"❌ Failed to send staff feedback: {e}")
+            return False
 
-# Environment variables to add to your .env file:
-"""
-# Remote NLP Service Configuration
-GLOBAL_NLP_API_HOST=192.168.1.100  # Replace with your AI rig's IP address
-GLOBAL_NLP_API_PORT=8881
-"""
+# For backwards compatibility, create alias
+RemoteNLPClient = EnhancedNLPClient

@@ -135,12 +135,12 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Step 1: Initialize integrations with resource management
         logger.info("🔌 Initializing integrations with resource management...")
         from integrations.claude_api import ClaudeAPI
-        from integrations.nlp_integration import RemoteNLPClient
+        from integrations.nlp_integration import EnhancedNLPClient
         from utils.keyword_detector import KeywordDetector
         
         # Pass config to ClaudeAPI
         self.claude_api = ClaudeAPI(self.config)
-        self.nlp_client = RemoteNLPClient()
+        self.nlp_client = EnhancedNLPClient()
         self.keyword_detector = KeywordDetector()
         
         # Register cleanup for integrations
@@ -193,11 +193,11 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Step 2: Initialize enhanced handlers with security
         logger.info("🚨 Initializing enhanced handlers with security...")
         from handlers.crisis_handler import CrisisHandler
-        from handlers.message_handler import MessageHandler
+        from handlers.message_handler import EnhancedMessageHandler
         
         self.crisis_handler = CrisisHandler(self, self.config)
         
-        self.message_handler = MessageHandler(
+        self.message_handler = EnhancedMessageHandler(
             self,
             self.claude_api,
             self.nlp_client, 
@@ -206,6 +206,8 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             self.config,
             security_manager=self.security_manager  # Pass security manager
         )
+        
+        await self.load_extension('commands.enhanced_learning_commands')
         
         logger.info("✅ All enhanced components initialized")
 
