@@ -122,6 +122,87 @@ class EnhancedMessageHandler:
             logger.error(f"❌ Error processing message from {message.author}: {e}")
             logger.exception("Full traceback:")
     
+    def _should_process_message(self, message: Message) -> bool:
+        """Enhanced message filtering with detailed logging"""
+        
+        if message.author.bot:
+            logger.debug(f"🤖 Ignored bot message from {message.author}")
+            return False
+        
+        if not message.guild or message.guild.id != self.guild_id:
+            logger.debug(f"🚫 Ignored message from wrong guild: {message.guild.id if message.guild else 'DM'}")
+            return False
+        
+        if not self.config.is_channel_allowed(message.channel.id):
+            logger.debug(f"🚫 Ignored message from restricted channel: {message.channel.id}")
+            return False
+        
+        logger.debug(f"📨 Processing message from {message.author} in {message.channel}: {message.content[:50]}...")
+        return True
+
+    async def check_rate_limits(self, user_id: int) -> bool:
+        """Check if user is within rate limits"""
+        current_time = time.time()
+        
+        # Clean old entries
+        if user_id in self.user_cooldowns:
+            self.user_cooldowns[user_id] = [
+                timestamp for timestamp in self.user_cooldowns[user_id]
+                if current_time - timestamp < 3600  # 1 hour
+            ]
+        else:
+            self.user_cooldowns[user_id] = []
+        
+        # Check rate limit
+        if len(self.user_cooldowns[user_id]) >= self.rate_limit_per_user:
+            return False
+        
+        # Add current timestamp
+        self.user_cooldowns[user_id].append(current_time)
+        return True
+
+    async def record_api_call(self, user_id: int):
+        """Record an API call for rate limiting"""
+        self.daily_call_count += 1
+        current_time = time.time()
+        
+        if user_id not in self.user_cooldowns:
+            self.user_cooldowns[user_id] = []
+        
+        self.user_cooldowns[user_id].append(current_time)
+
+    async def _handle_conversation_logic(self, message: Message, detection_result: Dict):
+        """Handle conversation setup and management"""
+        # For now, just log that conversation logic would happen here
+        # You can implement your full conversation logic later
+        if detection_result.get('needs_response'):
+            logger.info(f"💬 Would start conversation for {message.author.display_name}")
+            # Add your conversation management logic here if needed
+
+    def cleanup_expired_conversations(self):
+        """Clean up expired conversations"""
+        current_time = time.time()
+        expired_users = []
+        
+        for user_id, conv_data in self.active_conversations.items():
+            if current_time - conv_data.get('start_time', current_time) > self.conversation_timeout:
+                expired_users.append(user_id)
+        
+        for user_id in expired_users:
+            del self.active_conversations[user_id]
+            
+        if expired_users:
+            logger.info(f"💬 Cleaned up {len(expired_users)} expired conversations")
+
+    async def validate_message_security(self, message: Message) -> bool:
+        """Basic message security validation"""
+        # Basic security checks
+        if len(message.content) > 2000:  # Discord's limit
+            return False
+        
+        # Add more security checks as needed
+        return True
+
     async def _perform_enhanced_hybrid_detection(self, message: Message) -> Dict:
         """Enhanced hybrid detection using three-model ensemble with gap detection"""
         
