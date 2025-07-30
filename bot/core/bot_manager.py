@@ -231,6 +231,15 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             logger.error(f"❌ Failed to load Monitoring Commands: {e}")
             cog_errors.append(f"MonitoringCommands: {e}")
 
+        # Load NEW Ensemble Commands (replaces old individual learning system)
+        try:
+            from commands.ensemble_commands import EnsembleCommands
+            await self.add_cog(EnsembleCommands(self))
+            logger.info("✅ Loaded Ensemble Commands cog (three-model system)")
+        except Exception as e:
+            logger.error(f"❌ Failed to load Ensemble Commands: {e}")
+            cog_errors.append(f"EnsembleCommands: {e}")
+
         # Log cog loading errors as security events
         if cog_errors:
             logger.warning(f"⚠️ Cog loading errors: {cog_errors}")
