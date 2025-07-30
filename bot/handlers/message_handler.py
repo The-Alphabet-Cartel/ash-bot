@@ -77,11 +77,11 @@ class EnhancedMessageHandler:
         logger.info("📨 Enhanced message handler with three-model ensemble initialized")
         logger.info(f"🔍 Gap detection: {'enabled' if self.enable_gap_notifications else 'disabled'}")
     
-    async def process_message(self, message: Message):
+    async def handle_message(self, message: Message):
         """Enhanced message processing with three-model ensemble"""
         
         # Standard filtering
-        if not self._should_process_message(message):
+        if not self._should_handle_message(message):
             return
         
         # Rate limiting
@@ -429,7 +429,7 @@ class EnhancedMessageHandler:
         except Exception as e:
             logger.error(f"❌ Failed to handle crisis response: {e}")
     
-    # ... (rest of the existing methods like _should_process_message, check_rate_limits, etc.)
+    # ... (rest of the existing methods like _should_handle_message, check_rate_limits, etc.)
     # These remain largely the same as your current implementation
     
     def get_enhanced_stats(self) -> Dict:

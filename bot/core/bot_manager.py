@@ -357,7 +357,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Pass to message handler (which now has security manager)
         if self.message_handler:
-            await self.message_handler.process_message(message)
+            await self.message_handler.handle_message(message)
         else:
             logger.debug("Message handler not ready, using basic handling")
         
