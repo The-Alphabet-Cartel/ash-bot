@@ -1,6 +1,6 @@
 """
-Enhanced Monitoring Commands - FIXED datetime issue
-Copy this to: ash/bot/commands/monitoring_commands.py
+Enhanced Monitoring Commands - FIXED with detection_breakdown removed
+Updated for three-model ensemble support
 """
 
 import discord
@@ -8,18 +8,19 @@ from discord.ext import commands
 from discord import app_commands
 import logging
 import os
+import time
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
 class MonitoringCommands(commands.Cog):
-    """Enhanced monitoring commands for the modular bot"""
+    """Enhanced monitoring commands for the three-model ensemble bot"""
     
     def __init__(self, bot):
         self.bot = bot
         self.crisis_response_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID', '0'))
         
-        logger.info("📊 Enhanced monitoring commands loaded")
+        logger.info("📊 Enhanced monitoring commands loaded (detection_breakdown removed)")
     
     async def _check_crisis_role(self, interaction: discord.Interaction) -> bool:
         """Check if user has crisis response role"""
@@ -51,85 +52,54 @@ class MonitoringCommands(commands.Cog):
         try:
             embed = discord.Embed(
                 title="🖥️ Ash Bot v2.0 - Enhanced System Status",
-                description="Comprehensive modular architecture status",
+                description="Three-model ensemble with gap detection",
                 color=discord.Color.blue(),
-                timestamp=datetime.now(timezone.utc)  # FIXED: Use timezone-aware datetime
+                timestamp=datetime.now(timezone.utc)
             )
             
-            # Bot basic info - FIXED: Calculate uptime properly
-            bot_created = self.bot.user.created_at
+            # Bot basic info
             current_time = datetime.now(timezone.utc)
             
-            # Calculate actual bot uptime since startup (not since account creation)
-            # Use a simple approach - just show current status
             embed.add_field(
                 name="🤖 Bot Information",
-                value=f"**Status:** ✅ Online\n"
-                     f"**Architecture:** v2.0 Modular\n"
-                     f"**User:** {self.bot.user}\n"
-                     f"**Guild:** {interaction.guild.name}",
-                inline=True
-            )
-            
-            # Component status
-            components_status = []
-            if hasattr(self.bot, 'claude_api') and self.bot.claude_api:
-                components_status.append("✅ Claude API")
-            else:
-                components_status.append("❌ Claude API")
-                
-            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
-                components_status.append("✅ NLP Service")
-            else:
-                components_status.append("❌ NLP Service")
-                
-            if hasattr(self.bot, 'keyword_detector') and self.bot.keyword_detector:
-                components_status.append("✅ Keyword Detector")
-            else:
-                components_status.append("❌ Keyword Detector")
-                
-            if hasattr(self.bot, 'crisis_handler') and self.bot.crisis_handler:
-                components_status.append("✅ Crisis Handler")
-            else:
-                components_status.append("❌ Crisis Handler")
-                
-            if hasattr(self.bot, 'message_handler') and self.bot.message_handler:
-                components_status.append("✅ Message Handler")
-            else:
-                components_status.append("❌ Message Handler")
-            
-            embed.add_field(
-                name="🔧 Component Status",
-                value="\n".join(components_status),
-                inline=True
-            )
-            
-            # Command status
-            commands_count = len([cmd for cmd in self.bot.tree.walk_commands()])
-            embed.add_field(
-                name="⚡ Commands",
-                value=f"**Slash Commands:** {commands_count}\n"
-                     f"**Status:** ✅ Active\n"
+                value=f"**Status:** {'🟢 Online' if self.bot.is_ready() else '🔴 Offline'}\n"
+                     f"**Guilds:** {len(self.bot.guilds)}\n"
+                     f"**Users:** {len(self.bot.users)}\n"
+                     f"**Commands:** {len(self.bot.tree.get_commands())}\n"
                      f"**Sync Status:** Global",
                 inline=True
             )
             
-            # Get message handler stats if available
+            # Get enhanced message handler stats if available
             if hasattr(self.bot, 'message_handler') and self.bot.message_handler:
                 try:
-                    stats = self.bot.message_handler.get_message_handler_stats()
+                    # Use the correct method name for EnhancedMessageHandler
+                    stats = self.bot.message_handler.get_enhanced_stats()
+                    
                     embed.add_field(
-                        name="📨 Message Processing",
-                        value=f"**Processed Today:** {stats['message_processing']['total_messages_processed']}\n"
-                             f"**Crisis Responses:** {stats['message_processing']['crisis_responses_given']}\n"
-                             f"**Active Conversations:** {stats['conversation_tracking']['active_conversations']}\n"
-                             f"**Rate Limit Success:** {stats['rate_limiting']['success_rate_percent']}%",
+                        name="📨 Three-Model Ensemble",
+                        value=f"**Messages Processed:** {stats['total_messages_processed']}\n"
+                             f"**Crisis Responses:** {stats['crisis_responses_given']}\n"
+                             f"**Ensemble Analyses:** {stats['ensemble_analyses_performed']}\n"
+                             f"**Gaps Detected:** {stats['gaps_detected']}\n"
+                             f"**Staff Reviews:** {stats['staff_reviews_flagged']}",
                         inline=True
                     )
+                    
+                    # Ensemble-specific metrics
+                    embed.add_field(
+                        name="🎯 Ensemble Metrics",
+                        value=f"**Unanimous Consensus:** {stats['unanimous_consensus_count']}\n"
+                             f"**Model Disagreements:** {stats['model_disagreement_count']}\n"
+                             f"**Gap Detection Rate:** {stats['gap_detection_rate']:.1%}\n"
+                             f"**Staff Review Rate:** {stats['staff_review_rate']:.1%}",
+                        inline=True
+                    )
+                    
                 except Exception as e:
                     embed.add_field(
                         name="📨 Message Processing",
-                        value="Statistics unavailable",
+                        value=f"Statistics unavailable: {str(e)[:50]}...",
                         inline=True
                     )
             
@@ -142,7 +112,7 @@ class MonitoringCommands(commands.Cog):
                         value=f"**High Crises:** {crisis_stats['high_crisis_count']}\n"
                              f"**Medium Crises:** {crisis_stats['medium_crisis_count']}\n"
                              f"**Low Crises:** {crisis_stats['low_crisis_count']}\n"
-                             f"**Success Rate:** {crisis_stats['success_rate']}%",
+                             f"**Success Rate:** {crisis_stats['success_rate_percent']}%",
                         inline=True
                     )
                 except Exception as e:
@@ -151,6 +121,33 @@ class MonitoringCommands(commands.Cog):
                         value="Statistics unavailable",
                         inline=True
                     )
+            
+            # Service status checks
+            service_status = []
+            
+            # NLP Service
+            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
+                service_status.append("✅ NLP Service (Three-Model Ensemble)")
+            else:
+                service_status.append("❌ NLP Service")
+            
+            # Claude API
+            if hasattr(self.bot, 'claude_api') and self.bot.claude_api:
+                service_status.append("✅ Claude API")
+            else:
+                service_status.append("❌ Claude API")
+            
+            # Keyword Detector
+            if hasattr(self.bot, 'keyword_detector') and self.bot.keyword_detector:
+                service_status.append("✅ Keyword Detector")
+            else:
+                service_status.append("❌ Keyword Detector")
+            
+            embed.add_field(
+                name="🔧 Services",
+                value="\n".join(service_status),
+                inline=True
+            )
             
             # Configuration status
             config_status = []
@@ -169,18 +166,105 @@ class MonitoringCommands(commands.Cog):
                 inline=False
             )
             
-            embed.set_footer(text="Enhanced Monitoring System | Ash v2.0 Modular")
+            embed.set_footer(text="Three-Model Ensemble System | Ash v2.0")
             
             await interaction.response.send_message(embed=embed, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Error in system_status command: {e}")
-            logger.exception("Full traceback:")  # Added full traceback for debugging
+            logger.exception("Full traceback:")
             await interaction.response.send_message(
                 f"❌ Error retrieving system status: {str(e)}", 
                 ephemeral=True
             )
     
+    @app_commands.command(name="ensemble_stats", description="View three-model ensemble statistics")
+    async def ensemble_stats(self, interaction: discord.Interaction):
+        """View detailed three-model ensemble statistics"""
+        
+        if not await self._check_crisis_role(interaction):
+            return
+        
+        try:
+            if not hasattr(self.bot, 'message_handler') or not self.bot.message_handler:
+                await interaction.response.send_message(
+                    "❌ Message handler not available", 
+                    ephemeral=True
+                )
+                return
+            
+            stats = self.bot.message_handler.get_enhanced_stats()
+            
+            embed = discord.Embed(
+                title="🎯 Three-Model Ensemble Statistics",
+                description="Detailed breakdown of ensemble performance",
+                color=discord.Color.purple()
+            )
+            
+            # Detection method breakdown
+            detection_methods = stats['detection_method_breakdown']
+            total_detections = sum(detection_methods.values())
+            
+            if total_detections > 0:
+                method_text = ""
+                for method, count in detection_methods.items():
+                    percentage = (count / total_detections) * 100
+                    method_text += f"**{method.replace('_', ' ').title()}:** {count} ({percentage:.1f}%)\n"
+                
+                embed.add_field(
+                    name="🔍 Detection Methods",
+                    value=method_text,
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="🔍 Detection Methods",
+                    value="No detections recorded yet",
+                    inline=False
+                )
+            
+            # Ensemble performance metrics
+            embed.add_field(
+                name="📊 Ensemble Performance",
+                value=f"**Total Analyses:** {stats['ensemble_analyses_performed']}\n"
+                     f"**Gaps Detected:** {stats['gaps_detected']}\n"
+                     f"**Staff Reviews Flagged:** {stats['staff_reviews_flagged']}\n"
+                     f"**Gap Detection Rate:** {stats['gap_detection_rate']:.1%}\n"
+                     f"**Staff Review Rate:** {stats['staff_review_rate']:.1%}",
+                inline=True
+            )
+            
+            # Consensus analysis
+            embed.add_field(
+                name="🤝 Consensus Analysis",
+                value=f"**Unanimous Consensus:** {stats['unanimous_consensus_count']}\n"
+                     f"**Model Disagreements:** {stats['model_disagreement_count']}\n"
+                     f"**Consensus Rate:** {stats['unanimous_consensus_rate']:.1%}",
+                inline=True
+            )
+            
+            # Rate limiting and performance
+            embed.add_field(
+                name="⚡ Performance",
+                value=f"**Messages Processed:** {stats['total_messages_processed']}\n"
+                     f"**Crisis Responses:** {stats['crisis_responses_given']}\n"
+                     f"**Rate Limits Hit:** {stats['rate_limits_hit']}\n"
+                     f"**Daily Limits Hit:** {stats['daily_limits_hit']}",
+                inline=False
+            )
+            
+            embed.set_footer(text="Three-Model Ensemble: Depression • Sentiment • Emotional Distress")
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            logger.error(f"Error in ensemble_stats command: {e}")
+            logger.exception("Full traceback:")
+            await interaction.response.send_message(
+                f"❌ Error retrieving ensemble statistics: {str(e)}", 
+                ephemeral=True
+            )
+
     @app_commands.command(name="conversation_stats", description="View conversation isolation statistics")
     async def conversation_stats(self, interaction: discord.Interaction):
         """View statistics about conversation isolation and mention requirements"""
@@ -197,57 +281,49 @@ class MonitoringCommands(commands.Cog):
                 return
             
             handler = self.bot.message_handler
-            stats = handler.message_stats
+            stats = handler.get_enhanced_stats()
             
             embed = discord.Embed(
                 title="💬 Conversation Isolation Statistics",
                 description="Statistics for the mention/ping requirement system",
-                color=discord.Color.blue()
+                color=discord.Color.green()
             )
             
-            # Basic conversation stats
+            # Conversation metrics
             embed.add_field(
-                name="📊 Conversation Activity",
-                value=f"**Started:** {stats.get('conversations_started', 0)}\n"
-                     f"**Follow-ups handled:** {stats.get('follow_ups_handled', 0)}\n"
-                     f"**Currently active:** {len(handler.active_conversations)}\n"
-                     f"**Ignored attempts:** {stats.get('ignored_follow_ups', 0)}\n"
-                     f"**🚫 Intrusions blocked:** {stats.get('intrusion_attempts_blocked', 0)}\n"
-                     f"**🚨 Crisis overrides:** {stats.get('crisis_overrides_triggered', 0)}",
+                name="💬 Conversation Metrics",
+                value=f"**Conversations Started:** {stats['conversations_started']}\n"
+                     f"**Follow-ups Handled:** {stats['follow_ups_handled']}\n"
+                     f"**Ignored Follow-ups:** {stats['ignored_follow_ups']}\n"
+                     f"**Intrusions Blocked:** {stats['intrusion_attempts_blocked']}\n"
+                     f"**Crisis Overrides:** {stats['crisis_overrides_triggered']}",
                 inline=True
             )
             
-            # Configuration status
-            config_status = []
-            if handler.config.get_bool('BOT_CONVERSATION_REQUIRES_MENTION', True):
-                config_status.append("✅ Mention requirement: Enabled")
-            else:
-                config_status.append("❌ Mention requirement: Disabled")
-                
-            if handler.config.get_bool('BOT_CONVERSATION_SETUP_INSTRUCTIONS', True):
-                config_status.append("✅ Setup instructions: Enabled")
-            else:
-                config_status.append("❌ Setup instructions: Disabled")
-                
-            if handler.config.get_bool('BOT_CONVERSATION_ALLOW_STARTERS', True):
-                config_status.append("✅ Natural starters: Enabled")
-            else:
-                config_status.append("❌ Natural starters: Disabled")
-                
-            # Crisis override levels
-            override_levels = handler.config.get('BOT_CRISIS_OVERRIDE_LEVELS', 'medium,high')
-            config_status.append(f"🚨 Crisis overrides: {override_levels}")
+            # Configuration info
+            mention_required = self.bot.config.get_bool('BOT_CONVERSATION_REQUIRES_MENTION', True)
+            triggers = self.bot.config.get('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash,ash help,@ash')
+            timeout = self.bot.config.get_int('BOT_CONVERSATION_TIMEOUT', 300)
             
             embed.add_field(
                 name="⚙️ Configuration",
-                value="\n".join(config_status),
+                value=f"**Mention Required:** {'✅ Yes' if mention_required else '❌ No'}\n"
+                     f"**Timeout:** {timeout} seconds\n"
+                     f"**Override Levels:** {self.bot.config.get('BOT_CRISIS_OVERRIDE_LEVELS', 'medium,high')}",
                 inline=True
             )
             
-            # Trigger phrases
-            triggers = handler.config.get('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash')
-            trigger_list = [f"`{trigger.strip()}`" for trigger in triggers.split(',')[:5]]  # Show first 5
+            # Current active conversations
+            active_count = len(handler.active_conversations) if hasattr(handler, 'active_conversations') else 0
+            embed.add_field(
+                name="🔄 Current Status",
+                value=f"**Active Conversations:** {active_count}\n"
+                     f"**System Status:** {'🟢 Operational' if active_count >= 0 else '🔴 Error'}",
+                inline=False
+            )
             
+            # Trigger phrases
+            trigger_list = triggers.split(',')[:5]  # Show first 5
             embed.add_field(
                 name="🔤 Trigger Phrases",
                 value=" • " + "\n • ".join(trigger_list) + 
@@ -255,57 +331,21 @@ class MonitoringCommands(commands.Cog):
                 inline=False
             )
             
-            # Active conversations details
-            if handler.active_conversations:
-                active_details = []
-                for user_id, conv_data in list(handler.active_conversations.items())[:5]:  # Show first 5
-                    try:
-                        user = await self.bot.fetch_user(user_id)
-                        duration = time.time() - conv_data['start_time']
-                        time_left = max(0, handler.conversation_timeout - duration)
-                        
-                        active_details.append(
-                            f"**{user.display_name}** ({conv_data['crisis_level']}) - {time_left:.0f}s left"
-                        )
-                    except:
-                        active_details.append(f"**User {user_id}** ({conv_data['crisis_level']})")
-                
-                embed.add_field(
-                    name="👥 Active Conversations",
-                    value="\n".join(active_details) + 
-                         (f"\n...and {len(handler.active_conversations) - 5} more" if len(handler.active_conversations) > 5 else ""),
-                    inline=False
-                )
-            
-            # Effectiveness metrics
-            total_attempts = stats.get('follow_ups_handled', 0) + stats.get('ignored_follow_ups', 0)
-            intrusion_attempts = stats.get('intrusion_attempts_blocked', 0)
-            
-            if total_attempts > 0:
-                success_rate = (stats.get('follow_ups_handled', 0) / total_attempts) * 100
-                embed.add_field(
-                    name="📈 Effectiveness",
-                    value=f"**Follow-up success rate:** {success_rate:.1f}%\n"
-                         f"**Isolation working:** {'✅ Yes' if stats.get('ignored_follow_ups', 0) > 0 else '⚠️ Untested'}\n"
-                         f"**Intrusions blocked:** {'🛡️ ' + str(intrusion_attempts) if intrusion_attempts > 0 else '✅ None'}",
-                    inline=True
-                )
-            
-            embed.set_footer(text="Conversation Isolation System | Ash v2.0")
+            embed.set_footer(text="Conversations expire after timeout • Crisis overrides bypass isolation")
             
             await interaction.response.send_message(embed=embed, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Error in conversation_stats command: {e}")
+            logger.exception("Full traceback:")
             await interaction.response.send_message(
                 f"❌ Error retrieving conversation statistics: {str(e)}", 
                 ephemeral=True
             )
 
-    @app_commands.command(name="test_mention", description="Test the mention requirement system")
-    async def test_mention(self, interaction: discord.Interaction, 
-                          test_message: str = "ash help me"):
-        """Test whether a message would trigger the mention system"""
+    @app_commands.command(name="active_conversations", description="View currently active conversations")
+    async def active_conversations(self, interaction: discord.Interaction):
+        """View currently active conversations"""
         
         if not await self._check_crisis_role(interaction):
             return
@@ -320,138 +360,48 @@ class MonitoringCommands(commands.Cog):
             
             handler = self.bot.message_handler
             
-            # Create a mock message object for testing
-            class MockMessage:
-                def __init__(self, content, author_id):
-                    self.content = content
-                    self.author = type('author', (), {'id': author_id})()
-                    self.mentions = []  # Would contain bot mentions in real message
-            
-            mock_msg = MockMessage(test_message, interaction.user.id)
-            
-            # Test the trigger detection
-            would_respond = handler._should_respond_in_conversation(mock_msg, interaction.user.id)
-            
-            embed = discord.Embed(
-                title="🧪 Mention System Test",
-                description=f"Testing message: `{test_message}`",
-                color=discord.Color.green() if would_respond else discord.Color.red()
-            )
-            
-            embed.add_field(
-                name="🤖 Would Ash Respond?",
-                value="✅ Yes" if would_respond else "❌ No",
-                inline=True
-            )
-            
-            # Check what triggered (or didn't trigger)
-            triggers = handler.config.get('BOT_CONVERSATION_TRIGGER_PHRASES', 'ash,hey ash').split(',')
-            message_lower = test_message.lower()
-            
-            matched_triggers = [trigger.strip() for trigger in triggers if trigger.strip().lower() in message_lower]
-            
-            if matched_triggers:
-                embed.add_field(
-                    name="🔤 Matched Triggers",
-                    value=" • " + "\n • ".join([f"`{trigger}`" for trigger in matched_triggers]),
-                    inline=True
-                )
-            
-            # Check conversation starters
-            if handler.config.get_bool('BOT_CONVERSATION_ALLOW_STARTERS', True):
-                starters = ["i'm still", "i still", "but i", "what if", "can you", "help me", "i need"]
-                matched_starters = [starter for starter in starters if message_lower.startswith(starter)]
-                
-                if matched_starters:
-                    embed.add_field(
-                        name="🗣️ Matched Starters",
-                        value=" • " + "\n • ".join([f"`{starter}`" for starter in matched_starters]),
-                        inline=True
-                    )
-            
-            embed.add_field(
-                name="💡 Tips",
-                value="• Use `@Ash` or mention the bot directly\n"
-                     "• Say 'ash', 'hey ash', or 'ash help'\n"
-                     "• Start with natural phrases like 'I need' or 'Can you'",
-                inline=False
-            )
-            
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            
-        except Exception as e:
-            logger.error(f"Error in test_mention command: {e}")
-            await interaction.response.send_message(
-                f"❌ Error testing mention system: {str(e)}", 
-                ephemeral=True
-            )
-
-    @app_commands.command(name="active_conversations", description="View active crisis conversations")
-    async def active_conversations(self, interaction: discord.Interaction):
-        """View all active crisis conversations"""
-        
-        if not await self._check_crisis_role(interaction):
-            return
-        
-        try:
-            if not hasattr(self.bot, 'message_handler') or not self.bot.message_handler:
-                await interaction.response.send_message(
-                    "❌ Message handler not available", 
-                    ephemeral=True
-                )
-                return
-            
-            active_convs = self.bot.message_handler.active_conversations
-            
-            if not active_convs:
+            if not hasattr(handler, 'active_conversations') or not handler.active_conversations:
                 embed = discord.Embed(
                     title="💬 Active Conversations",
-                    description="No active crisis conversations at this time",
+                    description="No active conversations currently",
                     color=discord.Color.green()
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-            
-            embed = discord.Embed(
-                title="💬 Active Crisis Conversations",
-                description=f"Currently tracking {len(active_convs)} active conversations",
-                color=discord.Color.orange()
-            )
-            
-            for user_id, conv_data in list(active_convs.items())[:10]:  # Show max 10
-                try:
-                    user = await self.bot.fetch_user(user_id)
-                    channel = self.bot.get_channel(conv_data['channel_id'])
-                    
-                    import time
-                    current_time = time.time()
-                    duration = current_time - conv_data['start_time']
-                    time_remaining = max(0, 300 - duration)  # 5 minutes timeout
-                    
-                    embed.add_field(
-                        name=f"👤 {user.display_name}",
-                        value=f"**Crisis Level:** {conv_data['crisis_level'].title()}\n"
-                             f"**Channel:** {channel.mention if channel else 'Unknown'}\n"
-                             f"**Duration:** {duration:.0f}s\n"
-                             f"**Time Left:** {time_remaining:.0f}s\n"
-                             f"**Follow-ups:** {conv_data.get('follow_up_count', 0)}\n"
-                             f"**Escalations:** {conv_data.get('escalations', 0)}",
-                        inline=True
-                    )
-                except Exception as e:
-                    embed.add_field(
-                        name=f"👤 User {user_id}",
-                        value=f"**Crisis Level:** {conv_data['crisis_level'].title()}\n"
-                             f"**Error loading details:** {str(e)[:50]}",
-                        inline=True
-                    )
-            
-            if len(active_convs) > 10:
-                embed.add_field(
-                    name="Additional Conversations",
-                    value=f"...and {len(active_convs) - 10} more active conversations",
-                    inline=False
+            else:
+                embed = discord.Embed(
+                    title="💬 Active Conversations",
+                    description=f"{len(handler.active_conversations)} conversations active",
+                    color=discord.Color.orange()
                 )
+                
+                # Show conversation details
+                for user_id, conv_data in list(handler.active_conversations.items())[:10]:  # Limit to 10
+                    try:
+                        user = await self.bot.fetch_user(user_id)
+                        duration = time.time() - conv_data.get('start_time', time.time())
+                        time_left = max(0, handler.conversation_timeout - duration)
+                        
+                        embed.add_field(
+                            name=f"👤 {user.display_name}",
+                            value=f"**Crisis Level:** {conv_data.get('crisis_level', 'unknown')}\n"
+                                 f"**Duration:** {duration:.0f}s\n"
+                                 f"**Time Left:** {time_left:.0f}s\n"
+                                 f"**Channel:** <#{conv_data.get('channel_id', 'unknown')}>",
+                            inline=True
+                        )
+                    except Exception:
+                        embed.add_field(
+                            name=f"👤 User {user_id}",
+                            value=f"**Crisis Level:** {conv_data.get('crisis_level', 'unknown')}\n"
+                                 f"**Channel:** <#{conv_data.get('channel_id', 'unknown')}>",
+                            inline=True
+                        )
+                
+                if len(handler.active_conversations) > 10:
+                    embed.add_field(
+                        name="📋 Note",
+                        value=f"Showing first 10 of {len(handler.active_conversations)} conversations",
+                        inline=False
+                    )
             
             embed.set_footer(text="Conversations expire after 5 minutes of inactivity")
             
@@ -462,88 +412,6 @@ class MonitoringCommands(commands.Cog):
             logger.exception("Full traceback:")
             await interaction.response.send_message(
                 f"❌ Error retrieving conversations: {str(e)}", 
-                ephemeral=True
-            )
-    
-    @app_commands.command(name="detection_breakdown", description="View crisis detection method breakdown")
-    async def detection_breakdown(self, interaction: discord.Interaction):
-        """View detailed breakdown of detection methods"""
-        
-        if not await self._check_crisis_role(interaction):
-            return
-        
-        try:
-            embed = discord.Embed(
-                title="🔍 Crisis Detection Method Breakdown",
-                description="Analysis of how crises are being detected",
-                color=discord.Color.purple()
-            )
-            
-            # Get message handler stats
-            if hasattr(self.bot, 'message_handler') and self.bot.message_handler:
-                stats = self.bot.message_handler.get_message_handler_stats()
-                
-                detection_methods = stats['detection_breakdown']
-                total_detections = sum(detection_methods.values())
-                
-                if total_detections > 0:
-                    for method, count in detection_methods.items():
-                        percentage = (count / total_detections) * 100
-                        embed.add_field(
-                            name=f"🔍 {method.replace('_', ' ').title()}",
-                            value=f"**Count:** {count}\n**Percentage:** {percentage:.1f}%",
-                            inline=True
-                        )
-                    
-                    embed.add_field(
-                        name="📊 Total Detections",
-                        value=f"{total_detections} crisis detections processed",
-                        inline=False
-                    )
-                else:
-                    embed.add_field(
-                        name="📊 Detection Status",
-                        value="No crisis detections recorded yet",
-                        inline=False
-                    )
-                
-                # Rate limiting info
-                rate_info = stats['rate_limiting']
-                embed.add_field(
-                    name="⏱️ Rate Limiting",
-                    value=f"**Success Rate:** {rate_info['success_rate_percent']}%\n"
-                         f"**Daily Calls:** {rate_info['current_daily_calls']}/{rate_info['max_daily_calls']}\n"
-                         f"**Per User Limit:** {rate_info['rate_limit_per_user']}/hour",
-                    inline=True
-                )
-            else:
-                embed.add_field(
-                    name="❌ Detection Analysis",
-                    value="Message handler not available for detailed breakdown",
-                    inline=False
-                )
-            
-            # Keyword detector stats
-            if hasattr(self.bot, 'keyword_detector') and self.bot.keyword_detector:
-                keyword_stats = self.bot.keyword_detector.get_keyword_stats()
-                embed.add_field(
-                    name="🔤 Keyword Statistics",
-                    value=f"**High Crisis:** {keyword_stats['high_crisis']} keywords\n"
-                         f"**Medium Crisis:** {keyword_stats['medium_crisis']} keywords\n"
-                         f"**Low Crisis:** {keyword_stats['low_crisis']} keywords\n"
-                         f"**Total:** {keyword_stats['total']} keywords",
-                    inline=True
-                )
-            
-            embed.set_footer(text="Detection methods: Keyword Only | NLP Primary | Hybrid Detection")
-            
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            
-        except Exception as e:
-            logger.error(f"Error in detection_breakdown command: {e}")
-            logger.exception("Full traceback:")
-            await interaction.response.send_message(
-                f"❌ Error retrieving detection breakdown: {str(e)}", 
                 ephemeral=True
             )
 
@@ -578,7 +446,11 @@ class MonitoringCommands(commands.Cog):
             # Test NLP analysis if available
             if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
                 try:
-                    nlp_result = await self.bot.nlp_client.analyze_message(test_message)
+                    nlp_result = await self.bot.nlp_client.analyze_message(
+                        test_message,
+                        str(interaction.user.id),
+                        str(interaction.channel.id)
+                    )
                     analysis_results['nlp_analysis'] = nlp_result
                 except Exception as e:
                     logger.warning(f"NLP analysis failed: {e}")
@@ -600,8 +472,8 @@ class MonitoringCommands(commands.Cog):
                             self.guild = interaction.guild
                     
                     mock_msg = MockMessage(test_message)
-                    # Use the message handler's hybrid detection method
-                    final_result = await self.bot.message_handler._perform_hybrid_detection(mock_msg)
+                    # Use the correct method name for EnhancedMessageHandler
+                    final_result = await self.bot.message_handler._perform_enhanced_hybrid_detection(mock_msg)
                     analysis_results['final_decision'] = final_result
                 except Exception as e:
                     logger.warning(f"Message handler analysis failed: {e}")
@@ -609,7 +481,7 @@ class MonitoringCommands(commands.Cog):
             
             # Create response embed
             embed = discord.Embed(
-                title="🧪 Message Analysis Test",
+                title="🧪 Three-Model Ensemble Analysis Test",
                 description=f"**Test Message:** `{test_message[:100]}{'...' if len(test_message) > 100 else ''}`",
                 color=discord.Color.blue()
             )
@@ -626,13 +498,6 @@ class MonitoringCommands(commands.Cog):
                           f"**Categories:** {', '.join(kw_result.get('detected_categories', [])) if kw_result.get('detected_categories') else 'None'}",
                     inline=True
                 )
-                
-                if show_details and kw_result.get('detected_keywords'):
-                    embed.add_field(
-                        name="🎯 Detected Keywords",
-                        value=f"```{', '.join(kw_result['detected_keywords'][:5])}{'...' if len(kw_result['detected_keywords']) > 5 else ''}```",
-                        inline=True
-                    )
             else:
                 embed.add_field(
                     name="🔤 Keyword Detection",
@@ -640,17 +505,16 @@ class MonitoringCommands(commands.Cog):
                     inline=True
                 )
             
-            # NLP Analysis Results
+            # Three-Model Ensemble Results
             if analysis_results['nlp_analysis']:
                 nlp_result = analysis_results['nlp_analysis']
                 if 'error' in nlp_result:
                     embed.add_field(
-                        name="🧠 NLP Analysis",
+                        name="🎯 Three-Model Ensemble",
                         value=f"❌ Error: {nlp_result['error'][:50]}...",
                         inline=True
                     )
                 else:
-                    # Use the correct field names from NLP response
                     confidence = nlp_result.get('confidence_score', 0)
                     nlp_level = nlp_result.get('crisis_level', 'unknown')
                     nlp_color = "🔴" if nlp_level == 'high' else "🟡" if nlp_level == 'medium' else "🟢" if nlp_level == 'low' else "⚪"
@@ -658,34 +522,38 @@ class MonitoringCommands(commands.Cog):
                     processing_time = nlp_result.get('processing_time_ms', 0)
                     method = nlp_result.get('method', 'unknown')
                     
+                    ensemble_text = f"{nlp_color} **Level:** {nlp_level.title()}\n"
+                    ensemble_text += f"**Confidence:** {confidence:.2%}\n"
+                    ensemble_text += f"**Method:** {method.replace('_', ' ').title()}\n"
+                    ensemble_text += f"**Processing:** {processing_time}ms"
+                    
+                    if nlp_result.get('gap_detected'):
+                        ensemble_text += f"\n🔍 **Gaps Detected:** {len(nlp_result.get('gap_details', []))}"
+                    
                     embed.add_field(
-                        name="🧠 NLP Analysis",
-                        value=f"{nlp_color} **Level:** {nlp_level.title()}\n"
-                              f"**Confidence:** {confidence:.2%}\n"
-                              f"**Method:** {method}\n"
-                              f"**Time:** {processing_time:.1f}ms",
+                        name="🎯 Three-Model Ensemble",
+                        value=ensemble_text,
                         inline=True
                     )
                     
-                    if show_details and nlp_result.get('reasoning'):
-                        embed.add_field(
-                            name="🔍 AI Reasoning",
-                            value=f"```{nlp_result['reasoning'][:100]}{'...' if len(nlp_result['reasoning']) > 100 else ''}```",
-                            inline=False
-                        )
-                    
-                    # Show detected categories if available
-                    if nlp_result.get('detected_categories'):
-                        categories = nlp_result['detected_categories']
-                        embed.add_field(
-                            name="🏷️ Categories",
-                            value=f"```{', '.join(categories[:3])}{'...' if len(categories) > 3 else ''}```",
-                            inline=True
-                        )
+                    # Show model breakdown if available and requested
+                    if show_details and nlp_result.get('model_breakdown'):
+                        breakdown_text = ""
+                        for model, data in nlp_result.get('model_breakdown', {}).items():
+                            pred = data.get('prediction', 'unknown')
+                            conf = data.get('confidence', 0)
+                            breakdown_text += f"**{model.title()}:** {pred} ({conf:.2%})\n"
+                        
+                        if breakdown_text:
+                            embed.add_field(
+                                name="🤖 Model Breakdown",
+                                value=breakdown_text,
+                                inline=False
+                            )
             else:
                 embed.add_field(
-                    name="🧠 NLP Analysis",
-                    value="⚪ NLP service not available",
+                    name="🎯 Three-Model Ensemble",
+                    value="❌ NLP service not available",
                     inline=True
                 )
             
@@ -699,30 +567,32 @@ class MonitoringCommands(commands.Cog):
                         inline=False
                     )
                 else:
-                    final_level = final_result.get('crisis_level', 'unknown')
-                    final_color = "🔴" if final_level == 'high' else "🟡" if final_level == 'medium' else "🟢" if final_level == 'low' else "⚪"
-                    would_respond = final_result.get('needs_response', False)
-                    method = final_result.get('method', 'Unknown')  # Fixed field name
+                    crisis_level = final_result.get('crisis_level', 'unknown')
                     confidence = final_result.get('confidence', 0)
+                    method = final_result.get('method', 'unknown')
+                    
+                    decision_color = "🔴" if crisis_level == 'high' else "🟡" if crisis_level == 'medium' else "🟢" if crisis_level == 'low' else "⚪"
                     
                     embed.add_field(
                         name="⚡ Final Decision",
-                        value=f"{final_color} **Crisis Level:** {final_level.title()}\n"
-                              f"**Would Respond:** {'✅ Yes' if would_respond else '❌ No'}\n"
-                              f"**Method:** {method}\n"
-                              f"**Confidence:** {confidence:.2%}",
+                        value=f"{decision_color} **Level:** {crisis_level.title()}\n"
+                              f"**Method:** {method.replace('_', ' ').title()}\n"
+                              f"**Confidence:** {confidence:.2%}\n"
+                              f"**Needs Response:** {'✅' if final_result.get('needs_response') else '❌'}\n"
+                              f"**Gap Detected:** {'🔍' if final_result.get('gap_detected') else '❌'}",
                         inline=False
                     )
                     
-                    # Show breakdown if available
-                    if final_result.get('keyword_result') and final_result.get('nlp_result'):
-                        embed.add_field(
-                            name="🔍 Detection Breakdown",
-                            value=f"**Keywords:** {final_result['keyword_result'].title()}\n"
-                                  f"**NLP:** {final_result['nlp_result'].title()}\n"
-                                  f"**Winner:** {method.replace('_', ' ').title()}",
-                            inline=True
-                        )
+                    # Show gap details if detected
+                    if final_result.get('gap_detected') and show_details:
+                        gap_details = final_result.get('gap_details', [])
+                        if gap_details:
+                            gap_text = "\n".join([f"• {gap.get('type', 'unknown').replace('_', ' ').title()}" for gap in gap_details[:3]])
+                            embed.add_field(
+                                name="🔍 Gap Details",
+                                value=gap_text,
+                                inline=True
+                            )
             else:
                 embed.add_field(
                     name="⚡ Final Decision",
@@ -730,27 +600,7 @@ class MonitoringCommands(commands.Cog):
                     inline=False
                 )
             
-            # Summary and recommendations
-            summary_lines = []
-            if analysis_results['keyword_detection'] and analysis_results['keyword_detection']['needs_response']:
-                summary_lines.append("✅ Keywords detected crisis language")
-            if analysis_results['nlp_analysis'] and not analysis_results['nlp_analysis'].get('error'):
-                nlp_confidence = analysis_results['nlp_analysis'].get('confidence', 0)
-                if nlp_confidence > 0.7:
-                    summary_lines.append("✅ High NLP confidence in analysis")
-                elif nlp_confidence > 0.4:
-                    summary_lines.append("⚠️ Moderate NLP confidence")
-                else:
-                    summary_lines.append("⚪ Low NLP confidence")
-            
-            if summary_lines:
-                embed.add_field(
-                    name="📊 Analysis Summary",
-                    value="\n".join(summary_lines),
-                    inline=False
-                )
-            
-            embed.set_footer(text=f"Analysis completed • Detection System v2.0")
+            embed.set_footer(text="Three-Model Ensemble Test • Gap Detection Active")
             
             await interaction.followup.send(embed=embed, ephemeral=True)
             
@@ -765,4 +615,4 @@ class MonitoringCommands(commands.Cog):
 async def setup(bot):
     """Setup function for the monitoring commands cog"""
     await bot.add_cog(MonitoringCommands(bot))
-    logger.info("✅ Enhanced monitoring commands cog loaded")
+    logger.info("✅ Enhanced monitoring commands cog loaded (detection_breakdown removed)")
