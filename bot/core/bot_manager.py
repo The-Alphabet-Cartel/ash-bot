@@ -231,15 +231,6 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             logger.error(f"❌ Failed to load Monitoring Commands: {e}")
             cog_errors.append(f"MonitoringCommands: {e}")
 
-        # Load Enhanced Learning Commands (replaces false_positive_commands)
-        try:
-            from commands.enhanced_learning_commands import EnhancedLearningCommands
-            await self.add_cog(EnhancedLearningCommands(self))
-            logger.info("✅ Loaded Enhanced Learning Commands cog (false positives + negatives)")
-        except Exception as e:
-            logger.error(f"❌ Failed to load Enhanced Learning Commands: {e}")
-            cog_errors.append(f"EnhancedLearningCommands: {e}")
-
         # Log cog loading errors as security events
         if cog_errors:
             logger.warning(f"⚠️ Cog loading errors: {cog_errors}")
