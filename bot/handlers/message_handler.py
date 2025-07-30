@@ -95,9 +95,10 @@ class EnhancedMessageHandler:
             logger.warning(f"⚠️ Daily API call limit reached: {self.daily_call_count}/{self.max_daily_calls}")
             return
         
-        # Security check
+        # Security check (updated for current security manager)
         if self.security_manager:
-            if not await self.security_manager.validate_message_security(message):
+            # Use your existing security validation method
+            if not self.security_manager.validate_channel_access(message.channel.id):
                 self.message_stats['intrusion_attempts_blocked'] += 1
                 return
         
