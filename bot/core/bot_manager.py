@@ -207,8 +207,6 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             security_manager=self.security_manager  # Pass security manager
         )
         
-        await self.load_extension('commands.enhanced_learning_commands')
-        
         logger.info("✅ All enhanced components initialized")
 
     async def _load_command_cogs(self):
