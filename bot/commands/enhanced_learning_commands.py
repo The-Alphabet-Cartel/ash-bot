@@ -1024,8 +1024,8 @@ class EnhancedLearningCommands(commands.Cog):
                 ephemeral=True
             )
 
-    @app_commands.command(name="ensemble_stats", description="View three-model ensemble performance statistics")
-    async def ensemble_statistics(self, interaction: discord.Interaction):
+    @app_commands.command(name="learning_ensemble_stats", description="View three-model ensemble performance statistics")
+    async def learning_ensemble_statistics(self, interaction: discord.Interaction):
         """Display comprehensive ensemble system statistics"""
         
         if not await self._check_crisis_role(interaction):
