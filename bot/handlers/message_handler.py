@@ -499,20 +499,64 @@ class EnhancedMessageHandler:
         """Enhanced crisis response handling with ensemble details"""
         
         try:
-            self.message_stats['crisis_responses_given'] += 1
-            
-            # Enhanced crisis response that includes ensemble information
-            await self.crisis_handler.handle_crisis(message, detection_result)
-            
-            logger.info(f"🚨 Crisis response sent for {message.author.display_name}: "
-                       f"{detection_result.get('crisis_level', 'unknown')} "
-                       f"(method: {detection_result.get('method', 'unknown')})")
-            
+            async with message.channel.typing():
+                crisis_level = detection_result['crisis_level']
+                
+                # Log crisis detection as security event (if security manager available)
+                if self.security_manager:
+                    self.security_manager.log_security_event(
+                        f"crisis_detected_{crisis_level}",
+                        message.author.id,
+                        message.guild.id,
+                        message.channel.id,
+                        {
+                            "crisis_level": crisis_level,
+                            "method": detection_result.get('method', 'unknown'),
+                            "confidence": detection_result.get('confidence', 0),
+                            "message_preview": message.content[:50] + "..." if len(message.content) > 50 else message.content,
+                            "ensemble_details": detection_result.get('ensemble_details', {}),
+                            "gap_detected": detection_result.get('gap_detected', False)
+                        },
+                        "warning" if crisis_level == "high" else "info"
+                    )
+                
+                # Get response using Claude API
+                response = await self.claude_api.get_ash_response(
+                    message.content,
+                    crisis_level,
+                    message.author.display_name
+                )
+                
+                # Use the correct method name with proper parameters
+                await self.crisis_handler.handle_crisis_response_with_instructions(message, crisis_level, response)
+                
+                # Update counters
+                self.daily_call_count += 1
+                await self.record_api_call(message.author.id)
+                self.message_stats['crisis_responses_given'] += 1
+                
+                logger.info(f"✅ Crisis response with conversation setup completed:")
+                logger.info(f"   👤 User: {message.author} ({message.author.id})")
+                logger.info(f"   🚨 Level: {crisis_level}")
+                logger.info(f"   🔍 Method: {detection_result.get('method', 'unknown')}")
+                logger.info(f"   📊 Confidence: {detection_result.get('confidence', 0):.2f}")
+                logger.info(f"   🤖 Ensemble: {detection_result.get('gap_detected', False) and 'gaps detected' or 'consensus'}")
+                
         except Exception as e:
-            logger.error(f"❌ Failed to handle crisis response: {e}")
-    
-    # ... (rest of the existing methods like _should_process_message, check_rate_limits, etc.)
-    # These remain largely the same as your current implementation
+            logger.error(f"❌ Error handling crisis response: {e}")
+            
+            # Log error as security event if possible
+            if self.security_manager:
+                self.security_manager.log_security_event(
+                    "crisis_response_error",
+                    message.author.id,
+                    message.guild.id,
+                    message.channel.id,
+                    {"error": str(e), "crisis_level": detection_result.get('crisis_level', 'unknown')},
+                    "error"
+                )
+            
+            await message.add_reaction('❌')
     
     def get_enhanced_stats(self) -> Dict:
         """Get comprehensive statistics including ensemble performance"""
