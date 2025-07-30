@@ -399,51 +399,51 @@ class EnhancedNLPClient:
                 logger.error(f"❌ Failed to send ensemble feedback: {e}")
                 return False
 
-        async def _send_legacy_feedback_fallback(self, message_content: str, correct_level: str, detected_level: str, feedback_type: str) -> bool:
-            """
-            Fallback method when ensemble learning endpoints are not available
-            This just logs the feedback instead of using the old individual learning system
-            """
+    async def _send_legacy_feedback_fallback(self, message_content: str, correct_level: str, detected_level: str, feedback_type: str) -> bool:
+        """
+        Fallback method when ensemble learning endpoints are not available
+        This just logs the feedback instead of using the old individual learning system
+        """
+        try:
+            # Instead of using old endpoints, just log for manual review
+            logger.warning(f"📝 Manual review needed: {feedback_type}")
+            logger.warning(f"   Message: {message_content[:100]}...")
+            logger.warning(f"   Detected: {detected_level} → Should be: {correct_level}")
+            
+            # Could also write to a file for batch processing later
+            feedback_log = {
+                'timestamp': datetime.now().isoformat(),
+                'message': message_content,
+                'detected_level': detected_level,
+                'correct_level': correct_level,
+                'feedback_type': feedback_type,
+                'source': 'ash_bot_staff_correction'
+            }
+            
+            # Log to file for manual processing
+            log_file = './data/manual_feedback_log.json'
             try:
-                # Instead of using old endpoints, just log for manual review
-                logger.warning(f"📝 Manual review needed: {feedback_type}")
-                logger.warning(f"   Message: {message_content[:100]}...")
-                logger.warning(f"   Detected: {detected_level} → Should be: {correct_level}")
+                if os.path.exists(log_file):
+                    with open(log_file, 'r') as f:
+                        logs = json.load(f)
+                else:
+                    logs = []
                 
-                # Could also write to a file for batch processing later
-                feedback_log = {
-                    'timestamp': datetime.now().isoformat(),
-                    'message': message_content,
-                    'detected_level': detected_level,
-                    'correct_level': correct_level,
-                    'feedback_type': feedback_type,
-                    'source': 'ash_bot_staff_correction'
-                }
+                logs.append(feedback_log)
                 
-                # Log to file for manual processing
-                log_file = './data/manual_feedback_log.json'
-                try:
-                    if os.path.exists(log_file):
-                        with open(log_file, 'r') as f:
-                            logs = json.load(f)
-                    else:
-                        logs = []
-                    
-                    logs.append(feedback_log)
-                    
-                    with open(log_file, 'w') as f:
-                        json.dump(logs, f, indent=2)
-                    
-                    logger.info(f"📁 Feedback logged to {log_file} for manual processing")
-                    return True
-                    
-                except Exception as file_error:
-                    logger.error(f"❌ Failed to log feedback to file: {file_error}")
-                    return False
-                    
-            except Exception as e:
-                logger.error(f"❌ Legacy feedback fallback failed: {e}")
+                with open(log_file, 'w') as f:
+                    json.dump(logs, f, indent=2)
+                
+                logger.info(f"📁 Feedback logged to {log_file} for manual processing")
+                return True
+                
+            except Exception as file_error:
+                logger.error(f"❌ Failed to log feedback to file: {file_error}")
                 return False
+                
+        except Exception as e:
+            logger.error(f"❌ Legacy feedback fallback failed: {e}")
+            return False
 
 # For backwards compatibility, create alias
 RemoteNLPClient = EnhancedNLPClient
