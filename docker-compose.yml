@@ -59,6 +59,11 @@ services:
       - BOT_CONVERSATION_LOG_ATTEMPTS=${BOT_CONVERSATION_LOG_ATTEMPTS:-true}
       - BOT_CONVERSATION_TIMEOUT=${BOT_CONVERSATION_TIMEOUT:-300}
       - BOT_CRISIS_OVERRIDE_LEVELS=${BOT_CRISIS_OVERRIDE_LEVELS:-medium,high}
+      
+      # Three-Model Ensemble Configuration
+      - BOT_ENABLE_GAP_NOTIFICATIONS=${BOT_ENABLE_GAP_NOTIFICATIONS:-true}
+      - BOT_GAP_NOTIFICATION_CHANNEL_ID=${BOT_GAP_NOTIFICATION_CHANNEL_ID}
+
     volumes:
       - ./ash-bot/logs:/app/logs
       - ./ash-bot/data:/app/data
