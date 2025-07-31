@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """
-Core Bot Manager - Integrated with Resource Management and API Server
+Core Bot Manager - Simplified without Security Manager
 """
 
 import discord
 from discord.ext import commands
 import logging
 from datetime import datetime, timezone
-from bot.utils.resource_managers import ResourceCleanupMixin, graceful_shutdown
-from bot.utils.security import get_security_manager
+from utils.resource_managers import ResourceCleanupMixin, graceful_shutdown
 
 logger = logging.getLogger(__name__)
 
 class AshBot(commands.Bot, ResourceCleanupMixin):
-    """Enhanced Ash Bot with Resource Management, Security, and API Server"""
+    """Enhanced Ash Bot with Resource Management - Security Manager Removed"""
     
     def __init__(self, config):
         self.config = config
@@ -39,7 +38,6 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         self.keyword_detector = None
         self.crisis_handler = None
         self.message_handler = None
-        self.security_manager = None
         
         # NEW: API Server components
         self.api_server = None
@@ -48,17 +46,14 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Register shutdown handler
         graceful_shutdown.register_shutdown_handler(self.cleanup_resources)
         
-        logger.info("🤖 AshBot initialized with enhanced resource management and API server")
+        logger.info("🤖 AshBot initialized with enhanced resource management (security manager removed)")
     
     async def setup_hook(self):
-        """Setup hook - initialize components with resource management and API server"""
-        logger.info("🔄 Starting enhanced setup_hook with API server...")
+        """Setup hook - initialize components with resource management"""
+        logger.info("🔄 Starting enhanced setup_hook...")
         
         try:
-            # Initialize security manager first
-            self.security_manager = get_security_manager(self.config)
-            
-            # Initialize components (now with resource management)
+            # Initialize components (now without security manager)
             await self._initialize_components()
             
             # NEW: Initialize API Server
@@ -70,152 +65,82 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             # Sync commands globally
             await self._sync_slash_commands()
             
-            logger.info("✅ Enhanced setup with API server completed successfully")
+            logger.info("✅ Enhanced setup completed successfully (no security manager)")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Setup hook failed: {e}")
-            logger.exception("Full setup_hook traceback:")
-            return False
-    
-    async def _initialize_api_server(self):
-        """Initialize and start the API server"""
-        try:
-            # Get API server configuration
-            api_host = self.config.get('GLOBAL_BOT_API_HOST', '0.0.0.0')
-            api_port = int(self.config.get('GLOBAL_BOT_API_PORT', '8882'))
-            
-            logger.info(f"🌐 Initializing API server on {api_host}:{api_port}...")
-            
-            # Import and create API server instance
-            from bot.api.api_server import setup_api_server
-            self.api_server = setup_api_server(self, api_host, api_port)
-            
-            # Register cleanup for API server
-            self.register_cleanup(self.api_server.stop_server)
-            
-            # Start the API server
-            server_started = await self.api_server.start_server()
-            
-            if server_started:
-                logger.info(f"✅ API Server running at http://{api_host}:{api_port}")
-                logger.info("📊 Dashboard endpoints available:")
-                logger.info(f"   • http://{api_host}:{api_port}/health")
-                logger.info(f"   • http://{api_host}:{api_port}/api/metrics")
-                logger.info(f"   • http://{api_host}:{api_port}/api/crisis-stats")
-                logger.info(f"   • http://{api_host}:{api_port}/api/learning-stats")
-                
-                # Log API server startup as security event
-                self.security_manager.log_security_event(
-                    "api_server_startup", 0, 0, 0,
-                    {"host": api_host, "port": api_port}, "info"
-                )
-                
-                return True
-            else:
-                logger.warning("⚠️ API Server failed to start - dashboard will not be available")
-                self.security_manager.log_security_event(
-                    "api_server_startup_failed", 0, 0, 0,
-                    {"host": api_host, "port": api_port}, "warning"
-                )
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ API Server initialization failed: {e}")
-            self.security_manager.log_security_event(
-                "api_server_error", 0, 0, 0,
-                {"error": str(e)}, "error"
-            )
+            logger.error(f"❌ Setup failed: {e}")
             return False
     
     async def _initialize_components(self):
-        """Initialize all bot components with enhanced resource management"""
-        logger.info("🔧 Initializing enhanced components...")
+        """Initialize core components without security manager"""
         
-        # Step 1: Initialize integrations with resource management
-        logger.info("🔌 Initializing integrations with resource management...")
-        from bot.integrations.claude_api import ClaudeAPI
-        from bot.integrations.nlp_integration import EnhancedNLPClient
-        from bot.utils.keyword_detector import KeywordDetector
-        
-        # Pass config to ClaudeAPI
-        self.claude_api = ClaudeAPI(self.config)
-        self.nlp_client = EnhancedNLPClient()
-        self.keyword_detector = KeywordDetector()
-        
-        # Register cleanup for integrations
-        self.register_cleanup(self.claude_api.close)
-        # Note: Add nlp_client.close if it has one
-        
-        # Test connections with better error handling
-        logger.info("🔍 Testing integrations with enhanced error handling...")
+        # Step 1: Initialize Claude API
+        logger.info("🧠 Initializing Claude API...")
         try:
-            claude_ok = await self.claude_api.test_connection()
-            logger.info(f"Claude API: {'✅ Connected' if claude_ok else '❌ Failed'}")
+            from integrations.claude_api import ClaudeAPI
+            self.claude_api = ClaudeAPI(self.config)
+            logger.info("✅ Claude API initialized")
+        except Exception as e:
+            logger.error(f"❌ Claude API initialization failed: {e}")
+            # Continue without Claude API - use fallback responses
+            self.claude_api = None
+        
+        # Step 2: Initialize keyword detector
+        logger.info("🔍 Initializing keyword detector...")
+        try:
+            from utils.keyword_detector import KeywordDetector
+            self.keyword_detector = KeywordDetector()
+            logger.info("✅ Keyword detector initialized")
+        except Exception as e:
+            logger.error(f"❌ Keyword detector initialization failed: {e}")
+            raise
+        
+        # Step 3: Initialize NLP client
+        logger.info("🧠 Initializing NLP client...")
+        try:
+            from integrations.nlp_integration import NLPClient
+            nlp_url = self.config.get('GLOBAL_NLP_API_URL', 'http://10.20.30.253:8881')
+            self.nlp_client = NLPClient(nlp_url)
             
-            # Log security event for API connection
-            if claude_ok:
-                self.security_manager.log_security_event(
-                    "api_connection_success", 0, 0, 0,
-                    {"service": "claude_api"}, "info"
-                )
+            # Test connection
+            health = await self.nlp_client.health_check()
+            if health:
+                logger.info("✅ NLP client connected successfully")
             else:
-                self.security_manager.log_security_event(
-                    "api_connection_failed", 0, 0, 0,
-                    {"service": "claude_api"}, "warning"
-                )
+                logger.warning("⚠️ NLP client initialized but health check failed")
                 
         except Exception as e:
-            logger.warning(f"Claude API test error: {e}")
-            self.security_manager.log_security_event(
-                "api_connection_error", 0, 0, 0,
-                {"service": "claude_api", "error": str(e)}, "error"
-            )
+            logger.warning(f"⚠️ NLP client initialization failed: {e}")
+            # Continue without NLP client - will use keyword-only detection
+            self.nlp_client = None
         
-        try:
-            nlp_ok = await self.nlp_client.test_connection()
-            logger.info(f"NLP Service: {'✅ Connected' if nlp_ok else '❌ Failed'}")
-            
-            # Log security event for NLP connection
-            if nlp_ok:
-                self.security_manager.log_security_event(
-                    "nlp_connection_success", 0, 0, 0,
-                    {"service": "nlp_server", "host": self.config.get('GLOBAL_NLP_API_HOST')}, "info"
-                )
-                
-        except Exception as e:
-            logger.warning(f"NLP Service test error: {e}")
-            self.security_manager.log_security_event(
-                "nlp_connection_error", 0, 0, 0,
-                {"service": "nlp_server", "error": str(e)}, "error"
-            )
-        
-        # Step 2: Initialize enhanced handlers with security
-        logger.info("🚨 Initializing enhanced handlers with security...")
-        from bot.handlers.crisis_handler import CrisisHandler
-        from bot.handlers.message_handler import EnhancedMessageHandler
+        # Step 2: Initialize enhanced handlers WITHOUT security
+        logger.info("🚨 Initializing enhanced handlers...")
+        from handlers.crisis_handler import CrisisHandler
+        from handlers.message_handler import MessageHandler
         
         self.crisis_handler = CrisisHandler(self, self.config)
         
-        self.message_handler = EnhancedMessageHandler(
+        self.message_handler = MessageHandler(
             self,
             self.claude_api,
             self.nlp_client, 
             self.keyword_detector,
             self.crisis_handler,
-            self.config,
-            security_manager=self.security_manager  # Pass security manager
+            self.config
+            # REMOVED: security_manager parameter
         )
         
-        logger.info("✅ All enhanced components initialized")
+        logger.info("✅ All enhanced components initialized without security manager")
 
     async def _load_command_cogs(self):
-        """Load command cogs with enhanced learning system"""
+        """Load command cogs"""
         cog_errors = []
         
         # Load Crisis Commands
         try:
-            from bot.commands.crisis_commands import CrisisKeywordCommands
+            from commands.crisis_commands import CrisisKeywordCommands
             await self.add_cog(CrisisKeywordCommands(self))
             logger.info("✅ Loaded Crisis Commands cog")
         except Exception as e:
@@ -224,40 +149,37 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Load Monitoring Commands
         try:
-            from bot.commands.monitoring_commands import MonitoringCommands
+            from commands.monitoring_commands import MonitoringCommands
             await self.add_cog(MonitoringCommands(self))
             logger.info("✅ Loaded Monitoring Commands cog")
         except Exception as e:
             logger.error(f"❌ Failed to load Monitoring Commands: {e}")
             cog_errors.append(f"MonitoringCommands: {e}")
 
-        # Load NEW Ensemble Commands (replaces old individual learning system)
+        # Load Enhanced Learning Commands (replaces false_positive_commands)
         try:
-            from bot.commands.ensemble_commands import EnsembleCommands
-            await self.add_cog(EnsembleCommands(self))
-            logger.info("✅ Loaded Ensemble Commands cog (three-model system)")
+            from commands.enhanced_learning_commands import EnhancedLearningCommands
+            await self.add_cog(EnhancedLearningCommands(self))
+            logger.info("✅ Loaded Enhanced Learning Commands cog")
         except Exception as e:
-            logger.error(f"❌ Failed to load Ensemble Commands: {e}")
-            cog_errors.append(f"EnsembleCommands: {e}")
+            logger.error(f"❌ Failed to load Enhanced Learning Commands: {e}")
+            cog_errors.append(f"EnhancedLearningCommands: {e}")
 
-        # Log cog loading errors as security events
+        # Log cog loading errors
         if cog_errors:
             logger.warning(f"⚠️ Cog loading errors: {cog_errors}")
-            self.security_manager.log_security_event(
-                "cog_loading_errors", 0, 0, 0,
-                {"errors": cog_errors}, "warning"
-            )
+
+    async def _initialize_api_server(self):
+        """Initialize API server if enabled"""
+        # API server initialization code would go here
+        # For now, just log that it's disabled
+        logger.info("📡 API server initialization skipped (not implemented in this fix)")
+        self.api_server = None
 
     async def _sync_slash_commands(self):
         """Sync slash commands with enhanced logging"""
         total_commands = len([cmd for cmd in self.tree.walk_commands()])
         logger.info(f"📋 Found {total_commands} commands in tree before sync")
-        
-        # Log command sync attempt
-        self.security_manager.log_security_event(
-            "command_sync_attempt", 0, 0, 0,
-            {"command_count": total_commands}, "info"
-        )
         
         logger.info("🌍 Syncing slash commands globally...")
         try:
@@ -268,38 +190,22 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             for cmd in synced:
                 logger.info(f"   📝 Synced: /{cmd.name} - {cmd.description[:50]}...")
             
-            # Log successful sync
-            self.security_manager.log_security_event(
-                "command_sync_success", 0, 0, 0,
-                {"synced_count": len(synced)}, "info"
-            )
-            
             return True
             
         except Exception as sync_error:
             logger.error(f"❌ Command sync failed: {sync_error}")
-            self.security_manager.log_security_event(
-                "command_sync_failed", 0, 0, 0,
-                {"error": str(sync_error)}, "error"
-            )
             return False
     
     async def on_ready(self):
-        """Bot ready event with enhanced security logging and API server status"""
+        """Bot ready event with enhanced logging"""
         logger.info(f'✅ {self.user} has awakened in The Alphabet Cartel')
-        
-        # Log bot startup as security event
-        self.security_manager.log_security_event(
-            "bot_startup", 0, 0, 0,
-            {"bot_user": str(self.user), "bot_id": self.user.id}, "info"
-        )
         
         # Log service status
         logger.info(f"📊 API Server: {'Running' if self.api_server else 'Not Available'}")
         logger.info(f"🧠 NLP Server: {'Connected' if self.nlp_client else 'Not Connected'}")
         logger.info(f"🔍 Learning System: {'Enabled' if self.config.get_bool('GLOBAL_ENABLE_LEARNING_SYSTEM') else 'Disabled'}")
         
-        # Log guild information with security context
+        # Log guild information
         guild = discord.utils.get(self.guilds, id=self.config.get_int('BOT_GUILD_ID'))
         if guild:
             logger.info(f'Connected to guild: {guild.name}')
@@ -309,17 +215,6 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             if bot_member:
                 perms = bot_member.guild_permissions
                 logger.info(f'Bot permissions: send_messages={perms.send_messages}, use_application_commands={perms.use_application_commands}')
-                
-                # Log permission status as security event
-                self.security_manager.log_security_event(
-                    "bot_permissions_check", 0, guild.id, 0,
-                    {
-                        "send_messages": perms.send_messages,
-                        "use_application_commands": perms.use_application_commands,
-                        "guild_name": guild.name
-                    }, 
-                    "info"
-                )
         
         # Verify slash commands are registered
         try:
@@ -330,10 +225,6 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
                 
         except Exception as e:
             logger.error(f"❌ Failed to fetch registered commands: {e}")
-            self.security_manager.log_security_event(
-                "command_verification_failed", 0, 0, 0,
-                {"error": str(e)}, "error"
-            )
         
         # Set bot status
         await self.change_presence(
@@ -344,14 +235,14 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             )
         )
         
-        logger.info("🎉 Ash Bot fully operational with enhanced security and API server")
+        logger.info("🎉 Ash Bot fully operational (security manager removed)")
     
     async def on_message(self, message):
-        """Enhanced message handler with self-message filtering and security validation"""
+        """FIXED: Simplified message routing without security validation"""
         
         # CRITICAL FIX #1: Never process the bot's own messages
         if message.author == self.user:
-            logger.debug(f"🤖 Ignoring bot's own message: '{message.content[:50] if message.content else '[empty]'}...'")
+            logger.debug(f"🤖 Ignoring bot's own message")
             return
         
         # CRITICAL FIX #2: Never process any bot messages
@@ -364,101 +255,56 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             logger.debug(f"📭 Ignoring empty message from {message.author}")
             return
         
-        # OPTIONAL FIX #4: Handle DMs cautiously (you can enable this if needed)
-        if not message.guild:
-            logger.debug(f"📬 Direct message from {message.author}: '{message.content[:50]}...'")
-            # Uncomment the next line if you want to ignore all DMs:
-            # return
-        
-        # Basic security validation
-        if not self.security_manager.validate_channel_access(message.channel.id):
-            # Removed the warning log since this is expected behavior
-            # If you need debugging, uncomment the following line:
-            #logger.warning(f"Message from unauthorized channel: {message.channel.id}")
+        # Basic guild validation
+        if not message.guild or message.guild.id != self.config.get_int('BOT_GUILD_ID'):
+            logger.debug(f"🚫 Wrong guild: {message.guild.id if message.guild else 'DM'}")
             return
         
-        try:
-            # Pass to message handler (which now has security manager)
-            if self.message_handler:
-                await self.message_handler.process_message(message)
-            else:
-                logger.debug("Message handler not ready, using basic handling")
-            
-            # Process commands
-            await self.process_commands(message)
-            
-        except Exception as e:
-            logger.error(f"❌ Error in on_message handler: {e}")
-            logger.exception("Full traceback:")
-            
-            # Log as security event
-            self.security_manager.log_security_event(
-                "message_processing_error", 
-                message.author.id, 
-                message.guild.id if message.guild else 0, 
-                message.channel.id,
-                {"error": str(e), "message_preview": message.content[:50] if message.content else "[empty]"}, 
-                "error"
-            )
-            
-            # Don't re-raise - this prevents the bot from crashing
-    
-    async def on_command_error(self, ctx, error):
-        """Handle command errors with security logging"""
-        logger.error(f"Command error in {ctx.command}: {error}")
+        # SIMPLIFIED channel validation (remove security manager dependency)
+        allowed_channels = self.config.get_allowed_channels()
+        if allowed_channels and message.channel.id not in allowed_channels:
+            logger.debug(f"🚫 Message from non-allowed channel: {message.channel.id}")
+            return
         
-        # Log as security event if it might be malicious
-        if isinstance(error, (commands.CommandNotFound, commands.MissingPermissions)):
-            self.security_manager.log_security_event(
-                "command_error", ctx.author.id, ctx.guild.id if ctx.guild else 0, ctx.channel.id,
-                {"command": str(ctx.command), "error": str(error)}, "warning"
-            )
-    
-    async def cleanup_resources(self):
-        """Enhanced cleanup with resource management and API server"""
-        logger.info("🧹 Starting enhanced cleanup with API server...")
+        logger.debug(f"📨 Processing message from {message.author} in {message.channel}")
         
-        try:
-            # Stop API server first
-            if self.api_server:
-                await self.api_server.stop_server()
-                logger.info("✅ API Server stopped")
-            
-            # Cleanup other components
-            if self.claude_api:
-                await self.claude_api.close()
-            
-            if self.nlp_client and hasattr(self.nlp_client, 'close'):
-                await self.nlp_client.close()
-            
-            if self.keyword_detector and hasattr(self.keyword_detector, 'cleanup'):
-                await self.keyword_detector.cleanup()
-            
-            if self.crisis_handler and hasattr(self.crisis_handler, 'cleanup'):
-                await self.crisis_handler.cleanup()
-            
-            if self.message_handler and hasattr(self.message_handler, 'cleanup'):
-                await self.message_handler.cleanup()
-            
-            # Call parent cleanup
-            await ResourceCleanupMixin.cleanup_resources(self)
-            
-            logger.info("✅ All resources including API server cleaned up successfully")
-            
-        except Exception as e:
-            logger.error(f"❌ Error during cleanup: {e}")
-    
-    async def close(self):
-        """Enhanced cleanup with resource management and API server shutdown"""
-        logger.info("🛑 Starting enhanced shutdown with API server...")
+        # CRITICAL FIX: Call the RIGHT method that actually handles crisis responses
+        if self.message_handler:
+            try:
+                # Call the method that has all the crisis handling logic
+                if hasattr(self.message_handler, 'handle_message'):
+                    await self.message_handler.handle_message(message)
+                elif hasattr(self.message_handler, 'process_message'):
+                    # Fallback for your current structure
+                    detection_result = await self.message_handler.process_message(message)
+                    if detection_result and detection_result.get('needs_response'):
+                        logger.info("🚨 Crisis detected - need to trigger response manually")
+                        # Manually trigger crisis response if it wasn't handled
+                        if self.crisis_handler:
+                            crisis_level = detection_result['crisis_level']
+                            if self.claude_api:
+                                response = await self.claude_api.get_ash_response(
+                                    message.content, crisis_level, message.author.display_name
+                                )
+                            else:
+                                response = "I'm here to support you through this difficult time."
+                            
+                            await self.crisis_handler.handle_crisis_response_with_instructions(
+                                message, crisis_level, response
+                            )
+                else:
+                    logger.error("❌ Message handler has no handle_message or process_message method")
+                    
+            except Exception as e:
+                logger.error(f"❌ Error in message handler: {e}")
+                logger.exception("Full traceback:")
+                # Add error reaction to message
+                try:
+                    await message.add_reaction('❌')
+                except:
+                    pass  # Don't fail if we can't add reactions
+        else:
+            logger.warning("⚠️ Message handler not ready")
         
-        # Use enhanced resource cleanup
-        await self.cleanup_resources()
-        
-        # Close parent
-        await super().close()
-        
-        logger.info("✅ Enhanced shutdown with API server complete")
-
-# Export for backwards compatibility
-AshBotEnhanced = AshBot
+        # Process commands (in case any text commands are still used)
+        await self.process_commands(message)
