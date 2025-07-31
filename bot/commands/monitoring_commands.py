@@ -421,9 +421,9 @@ class MonitoringCommands(commands.Cog):
         show_details="Show detailed analysis breakdown"
     )
     async def test_message_analysis(self, interaction: discord.Interaction, 
-                                  message: str,  # Changed from test_message to message
+                                  message: str,
                                   show_details: bool = True):
-        """Test message analysis and crisis detection capabilities - FIXED VERSION"""
+        """Test message analysis and crisis detection capabilities - FINAL FIXED VERSION"""
         
         if not await self._check_crisis_role(interaction):
             return
@@ -439,7 +439,7 @@ class MonitoringCommands(commands.Cog):
                 )
                 return
             
-            test_message = message.strip()  # Clean the message
+            test_message = message.strip()
             logger.info(f"🧪 Testing message analysis for: '{test_message}' (length: {len(test_message)})")
             
             # Initialize analysis results
@@ -449,7 +449,7 @@ class MonitoringCommands(commands.Cog):
                 'final_decision': None
             }
             
-            # Test keyword detection
+            # Test keyword detection ONLY
             if hasattr(self.bot, 'keyword_detector') and self.bot.keyword_detector:
                 try:
                     logger.debug(f"🔤 Testing keyword detection with: '{test_message}'")
@@ -460,25 +460,10 @@ class MonitoringCommands(commands.Cog):
                     logger.error(f"Keyword detection failed: {e}")
                     analysis_results['keyword_detection'] = {'error': str(e)}
             
-            # Test NLP analysis if available - DIRECT CALL WITHOUT DUPLICATES
-            if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
-                try:
-                    logger.debug(f"🧠 Testing NLP analysis with: '{test_message}'")
-                    nlp_result = await self.bot.nlp_client.analyze_message(
-                        test_message,  # Use the validated message
-                        str(interaction.user.id),
-                        str(interaction.channel.id)
-                    )
-                    analysis_results['nlp_analysis'] = nlp_result
-                    if nlp_result:
-                        logger.debug(f"🧠 NLP result: {nlp_result.get('crisis_level')} (confidence: {nlp_result.get('confidence_score', 0):.3f})")
-                    else:
-                        logger.warning("🧠 NLP analysis returned None")
-                except Exception as e:
-                    logger.error(f"NLP analysis failed: {e}")
-                    analysis_results['nlp_analysis'] = {'error': str(e)}
+            # REMOVED: Direct NLP call to prevent duplicates
+            # The message handler will call NLP internally, and we'll get those results
             
-            # Test full detection decision through message handler - SINGLE CALL ONLY
+            # Test full detection decision through message handler - SINGLE COMPREHENSIVE CALL
             if hasattr(self.bot, 'message_handler') and self.bot.message_handler:
                 try:
                     logger.debug(f"⚡ Testing message handler with: '{test_message}'")
@@ -500,7 +485,7 @@ class MonitoringCommands(commands.Cog):
                     
                     mock_msg = MockMessage(test_message)
                     
-                    # Use the correct method name for your message handler
+                    # Use the message handler's hybrid detection - this will call NLP internally
                     if hasattr(self.bot.message_handler, '_perform_enhanced_hybrid_detection'):
                         final_result = await self.bot.message_handler._perform_enhanced_hybrid_detection(mock_msg)
                     elif hasattr(self.bot.message_handler, '_perform_hybrid_detection'):
@@ -511,13 +496,36 @@ class MonitoringCommands(commands.Cog):
                     analysis_results['final_decision'] = final_result
                     if final_result:
                         logger.debug(f"⚡ Final result: {final_result.get('crisis_level')} via {final_result.get('method')}")
+                        
+                        # Extract NLP results from the final decision for display
+                        if final_result.get('ensemble_details'):
+                            # Build NLP analysis results from the final decision
+                            analysis_results['nlp_analysis'] = {
+                                'crisis_level': final_result.get('nlp_result', 'none'),
+                                'confidence_score': final_result.get('confidence', 0.0),
+                                'method': final_result.get('method', 'unknown'),
+                                'gaps_detected': final_result.get('gaps_detected', False),
+                                'requires_staff_review': final_result.get('requires_staff_review', False),
+                                'processing_time_ms': final_result.get('processing_time_ms', 0),
+                                'ensemble_details': final_result.get('ensemble_details', {})
+                            }
+                        else:
+                            # Fallback: Basic NLP result extraction
+                            analysis_results['nlp_analysis'] = {
+                                'crisis_level': final_result.get('nlp_result', 'none'),
+                                'confidence_score': final_result.get('confidence', 0.0),
+                                'method': final_result.get('method', 'unknown'),
+                                'gaps_detected': final_result.get('gaps_detected', False),
+                                'requires_staff_review': final_result.get('requires_staff_review', False),
+                                'processing_time_ms': final_result.get('processing_time_ms', 0)
+                            }
                     
                 except Exception as e:
                     logger.error(f"Message handler analysis failed: {e}")
                     logger.exception("Full traceback:")
                     analysis_results['final_decision'] = {'error': str(e)}
             
-            # Create response embed
+            # Create response embed - SAME AS BEFORE
             embed = discord.Embed(
                 title="🧪 Three-Model Ensemble Analysis Test",
                 description=f"**Test Message:** `{test_message[:100]}{'...' if len(test_message) > 100 else ''}`",
@@ -550,7 +558,7 @@ class MonitoringCommands(commands.Cog):
                     inline=True
                 )
             
-            # Three-Model Ensemble Results
+            # Three-Model Ensemble Results (from final decision)
             if analysis_results['nlp_analysis']:
                 nlp_result = analysis_results['nlp_analysis']
                 if 'error' in nlp_result:
