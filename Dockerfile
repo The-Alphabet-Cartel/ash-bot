@@ -47,7 +47,7 @@ RUN mkdir -p logs data tests api && \
     chmod 755 /app
 
 # Copy bot application code
-COPY --chown=botuser:botuser ./bot .
+COPY --chown=botuser:botuser . .
 
 # Switch to non-root user
 USER botuser
