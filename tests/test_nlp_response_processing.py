@@ -17,14 +17,14 @@ import os
 # Add ash-bot root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from bot.integrations.nlp_integration import NLPIntegration
+from bot.integrations.nlp_integration import EnhancedNLPClient
 
 class TestNLPResponseProcessing(unittest.TestCase):
     """Test v3.0 NLP response processing"""
     
     def setUp(self):
         """Set up test fixtures"""
-        self.nlp_client = NLPIntegration("http://test-server:8881", timeout=5)
+        self.nlp_client = EnhancedNLPClient("http://test-server:8881", timeout=5)
     
     def test_v3_response_processing(self):
         """Test processing of v3.0 response structure"""
