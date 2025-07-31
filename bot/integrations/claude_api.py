@@ -10,7 +10,7 @@ from typing import Optional
 import aiohttp
 import json
 from contextlib import asynccontextmanager
-from core.ash_character import format_ash_prompt, get_crisis_addition, get_response_templates
+from bot.core.ash_character import format_ash_prompt, get_crisis_addition, get_response_templates
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class ClaudeAPI:
         self.min_call_interval = 1.0  # Minimum seconds between calls
 
         # Resource management
-        from utils.resource_managers import ResourceCleanupMixin
+        from bot.utils.resource_managers import ResourceCleanupMixin
         self._cleanup_mixin = ResourceCleanupMixin()
         self._cleanup_mixin.register_cleanup(self.close)
 
@@ -70,7 +70,7 @@ class ClaudeAPI:
 
         try:
             # Use the session manager properly
-            from utils.resource_managers import session_manager
+            from bot.utils.resource_managers import session_manager
             
             headers = {
                 'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ class ClaudeAPI:
         
         try:
             # Use resource manager cleanup
-            from utils.resource_managers import session_manager
+            from bot.utils.resource_managers import session_manager
             await session_manager.close_session("claude")
             
             logger.info("✅ Claude API cleanup completed")
