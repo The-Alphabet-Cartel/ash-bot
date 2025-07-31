@@ -161,14 +161,27 @@ class AshBot(commands.Bot):
             logger.error(f"❌ Failed to load Monitoring Commands: {e}")
             cog_errors.append(f"MonitoringCommands: {e}")
 
-        # Load Enhanced Learning Commands
+        # Load Ensemble Commands (enhanced learning + v3.0 features)
         try:
-            from bot.commands.enhanced_learning_commands import EnhancedLearningCommands
-            await self.add_cog(EnhancedLearningCommands(self))
-            logger.info("✅ Loaded Enhanced Learning Commands cog")
+            from bot.commands.ensemble_commands import EnsembleCommands
+            await self.add_cog(EnsembleCommands(self))
+            logger.info("✅ Loaded Ensemble Commands cog (enhanced learning + v3.0 features)")
+        except ImportError as import_err:
+            logger.error(f"❌ Failed to import Ensemble Commands: {import_err}")
+            # Try alternative import method using setup function
+            try:
+                import bot.commands.ensemble_commands as ensemble_module
+                if hasattr(ensemble_module, 'setup'):
+                    await ensemble_module.setup(self)
+                    logger.info("✅ Loaded Ensemble Commands via setup function")
+                else:
+                    cog_errors.append(f"EnsembleCommands: setup function not found")
+            except Exception as setup_err:
+                logger.error(f"❌ Failed to load via setup: {setup_err}")
+                cog_errors.append(f"EnsembleCommands: {import_err}")
         except Exception as e:
-            logger.error(f"❌ Failed to load Enhanced Learning Commands: {e}")
-            cog_errors.append(f"EnhancedLearningCommands: {e}")
+            logger.error(f"❌ Failed to load Ensemble Commands: {e}")
+            cog_errors.append(f"EnsembleCommands: {e}")
 
         # Log cog loading errors
         if cog_errors:
