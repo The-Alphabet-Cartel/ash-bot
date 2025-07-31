@@ -58,7 +58,7 @@ class MessageHandler:
             else:
                 self.conversation_timeout = config.get('BOT_CONVERSATION_TIMEOUT', 300)
         
-        # Enhanced statistics tracking
+        # Enhanced statistics tracking with backward compatibility
         self.message_stats = {
             'messages_processed': 0,
             'crisis_detected': 0,
@@ -72,7 +72,18 @@ class MessageHandler:
                 'gaps_detected_count': 0,
                 'staff_reviews_triggered': 0,
                 'ensemble_analyses': 0
-            }
+            },
+            # Backward compatibility fields for existing commands
+            'conversations_started': 0,
+            'follow_ups_handled': 0, 
+            'crisis_responses_given': 0,
+            'total_messages_processed': 0,
+            'rate_limits_hit': 0,
+            'daily_limits_hit': 0,
+            'ignored_follow_ups': 0,
+            'intrusion_attempts_blocked': 0,
+            'crisis_overrides_triggered': 0,
+            'multiple_conversations_same_channel': 0
         }
         
         # Conversation tracking (existing logic)
@@ -250,6 +261,7 @@ class MessageHandler:
         """
         
         self.message_stats['messages_processed'] += 1
+        self.message_stats['total_messages_processed'] += 1  # Backward compatibility
         
         # Clean up expired conversations (existing logic)
         await self._cleanup_expired_conversations()
@@ -260,6 +272,7 @@ class MessageHandler:
         # If crisis detected, update statistics and return result
         if detection_result['needs_response']:
             self.message_stats['crisis_detected'] += 1
+            self.message_stats['crisis_responses_given'] += 1  # Backward compatibility
             
             # Enhanced logging for v3.0
             crisis_level = detection_result['crisis_level']
@@ -283,6 +296,32 @@ class MessageHandler:
             return detection_result
         
         return None
+    
+    def get_message_handler_stats(self) -> Dict:
+        """Get message handler statistics in expected format for commands"""
+        
+        # Build stats in the format expected by monitoring_commands
+        return {
+            'message_processing': {
+                'total_messages_processed': self.message_stats['total_messages_processed'],
+                'crisis_responses_given': self.message_stats['crisis_responses_given'],
+                'messages_processed_today': self.message_stats['messages_processed']  # Alias
+            },
+            'conversation_tracking': {
+                'conversations_started': self.message_stats['conversations_started'],
+                'follow_ups_handled': self.message_stats['follow_ups_handled'],
+                'active_conversations': len(self.active_conversations),
+                'ignored_follow_ups': self.message_stats['ignored_follow_ups'],
+                'crisis_overrides_triggered': self.message_stats['crisis_overrides_triggered']
+            },
+            'rate_limiting': {
+                'rate_limits_hit': self.message_stats['rate_limits_hit'],
+                'daily_limits_hit': self.message_stats['daily_limits_hit'],
+                'success_rate_percent': 100.0 - (self.message_stats['rate_limits_hit'] * 100.0 / max(1, self.message_stats['total_messages_processed']))
+            },
+            'detection_methods': self.message_stats['detection_method_breakdown'].copy(),
+            'v3_ensemble_features': self.message_stats['v3_features'].copy()
+        }
     
     async def _cleanup_expired_conversations(self):
         """Enhanced conversation cleanup with v3.0 statistics"""
