@@ -53,6 +53,8 @@ COPY --chown=botuser:botuser ./bot .
 USER botuser
 
 # Set default environment variables
+ENV TZ="America/Los_Angeles"
+
 ENV GLOBAL_PYTHONUNBUFFERED="1"
 
 # Core Bot Configuration
