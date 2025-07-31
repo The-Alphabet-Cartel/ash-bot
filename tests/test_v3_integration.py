@@ -41,15 +41,15 @@ async def test_v3_integration():
     
     # Import the updated NLP integration
     try:
-        from bot.integrations.nlp_integration import NLPIntegration
-        print("✅ Successfully imported NLPIntegration")
+        from bot.integrations.nlp_integration import EnhancedNLPClient
+        print("✅ Successfully imported EnhancedNLPClient")
     except ImportError as e:
-        print(f"❌ Failed to import NLPIntegration: {e}")
+        print(f"❌ Failed to import EnhancedNLPClient: {e}")
         return False
     
     # Initialize NLP client
     nlp_url = os.getenv('GLOBAL_NLP_API_URL', 'http://10.20.30.253:8881')
-    nlp_client = NLPIntegration(nlp_url, timeout=30)
+    nlp_client = EnhancedNLPClient(nlp_url, timeout=30)
     
     print(f"🔗 Testing connection to: {nlp_url}")
     
