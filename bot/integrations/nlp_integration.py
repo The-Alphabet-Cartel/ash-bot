@@ -96,10 +96,6 @@ class EnhancedNLPClient:
             if not self.service_healthy:
                 logger.warning("🔌 NLP Service unavailable - skipping analysis")
                 return None
-
-# Backward compatibility aliases
-NLPIntegration = EnhancedNLPClient
-RemoteNLPClient = EnhancedNLPClient  # For existing imports
         
         for attempt in range(self.retry_attempts):
             try:
@@ -274,3 +270,7 @@ RemoteNLPClient = EnhancedNLPClient  # For existing imports
         except Exception as e:
             logger.debug(f"Error getting ensemble metrics: {e}")
             return None
+
+# Backward compatibility aliases
+NLPIntegration = EnhancedNLPClient
+RemoteNLPClient = EnhancedNLPClient  # For existing imports
