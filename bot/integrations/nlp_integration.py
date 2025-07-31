@@ -355,6 +355,256 @@ class EnhancedNLPClient:
             logger.debug(f"Error getting ensemble metrics: {e}")
             return None
 
+    async def get_ensemble_stats(self) -> Optional[Dict[str, Any]]:
+        """Get comprehensive ensemble statistics for ensemble commands"""
+        
+        if not self.service_healthy:
+            return None
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.nlp_url}/stats",
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    
+                    if response.status == 200:
+                        raw_stats = await response.json()
+                        
+                        # Process stats into format expected by ensemble commands
+                        ensemble_stats = {
+                            'ensemble_status': 'active' if raw_stats.get('model_loaded', False) else 'inactive',
+                            'service_healthy': self.service_healthy,
+                            
+                            # Server stats from NLP service
+                            'server_stats': {
+                                'total_requests': raw_stats.get('total_requests', 0),
+                                'successful_analyses': raw_stats.get('successful_analyses', 0),
+                                'failed_analyses': raw_stats.get('failed_analyses', 0),
+                                'uptime_seconds': raw_stats.get('uptime_seconds', 0),
+                                'models_loaded': raw_stats.get('models_loaded', False),
+                                'individual_models': {
+                                    'depression_model': {'loaded': True, 'name': 'Depression Detection'},
+                                    'sentiment_model': {'loaded': True, 'name': 'Sentiment Analysis'},
+                                    'emotional_distress_model': {'loaded': True, 'name': 'Emotional Distress'}
+                                }
+                            },
+                            
+                            # Client stats (we track these locally)
+                            'client_stats': {
+                                'total_requests': raw_stats.get('total_requests', 0),
+                                'successful_requests': raw_stats.get('successful_analyses', 0),
+                                'gap_detections': raw_stats.get('gaps_detected', 0),
+                                'staff_reviews_flagged': raw_stats.get('staff_reviews_flagged', 0),
+                                'ensemble_methods_used': {
+                                    'consensus': raw_stats.get('consensus_analyses', 0),
+                                    'majority_voting': raw_stats.get('majority_analyses', 0),
+                                    'weighted_average': raw_stats.get('weighted_analyses', 0)
+                                }
+                            },
+                            
+                            # Performance metrics
+                            'performance': {
+                                'average_response_time_ms': raw_stats.get('average_processing_time_ms', 0),
+                                'gap_detection_rate': raw_stats.get('gap_detection_rate', 0.0),
+                                'staff_review_rate': raw_stats.get('staff_review_rate', 0.0)
+                            },
+                            
+                            # Timestamp
+                            'retrieved_at': time.time()
+                        }
+                        
+                        logger.debug(f"📊 Retrieved ensemble stats successfully")
+                        return ensemble_stats
+                        
+                    else:
+                        logger.warning(f"Failed to get ensemble stats: HTTP {response.status}")
+                        return None
+                        
+        except Exception as e:
+            logger.warning(f"Error getting ensemble stats: {e}")
+            return None
+
+    async def send_staff_feedback(self, message_content: str, correct_level: str, detected_level: str, correction_type: str) -> bool:
+        """Send staff feedback to the ensemble learning system"""
+        
+        if not self.service_healthy:
+            logger.warning("🔌 NLP Service unavailable - cannot send feedback")
+            return False
+        
+        try:
+            # Prepare feedback payload
+            feedback_payload = {
+                "message": message_content.strip(),
+                "staff_correction": {
+                    "detected_level": detected_level,
+                    "correct_level": correct_level,
+                    "correction_type": correction_type,
+                    "timestamp": time.time()
+                },
+                "feedback_type": "staff_review",
+                "source": "discord_bot"
+            }
+            
+            logger.debug(f"📝 Sending staff feedback: {correction_type} - {detected_level} → {correct_level}")
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.nlp_url}/staff_feedback",
+                    json=feedback_payload,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                    headers={'Content-Type': 'application/json'}
+                ) as response:
+                    
+                    response_text = await response.text()
+                    
+                    if response.status == 200:
+                        feedback_result = await response.json()
+                        
+                        logger.info(f"✅ Staff feedback sent successfully:")
+                        logger.info(f"   📊 Correction Type: {correction_type}")
+                        logger.info(f"   📈 Pattern Learning: {feedback_result.get('patterns_learned', 0)} patterns")
+                        logger.info(f"   🎯 Threshold Adjustments: {feedback_result.get('thresholds_adjusted', 0)}")
+                        
+                        return True
+                        
+                    elif response.status == 404:
+                        # Staff feedback endpoint not available - try alternative endpoint
+                        logger.info("Staff feedback endpoint not available, trying learning endpoint")
+                        return await self._send_learning_feedback_fallback(feedback_payload)
+                        
+                    elif response.status == 422:
+                        logger.error(f"❌ Staff feedback validation error: {response_text}")
+                        return False
+                        
+                    else:
+                        logger.error(f"❌ Staff feedback failed: HTTP {response.status}")
+                        logger.error(f"   Response: {response_text[:200]}...")
+                        return False
+                        
+        except Exception as e:
+            logger.error(f"🔌 Error sending staff feedback: {e}")
+            return False
+
+    async def _send_learning_feedback_fallback(self, feedback_payload: Dict) -> bool:
+        """Fallback method for sending learning feedback if staff_feedback endpoint is unavailable"""
+        
+        try:
+            # Try the general learning endpoint
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.nlp_url}/learning_feedback",
+                    json=feedback_payload,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                    headers={'Content-Type': 'application/json'}
+                ) as response:
+                    
+                    if response.status == 200:
+                        logger.info("✅ Learning feedback sent via fallback endpoint")
+                        return True
+                    else:
+                        logger.warning(f"⚠️ Fallback learning feedback failed: HTTP {response.status}")
+                        return False
+                        
+        except Exception as e:
+            logger.warning(f"⚠️ Fallback learning feedback error: {e}")
+            return False
+
+    async def get_learning_statistics(self) -> Optional[Dict[str, Any]]:
+        """Get learning system statistics"""
+        
+        if not self.service_healthy:
+            return None
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.nlp_url}/learning_statistics",
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    
+                    if response.status == 200:
+                        learning_data = await response.json()
+                        
+                        # Format for ensemble commands
+                        return {
+                            'learning_enabled': learning_data.get('learning_enabled', False),
+                            'total_feedback_records': learning_data.get('total_feedback_records', 0),
+                            'successful_learning_updates': learning_data.get('successful_learning_updates', 0),
+                            'failed_learning_updates': learning_data.get('failed_learning_updates', 0),
+                            'patterns_discovered': learning_data.get('patterns_discovered', 0),
+                            'threshold_adjustments': learning_data.get('threshold_adjustments', 0),
+                            'model_improvements': learning_data.get('model_improvements', {}),
+                            'last_learning_update': learning_data.get('last_learning_update', None),
+                            'retrieved_at': time.time()
+                        }
+                        
+                    elif response.status == 404:
+                        # Learning statistics not implemented
+                        return {
+                            'learning_enabled': False,
+                            'message': 'Learning statistics not available',
+                            'retrieved_at': time.time()
+                        }
+                        
+                    else:
+                        logger.warning(f"Failed to get learning statistics: HTTP {response.status}")
+                        return None
+                        
+        except Exception as e:
+            logger.warning(f"Error getting learning statistics: {e}")
+            return None
+
+    async def test_ensemble_connection(self) -> Dict[str, Any]:
+        """Test ensemble connection and return detailed status"""
+        
+        connection_status = {
+            'service_available': False,
+            'models_loaded': False,
+            'ensemble_ready': False,
+            'response_time_ms': 0,
+            'error_message': None
+        }
+        
+        start_time = time.time()
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.nlp_url}/health",
+                    timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
+                    
+                    response_time_ms = (time.time() - start_time) * 1000
+                    connection_status['response_time_ms'] = response_time_ms
+                    
+                    if response.status == 200:
+                        health_data = await response.json()
+                        
+                        connection_status['service_available'] = True
+                        connection_status['models_loaded'] = health_data.get('model_loaded', False)
+                        connection_status['ensemble_ready'] = (
+                            health_data.get('status') == 'healthy' and 
+                            health_data.get('model_loaded', False)
+                        )
+                        
+                        # Check for ensemble-specific features
+                        hardware_info = health_data.get('hardware_info', {})
+                        ensemble_info = hardware_info.get('ensemble_info', {})
+                        
+                        if ensemble_info.get('models_count', 0) >= 3:
+                            connection_status['three_model_ensemble'] = True
+                            connection_status['gap_detection'] = ensemble_info.get('gap_detection') == 'enabled'
+                        
+                    else:
+                        connection_status['error_message'] = f"HTTP {response.status}"
+                        
+        except asyncio.TimeoutError:
+            connection_status['error_message'] = "Connection timeout"
+        except Exception as e:
+            connection_status['error_message'] = str(e)
+        
+        return connection_status
 
 # Backward compatibility aliases
 NLPIntegration = EnhancedNLPClient
