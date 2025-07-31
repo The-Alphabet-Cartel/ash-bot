@@ -347,7 +347,29 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         logger.info("🎉 Ash Bot fully operational with enhanced security and API server")
     
     async def on_message(self, message):
-        """Route messages with security validation"""
+        """Enhanced message handler with self-message filtering and security validation"""
+        
+        # CRITICAL FIX #1: Never process the bot's own messages
+        if message.author == self.user:
+            logger.debug(f"🤖 Ignoring bot's own message: '{message.content[:50] if message.content else '[empty]'}...'")
+            return
+        
+        # CRITICAL FIX #2: Never process any bot messages
+        if message.author.bot:
+            logger.debug(f"🤖 Ignoring bot message from {message.author}")
+            return
+        
+        # CRITICAL FIX #3: Handle empty messages gracefully
+        if not message.content or not message.content.strip():
+            logger.debug(f"📭 Ignoring empty message from {message.author}")
+            return
+        
+        # OPTIONAL FIX #4: Handle DMs cautiously (you can enable this if needed)
+        if not message.guild:
+            logger.debug(f"📬 Direct message from {message.author}: '{message.content[:50]}...'")
+            # Uncomment the next line if you want to ignore all DMs:
+            # return
+        
         # Basic security validation
         if not self.security_manager.validate_channel_access(message.channel.id):
             # Removed the warning log since this is expected behavior
@@ -355,14 +377,31 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             #logger.warning(f"Message from unauthorized channel: {message.channel.id}")
             return
         
-        # Pass to message handler (which now has security manager)
-        if self.message_handler:
-            await self.message_handler.process_message(message)
-        else:
-            logger.debug("Message handler not ready, using basic handling")
-        
-        # Process commands
-        await self.process_commands(message)
+        try:
+            # Pass to message handler (which now has security manager)
+            if self.message_handler:
+                await self.message_handler.process_message(message)
+            else:
+                logger.debug("Message handler not ready, using basic handling")
+            
+            # Process commands
+            await self.process_commands(message)
+            
+        except Exception as e:
+            logger.error(f"❌ Error in on_message handler: {e}")
+            logger.exception("Full traceback:")
+            
+            # Log as security event
+            self.security_manager.log_security_event(
+                "message_processing_error", 
+                message.author.id, 
+                message.guild.id if message.guild else 0, 
+                message.channel.id,
+                {"error": str(e), "message_preview": message.content[:50] if message.content else "[empty]"}, 
+                "error"
+            )
+            
+            # Don't re-raise - this prevents the bot from crashing
     
     async def on_command_error(self, ctx, error):
         """Handle command errors with security logging"""
