@@ -114,7 +114,7 @@ class EnhancedNLPClient:
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        f"{self.nlp_url}/analyze_ensemble",  # Use new ensemble endpoint
+                        f"{self.nlp_url}/analyze",  # Use new ensemble endpoint
                         json=payload,
                         timeout=aiohttp.ClientTimeout(total=self.analyze_timeout)
                     ) as response:
