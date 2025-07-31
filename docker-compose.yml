@@ -16,6 +16,10 @@ services:
     ports:
       - 8882:8882
     environment:
+      # Local Timezone
+      - TZ=America/Los_Angeles
+      
+      # Secrets
       - BOT_DISCORD_TOKEN=${BOT_DISCORD_TOKEN}
       - GLOBAL_SESSION_TOKEN=${GLOBAL_SESSION_TOKEN}
       - GLOBAL_CLAUDE_API_KEY=${GLOBAL_CLAUDE_API_KEY}
