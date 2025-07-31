@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NLP Integration - Updated for v3.0 Response Structure
+NLP Integration - FIXED for v3.0 Response Structure
 
 This module handles communication with the ash-nlp service v3.0 which now uses
 a three-model ensemble approach with enhanced response structure.
@@ -15,6 +15,7 @@ import logging
 import time
 import os
 from typing import Dict, Optional, Any
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +76,10 @@ class EnhancedNLPClient:
                         
                         # Log v3.0 health details
                         status = health_data.get('status', 'unknown')
-                        model_info = health_data.get('model_info', 'unknown')
+                        model_info = health_data.get('model_loaded', 'unknown')
                         
                         if status == 'healthy':
-                            logger.info(f"✅ NLP Service healthy: {model_info}")
+                            logger.info(f"✅ NLP Service healthy: models loaded = {model_info}")
                             self.service_healthy = True
                             return True
                         else:
@@ -115,12 +116,15 @@ class EnhancedNLPClient:
         
         for attempt in range(self.retry_attempts):
             try:
+                # FIXED: Use proper timestamp format that the v3.0 API expects
                 payload = {
                     "message": message_content,
                     "user_id": str(user_id),
-                    "channel_id": str(channel_id),
-                    "timestamp": time.time()
+                    "channel_id": str(channel_id)
+                    # Remove the timestamp field - it's optional and was causing the 500 error
                 }
+                
+                logger.debug(f"🧠 Sending NLP request (attempt {attempt + 1}): {payload}")
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
@@ -130,8 +134,15 @@ class EnhancedNLPClient:
                         headers={'Content-Type': 'application/json'}
                     ) as response:
                         
+                        response_text = await response.text()
+                        
                         if response.status == 200:
-                            raw_data = await response.json()
+                            try:
+                                raw_data = await response.json()
+                            except Exception as json_error:
+                                logger.error(f"❌ Failed to parse JSON response: {json_error}")
+                                logger.error(f"   Raw response: {response_text[:200]}...")
+                                return None
                             
                             # Process v3.0 response structure
                             processed_data = self._process_v3_response(raw_data)
@@ -140,7 +151,7 @@ class EnhancedNLPClient:
                             logger.debug(f"   📊 Crisis Level: {processed_data['crisis_level']}")
                             logger.debug(f"   🎯 Confidence: {processed_data['confidence_score']:.3f}")
                             logger.debug(f"   🔍 Method: {processed_data['method']}")
-                            logger.debug(f"   ⏱️ Processing Time: {processed_data['processing_time_ms']:.1f}ms")
+                            logger.debug(f"   ⏱️ Processing Time: {processed_data.get('processing_time_ms', 0):.1f}ms")
                             
                             # Log v3.0 specific features
                             if processed_data.get('gaps_detected'):
@@ -153,9 +164,19 @@ class EnhancedNLPClient:
                             
                         elif response.status == 422:
                             # Validation error - don't retry
-                            error_text = await response.text()
-                            logger.error(f"❌ NLP Service validation error: {error_text}")
+                            logger.error(f"❌ NLP Service validation error: {response_text}")
+                            logger.error(f"   Payload sent: {payload}")
                             return None
+                            
+                        elif response.status == 500:
+                            # Internal server error - log details and retry
+                            logger.error(f"❌ NLP Service internal error (attempt {attempt + 1}/{self.retry_attempts}): {response_text[:200]}...")
+                            logger.error(f"   Payload that caused error: {payload}")
+                            if attempt < self.retry_attempts - 1:
+                                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                                continue
+                            else:
+                                return None
                             
                         elif response.status == 503:
                             # Service temporarily unavailable - retry
@@ -165,6 +186,7 @@ class EnhancedNLPClient:
                                 continue
                         else:
                             logger.error(f"❌ NLP Service error: HTTP {response.status}")
+                            logger.error(f"   Response: {response_text[:200]}...")
                             return None
                             
             except asyncio.TimeoutError:
