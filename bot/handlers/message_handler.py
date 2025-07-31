@@ -159,6 +159,30 @@ class MessageHandler:
         
         return final_result
     
+    async def _perform_enhanced_hybrid_detection(self, message: Message) -> Dict:
+        """
+        Enhanced hybrid detection - Compatibility method for monitoring commands
+        This method serves as an alias to the main _perform_hybrid_detection method
+        to maintain compatibility with monitoring commands that expect this method name.
+        """
+        logger.debug(f"🔗 Enhanced hybrid detection called - routing to main hybrid detection")
+        
+        # Route to the main hybrid detection method
+        result = await self._perform_hybrid_detection(message)
+        
+        # Add any enhanced fields that monitoring commands might expect
+        if result:
+            # Ensure v3.0 ensemble fields are present for monitoring commands
+            result.setdefault('gaps_detected', False)
+            result.setdefault('requires_staff_review', result.get('crisis_level') == 'high')
+            result.setdefault('processing_time_ms', 0)
+            result.setdefault('model_breakdown', {})
+            result.setdefault('gap_details', [])
+            
+            logger.debug(f"🔗 Enhanced hybrid detection result: {result.get('crisis_level')} via {result.get('method')}")
+        
+        return result
+
     def _combine_detection_results_v3(self, keyword_result: Dict, nlp_result: Optional[Dict]) -> Dict:
         """
         Enhanced hybrid decision logic with v3.0 NLP features
