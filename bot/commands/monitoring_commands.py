@@ -417,19 +417,30 @@ class MonitoringCommands(commands.Cog):
 
     @app_commands.command(name="test_message_analysis", description="Test message analysis and crisis detection on sample text")
     @app_commands.describe(
-        test_message="Message text to analyze for crisis detection",
+        message="Message text to analyze for crisis detection",
         show_details="Show detailed analysis breakdown"
     )
     async def test_message_analysis(self, interaction: discord.Interaction, 
-                                  test_message: str,
+                                  message: str,  # Changed from test_message to message
                                   show_details: bool = True):
-        """Test message analysis and crisis detection capabilities"""
+        """Test message analysis and crisis detection capabilities - FIXED VERSION"""
         
         if not await self._check_crisis_role(interaction):
             return
         
         try:
             await interaction.response.defer(ephemeral=True)
+            
+            # Validate input message
+            if not message or not message.strip():
+                await interaction.followup.send(
+                    "❌ Error: Message cannot be empty. Please provide a message to analyze.", 
+                    ephemeral=True
+                )
+                return
+            
+            test_message = message.strip()  # Clean the message
+            logger.info(f"🧪 Testing message analysis for: '{test_message}' (length: {len(test_message)})")
             
             # Initialize analysis results
             analysis_results = {
@@ -440,29 +451,44 @@ class MonitoringCommands(commands.Cog):
             
             # Test keyword detection
             if hasattr(self.bot, 'keyword_detector') and self.bot.keyword_detector:
-                keyword_result = self.bot.keyword_detector.check_message(test_message)
-                analysis_results['keyword_detection'] = keyword_result
+                try:
+                    logger.debug(f"🔤 Testing keyword detection with: '{test_message}'")
+                    keyword_result = self.bot.keyword_detector.check_message(test_message)
+                    analysis_results['keyword_detection'] = keyword_result
+                    logger.debug(f"🔤 Keyword result: {keyword_result}")
+                except Exception as e:
+                    logger.error(f"Keyword detection failed: {e}")
+                    analysis_results['keyword_detection'] = {'error': str(e)}
             
-            # Test NLP analysis if available
+            # Test NLP analysis if available - DIRECT CALL WITHOUT DUPLICATES
             if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
                 try:
+                    logger.debug(f"🧠 Testing NLP analysis with: '{test_message}'")
                     nlp_result = await self.bot.nlp_client.analyze_message(
-                        test_message,
+                        test_message,  # Use the validated message
                         str(interaction.user.id),
                         str(interaction.channel.id)
                     )
                     analysis_results['nlp_analysis'] = nlp_result
+                    if nlp_result:
+                        logger.debug(f"🧠 NLP result: {nlp_result.get('crisis_level')} (confidence: {nlp_result.get('confidence_score', 0):.3f})")
+                    else:
+                        logger.warning("🧠 NLP analysis returned None")
                 except Exception as e:
-                    logger.warning(f"NLP analysis failed: {e}")
+                    logger.error(f"NLP analysis failed: {e}")
                     analysis_results['nlp_analysis'] = {'error': str(e)}
             
-            # Test full detection decision through message handler
+            # Test full detection decision through message handler - SINGLE CALL ONLY
             if hasattr(self.bot, 'message_handler') and self.bot.message_handler:
                 try:
-                    # Create a mock message for testing
+                    logger.debug(f"⚡ Testing message handler with: '{test_message}'")
+                    
+                    # Create a mock message for testing - ENSURE CONTENT IS SET
                     class MockMessage:
                         def __init__(self, content):
-                            self.content = content
+                            if not content or not content.strip():
+                                raise ValueError(f"MockMessage content cannot be empty: '{content}'")
+                            self.content = content.strip()
                             self.author = type('author', (), {
                                 'id': interaction.user.id, 
                                 'mention': f'<@{interaction.user.id}>',
@@ -470,13 +496,25 @@ class MonitoringCommands(commands.Cog):
                             })()
                             self.channel = interaction.channel
                             self.guild = interaction.guild
+                            logger.debug(f"🤖 Created MockMessage with content: '{self.content}' (length: {len(self.content)})")
                     
                     mock_msg = MockMessage(test_message)
-                    # Use the correct method name for EnhancedMessageHandler
-                    final_result = await self.bot.message_handler._perform_enhanced_hybrid_detection(mock_msg)
+                    
+                    # Use the correct method name for your message handler
+                    if hasattr(self.bot.message_handler, '_perform_enhanced_hybrid_detection'):
+                        final_result = await self.bot.message_handler._perform_enhanced_hybrid_detection(mock_msg)
+                    elif hasattr(self.bot.message_handler, '_perform_hybrid_detection'):
+                        final_result = await self.bot.message_handler._perform_hybrid_detection(mock_msg)
+                    else:
+                        raise AttributeError("No hybrid detection method found on message handler")
+                    
                     analysis_results['final_decision'] = final_result
+                    if final_result:
+                        logger.debug(f"⚡ Final result: {final_result.get('crisis_level')} via {final_result.get('method')}")
+                    
                 except Exception as e:
-                    logger.warning(f"Message handler analysis failed: {e}")
+                    logger.error(f"Message handler analysis failed: {e}")
+                    logger.exception("Full traceback:")
                     analysis_results['final_decision'] = {'error': str(e)}
             
             # Create response embed
@@ -489,15 +527,22 @@ class MonitoringCommands(commands.Cog):
             # Keyword Detection Results
             if analysis_results['keyword_detection']:
                 kw_result = analysis_results['keyword_detection']
-                kw_color = "🔴" if kw_result['crisis_level'] == 'high' else "🟡" if kw_result['crisis_level'] == 'medium' else "🟢" if kw_result['crisis_level'] == 'low' else "⚪"
-                
-                embed.add_field(
-                    name="🔤 Keyword Detection",
-                    value=f"{kw_color} **Level:** {kw_result['crisis_level'].title()}\n"
-                          f"**Needs Response:** {'✅' if kw_result['needs_response'] else '❌'}\n"
-                          f"**Categories:** {', '.join(kw_result.get('detected_categories', [])) if kw_result.get('detected_categories') else 'None'}",
-                    inline=True
-                )
+                if 'error' in kw_result:
+                    embed.add_field(
+                        name="🔤 Keyword Detection",
+                        value=f"❌ Error: {kw_result['error'][:50]}...",
+                        inline=True
+                    )
+                else:
+                    kw_color = "🔴" if kw_result['crisis_level'] == 'high' else "🟡" if kw_result['crisis_level'] == 'medium' else "🟢" if kw_result['crisis_level'] == 'low' else "⚪"
+                    
+                    embed.add_field(
+                        name="🔤 Keyword Detection",
+                        value=f"{kw_color} **Level:** {kw_result['crisis_level'].title()}\n"
+                              f"**Needs Response:** {'✅' if kw_result['needs_response'] else '❌'}\n"
+                              f"**Categories:** {', '.join(kw_result.get('detected_categories', [])) if kw_result.get('detected_categories') else 'None'}",
+                        inline=True
+                    )
             else:
                 embed.add_field(
                     name="🔤 Keyword Detection",
@@ -525,10 +570,10 @@ class MonitoringCommands(commands.Cog):
                     ensemble_text = f"{nlp_color} **Level:** {nlp_level.title()}\n"
                     ensemble_text += f"**Confidence:** {confidence:.2%}\n"
                     ensemble_text += f"**Method:** {method.replace('_', ' ').title()}\n"
-                    ensemble_text += f"**Processing:** {processing_time}ms"
+                    ensemble_text += f"**Processing:** {processing_time:.1f}ms"
                     
-                    if nlp_result.get('gap_detected'):
-                        ensemble_text += f"\n🔍 **Gaps Detected:** {len(nlp_result.get('gap_details', []))}"
+                    if nlp_result.get('gaps_detected'):
+                        ensemble_text += f"\n🔍 **Gaps Detected:** Yes"
                     
                     embed.add_field(
                         name="🎯 Three-Model Ensemble",
@@ -537,19 +582,23 @@ class MonitoringCommands(commands.Cog):
                     )
                     
                     # Show model breakdown if available and requested
-                    if show_details and nlp_result.get('model_breakdown'):
-                        breakdown_text = ""
-                        for model, data in nlp_result.get('model_breakdown', {}).items():
-                            pred = data.get('prediction', 'unknown')
-                            conf = data.get('confidence', 0)
-                            breakdown_text += f"**{model.title()}:** {pred} ({conf:.2%})\n"
+                    if show_details and nlp_result.get('ensemble_details'):
+                        ensemble_details = nlp_result['ensemble_details']
+                        predictions = ensemble_details.get('model_predictions', {})
+                        confidences = ensemble_details.get('individual_confidence_scores', {})
                         
-                        if breakdown_text:
-                            embed.add_field(
-                                name="🤖 Model Breakdown",
-                                value=breakdown_text,
-                                inline=False
-                            )
+                        if predictions:
+                            breakdown_text = ""
+                            for model, prediction in predictions.items():
+                                conf = confidences.get(model, 0)
+                                breakdown_text += f"**{model.title()}:** {prediction} ({conf:.2%})\n"
+                            
+                            if breakdown_text:
+                                embed.add_field(
+                                    name="🤖 Model Breakdown",
+                                    value=breakdown_text,
+                                    inline=False
+                                )
             else:
                 embed.add_field(
                     name="🎯 Three-Model Ensemble",
@@ -579,20 +628,20 @@ class MonitoringCommands(commands.Cog):
                               f"**Method:** {method.replace('_', ' ').title()}\n"
                               f"**Confidence:** {confidence:.2%}\n"
                               f"**Needs Response:** {'✅' if final_result.get('needs_response') else '❌'}\n"
-                              f"**Gap Detected:** {'🔍' if final_result.get('gap_detected') else '❌'}",
+                              f"**Gaps Detected:** {'🔍' if final_result.get('gaps_detected') else '❌'}",
                         inline=False
                     )
                     
-                    # Show gap details if detected
-                    if final_result.get('gap_detected') and show_details:
-                        gap_details = final_result.get('gap_details', [])
-                        if gap_details:
-                            gap_text = "\n".join([f"• {gap.get('type', 'unknown').replace('_', ' ').title()}" for gap in gap_details[:3]])
-                            embed.add_field(
-                                name="🔍 Gap Details",
-                                value=gap_text,
-                                inline=True
-                            )
+                    # Show breakdown if both keyword and NLP results available
+                    if (final_result.get('keyword_result') and final_result.get('nlp_result') and 
+                        final_result['keyword_result'] != 'none' and final_result['nlp_result'] != 'none'):
+                        embed.add_field(
+                            name="🔍 Detection Breakdown",
+                            value=f"**Keywords:** {final_result['keyword_result'].title()}\n"
+                                 f"**NLP:** {final_result['nlp_result'].title()}\n"
+                                 f"**Winner:** {method.replace('_', ' ').title()}",
+                            inline=True
+                        )
             else:
                 embed.add_field(
                     name="⚡ Final Decision",
@@ -600,7 +649,30 @@ class MonitoringCommands(commands.Cog):
                     inline=False
                 )
             
-            embed.set_footer(text="Three-Model Ensemble Test • Gap Detection Active")
+            # Summary and recommendations
+            summary_lines = []
+            if analysis_results['keyword_detection'] and analysis_results['keyword_detection'].get('needs_response'):
+                summary_lines.append("✅ Keywords detected crisis language")
+            if analysis_results['nlp_analysis'] and not analysis_results['nlp_analysis'].get('error'):
+                nlp_confidence = analysis_results['nlp_analysis'].get('confidence_score', 0)
+                if nlp_confidence > 0.7:
+                    summary_lines.append("✅ High NLP confidence in analysis")
+                elif nlp_confidence > 0.4:
+                    summary_lines.append("⚠️ Moderate NLP confidence")
+                else:
+                    summary_lines.append("⚪ Low NLP confidence")
+            
+            if analysis_results['nlp_analysis'] and analysis_results['nlp_analysis'].get('gaps_detected'):
+                summary_lines.append("🔍 Model disagreement detected - staff review recommended")
+            
+            if summary_lines:
+                embed.add_field(
+                    name="📊 Analysis Summary",
+                    value="\n".join(summary_lines),
+                    inline=False
+                )
+            
+            embed.set_footer(text=f"Analysis completed • Detection System v3.0")
             
             await interaction.followup.send(embed=embed, ephemeral=True)
             
