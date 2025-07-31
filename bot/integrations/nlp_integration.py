@@ -103,9 +103,40 @@ class EnhancedNLPClient:
     async def analyze_message(self, message_content: str, user_id: str = "unknown", channel_id: str = "unknown") -> Optional[Dict]:
         """
         Analyze message using v3.0 NLP service with three-model ensemble
-        
-        Returns processed response compatible with existing ash-bot logic
+        Enhanced with debugging to track empty message issue
         """
+        
+        # ENHANCED DEBUGGING: Track exactly what's being sent
+        logger.info(f"🧠 NLP analyze_message called:")
+        logger.info(f"   📝 Content: '{message_content}' (length: {len(message_content) if message_content else 'None'})")
+        logger.info(f"   👤 User ID: '{user_id}'")
+        logger.info(f"   📍 Channel ID: '{channel_id}'")
+        
+        # Validate input - CRITICAL CHECK
+        if message_content is None:
+            logger.error(f"❌ CRITICAL: message_content is None! Caller should handle this.")
+            logger.error(f"   👤 User ID: {user_id}")
+            logger.error(f"   📍 Channel ID: {channel_id}")
+            return None
+            
+        if not isinstance(message_content, str):
+            logger.error(f"❌ CRITICAL: message_content is not a string! Type: {type(message_content)}")
+            logger.error(f"   📝 Content: {repr(message_content)}")
+            return None
+            
+        if not message_content.strip():
+            logger.error(f"❌ CRITICAL: message_content is empty or whitespace only!")
+            logger.error(f"   📝 Raw content: {repr(message_content)}")
+            logger.error(f"   👤 User ID: {user_id}")
+            logger.error(f"   📍 Channel ID: {channel_id}")
+            
+            # Log stack trace to find out who's calling with empty messages
+            import traceback
+            logger.error(f"   🔍 Call stack:")
+            for line in traceback.format_stack():
+                logger.error(f"     {line.strip()}")
+            
+            return None
         
         if not self.service_healthy:
             # Try to reconnect
@@ -118,13 +149,15 @@ class EnhancedNLPClient:
             try:
                 # FIXED: Use proper timestamp format that the v3.0 API expects
                 payload = {
-                    "message": message_content,
+                    "message": message_content.strip(),  # Ensure we trim whitespace
                     "user_id": str(user_id),
                     "channel_id": str(channel_id)
-                    # Remove the timestamp field - it's optional and was causing the 500 error
                 }
                 
-                logger.debug(f"🧠 Sending NLP request (attempt {attempt + 1}): {payload}")
+                logger.debug(f"🧠 Sending NLP request (attempt {attempt + 1}):")
+                logger.debug(f"   📝 Message: '{payload['message']}' (length: {len(payload['message'])})")
+                logger.debug(f"   👤 User: {payload['user_id']}")
+                logger.debug(f"   📍 Channel: {payload['channel_id']}")
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
@@ -147,7 +180,7 @@ class EnhancedNLPClient:
                             # Process v3.0 response structure
                             processed_data = self._process_v3_response(raw_data)
                             
-                            logger.debug(f"🧠 NLP v3.0 analysis successful:")
+                            logger.debug(f"✅ NLP v3.0 analysis successful:")
                             logger.debug(f"   📊 Crisis Level: {processed_data['crisis_level']}")
                             logger.debug(f"   🎯 Confidence: {processed_data['confidence_score']:.3f}")
                             logger.debug(f"   🔍 Method: {processed_data['method']}")
@@ -165,13 +198,26 @@ class EnhancedNLPClient:
                         elif response.status == 422:
                             # Validation error - don't retry
                             logger.error(f"❌ NLP Service validation error: {response_text}")
-                            logger.error(f"   Payload sent: {payload}")
+                            logger.error(f"   📝 Payload that failed validation: {payload}")
                             return None
                             
                         elif response.status == 500:
                             # Internal server error - log details and retry
-                            logger.error(f"❌ NLP Service internal error (attempt {attempt + 1}/{self.retry_attempts}): {response_text[:200]}...")
-                            logger.error(f"   Payload that caused error: {payload}")
+                            logger.error(f"❌ NLP Service internal error (attempt {attempt + 1}/{self.retry_attempts}):")
+                            logger.error(f"   📝 Error response: {response_text[:200]}...")
+                            logger.error(f"   📦 Payload that caused error: {payload}")
+                            
+                            # Check if it's the empty message error specifically
+                            if "Empty message" in response_text:
+                                logger.error(f"🔍 EMPTY MESSAGE ERROR DETECTED!")
+                                logger.error(f"   📝 Our payload message: '{payload['message']}'")
+                                logger.error(f"   📏 Our payload message length: {len(payload['message'])}")
+                                logger.error(f"   🔢 Our payload message repr: {repr(payload['message'])}")
+                                
+                                # This suggests the server is seeing something different than what we sent
+                                # Don't retry - this is a logic error, not a temporary issue
+                                return None
+                            
                             if attempt < self.retry_attempts - 1:
                                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
                                 continue
@@ -186,7 +232,7 @@ class EnhancedNLPClient:
                                 continue
                         else:
                             logger.error(f"❌ NLP Service error: HTTP {response.status}")
-                            logger.error(f"   Response: {response_text[:200]}...")
+                            logger.error(f"   📝 Response: {response_text[:200]}...")
                             return None
                             
             except asyncio.TimeoutError:
@@ -208,7 +254,7 @@ class EnhancedNLPClient:
                     return None
         
         return None
-    
+
     def _process_v3_response(self, raw_response: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process v3.0 NLP response into format compatible with existing ash-bot logic
