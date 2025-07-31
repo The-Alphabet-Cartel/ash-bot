@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Message Handler - Enhanced for v3.0 NLP Integration - FIXED VERSION
+Message Handler - Enhanced for v3.0 NLP Integration - CORRECTED VERSION
 
-Fixed to actually handle crisis responses instead of just detecting them.
+This is the CORRECT MessageHandler class, not CrisisHandler.
 """
 
 import logging
@@ -13,7 +13,7 @@ from discord import Message
 logger = logging.getLogger(__name__)
 
 class MessageHandler:
-    """Enhanced message handler for v3.0 NLP integration - FIXED"""
+    """Enhanced message handler for v3.0 NLP integration - CORRECTED"""
     
     def __init__(self, bot, claude_api=None, nlp_client=None, keyword_detector=None, crisis_handler=None, config=None, security_manager=None):
         """
@@ -93,7 +93,7 @@ class MessageHandler:
                 self.rate_limit_per_user = config.get('BOT_RATE_LIMIT_PER_USER', 10)
         
         # Log initialization status
-        logger.info("📨 Enhanced Message Handler initialized (FIXED VERSION)")
+        logger.info("📨 Enhanced Message Handler initialized (CORRECTED VERSION)")
         logger.info(f"   🧠 NLP Client: {'✅ Available' if self.nlp_client else '❌ Missing'}")
         logger.info(f"   🔤 Keyword Detector: {'✅ Available' if self.keyword_detector else '❌ Missing'}")
         logger.info(f"   🚨 Crisis Handler: {'✅ Available' if self.crisis_handler else '❌ Missing'}")
@@ -108,7 +108,7 @@ class MessageHandler:
         
         self.message_stats['total_messages_processed'] += 1
         
-        logger.debug(f"📨 Handling message from {message.author}: '{message.content[:50]}...'")
+        logger.info(f"📨 DIAGNOSTIC: Handling message from {message.author}: '{message.content[:50]}...'")
         
         # Basic filtering
         if not self._should_process_message(message):
@@ -172,10 +172,10 @@ class MessageHandler:
             # Perform detection
             detection_result = await self._perform_hybrid_detection(message)
             
-            logger.info(f"🔍 Detection result: needs_response={detection_result.get('needs_response', False)}, crisis_level={detection_result.get('crisis_level', 'none')}")
+            logger.warning(f"🔍 DIAGNOSTIC: Detection result: needs_response={detection_result.get('needs_response', False)}, crisis_level={detection_result.get('crisis_level', 'none')}")
             
             if detection_result.get('needs_response', False):
-                logger.info("✅ Crisis detected - triggering response")
+                logger.warning("✅ DIAGNOSTIC: Crisis detected - triggering response")
                 await self._handle_crisis_response(message, detection_result)
             else:
                 logger.debug("ℹ️ No crisis detected")
@@ -194,38 +194,38 @@ class MessageHandler:
         try:
             crisis_level = detection_result['crisis_level']
             
-            logger.info(f"🚨 HANDLING CRISIS RESPONSE:")
-            logger.info(f"   👤 User: {message.author} ({message.author.id})")
-            logger.info(f"   🚨 Level: {crisis_level}")
-            logger.info(f"   🔍 Method: {detection_result.get('method', 'unknown')}")
-            logger.info(f"   📊 Confidence: {detection_result.get('confidence', 0):.3f}")
+            logger.warning(f"🚨 DIAGNOSTIC: HANDLING CRISIS RESPONSE:")
+            logger.warning(f"   👤 User: {message.author} ({message.author.id})")
+            logger.warning(f"   🚨 Level: {crisis_level}")
+            logger.warning(f"   🔍 Method: {detection_result.get('method', 'unknown')}")
+            logger.warning(f"   📊 Confidence: {detection_result.get('confidence', 0):.3f}")
             
             # Get response from Claude API (with fallback)
             response = "I'm here to support you through this difficult time. You're not alone, and reaching out shows real strength."
             
             if self.claude_api:
                 try:
-                    logger.debug("🧠 Getting Claude API response...")
+                    logger.warning("🧠 DIAGNOSTIC: Getting Claude API response...")
                     response = await self.claude_api.get_ash_response(
                         message.content,
                         crisis_level,
                         message.author.display_name
                     )
-                    logger.info("✅ Got Claude API response")
+                    logger.warning("✅ DIAGNOSTIC: Got Claude API response")
                 except Exception as e:
-                    logger.warning(f"⚠️ Claude API failed, using fallback: {e}")
+                    logger.warning(f"⚠️ DIAGNOSTIC: Claude API failed, using fallback: {e}")
             else:
-                logger.info("ℹ️ No Claude API - using fallback response")
+                logger.warning("ℹ️ DIAGNOSTIC: No Claude API - using fallback response")
             
             # Call crisis handler to perform the actions
             if self.crisis_handler:
-                logger.info("📞 Calling crisis handler for response and escalation...")
+                logger.warning("📞 DIAGNOSTIC: Calling crisis handler for response and escalation...")
                 await self.crisis_handler.handle_crisis_response_with_instructions(
                     message, crisis_level, response
                 )
-                logger.info("✅ Crisis handler completed")
+                logger.warning("✅ DIAGNOSTIC: Crisis handler completed")
             else:
-                logger.error("❌ No crisis handler available - sending basic response")
+                logger.error("❌ DIAGNOSTIC: No crisis handler available - sending basic response")
                 await message.reply(response)
             
             # Start conversation tracking
@@ -236,10 +236,10 @@ class MessageHandler:
             await self.record_api_call(message.author.id)
             self.message_stats['crisis_responses_given'] += 1
             
-            logger.info(f"✅ Crisis response completed for {message.author}")
+            logger.warning(f"✅ DIAGNOSTIC: Crisis response completed for {message.author}")
             
         except Exception as e:
-            logger.error(f"❌ Error handling crisis response: {e}")
+            logger.error(f"❌ DIAGNOSTIC: Error handling crisis response: {e}")
             logger.exception("Full traceback:")
             try:
                 await message.add_reaction('❌')
@@ -271,7 +271,7 @@ class MessageHandler:
                 'detected_categories': []
             }
         
-        logger.debug(f"🔍 Analyzing message: '{message_content[:50]}...'")
+        logger.warning(f"🔍 DIAGNOSTIC: Analyzing message: '{message_content[:50]}...'")
         
         # Method 1: Keyword detection
         keyword_result = {'needs_response': False, 'crisis_level': 'none', 'detected_categories': []}
@@ -279,48 +279,48 @@ class MessageHandler:
         if self.keyword_detector:
             try:
                 keyword_result = self.keyword_detector.check_message(message_content)
-                logger.info(f"🔤 Keyword detection: {keyword_result['crisis_level']} (needs_response: {keyword_result.get('needs_response', False)})")
+                logger.warning(f"🔤 DIAGNOSTIC: Keyword detection: {keyword_result['crisis_level']} (needs_response: {keyword_result.get('needs_response', False)})")
             except Exception as e:
                 logger.error(f"🔤 Keyword detector error: {e}")
         else:
-            logger.warning("🔤 No keyword detector available")
+            logger.warning("🔤 DIAGNOSTIC: No keyword detector available")
         
         # Method 2: NLP analysis
         nlp_result = None
         if self.nlp_client:
             try:
-                logger.debug(f"🧠 Calling NLP analysis...")
+                logger.warning(f"🧠 DIAGNOSTIC: Calling NLP analysis...")
                 nlp_result = await self.nlp_client.analyze_message(
                     message_content,
                     str(message.author.id),
                     str(message.channel.id)
                 )
                 if nlp_result:
-                    logger.info(f"🧠 NLP v3.0 analysis: {nlp_result.get('crisis_level', 'none')} "
+                    logger.warning(f"🧠 DIAGNOSTIC: NLP v3.0 analysis: {nlp_result.get('crisis_level', 'none')} "
                                f"(confidence: {nlp_result.get('confidence_score', 0):.3f}) "
                                f"via {nlp_result.get('method', 'unknown')}")
                     
                     # Log v3.0 features
                     if nlp_result.get('gaps_detected'):
-                        logger.warning(f"⚠️ Model disagreement detected")
+                        logger.warning(f"⚠️ DIAGNOSTIC: Model disagreement detected")
                         self.message_stats['v3_features']['gaps_detected_count'] += 1
                     
                     if nlp_result.get('requires_staff_review'):
-                        logger.info(f"👥 Staff review flagged")
+                        logger.warning(f"👥 DIAGNOSTIC: Staff review flagged")
                         self.message_stats['v3_features']['staff_reviews_triggered'] += 1
                     
                     self.message_stats['v3_features']['ensemble_analyses'] += 1
                 else:
-                    logger.info("🧠 NLP analysis returned None")
+                    logger.warning("🧠 DIAGNOSTIC: NLP analysis returned None")
             except Exception as e:
-                logger.warning(f"🧠 NLP analysis failed: {e}")
+                logger.warning(f"🧠 DIAGNOSTIC: NLP analysis failed: {e}")
         else:
-            logger.warning("🧠 No NLP client available")
+            logger.warning("🧠 DIAGNOSTIC: No NLP client available")
         
         # Combine results
         final_result = self._combine_detection_results(keyword_result, nlp_result)
         
-        logger.info(f"⚡ Final decision: {final_result.get('crisis_level', 'unknown')} "
+        logger.warning(f"⚡ DIAGNOSTIC: Final decision: {final_result.get('crisis_level', 'unknown')} "
                    f"via {final_result.get('method', 'unknown')} "
                    f"(confidence: {final_result.get('confidence', 0):.3f})")
         
@@ -525,23 +525,91 @@ class MessageHandler:
         
         return None
 
-    def get_message_handler_stats(self) -> Dict:
-        """Get statistics for monitoring commands"""
+    def get_enhanced_stats(self) -> Dict:
+        """
+        Get enhanced statistics including v3.0 features AND all backward compatibility fields
+        This method ensures monitoring commands get all expected statistics fields
+        """
+        
+        # Calculate derived statistics
+        total_processed = max(1, self.message_stats['total_messages_processed'])
+        crisis_given = self.message_stats['crisis_responses_given']
+        
+        # V3.0 ensemble statistics
+        v3_features = self.message_stats['v3_features']
+        ensemble_analyses = v3_features['ensemble_analyses']
+        gaps_detected = v3_features['gaps_detected_count']
+        staff_reviews = v3_features['staff_reviews_triggered']
+        
+        # Calculate rates
+        gap_detection_rate = (gaps_detected / max(1, ensemble_analyses)) if ensemble_analyses > 0 else 0.0
+        staff_review_rate = (staff_reviews / max(1, ensemble_analyses)) if ensemble_analyses > 0 else 0.0
+        
+        # Detection method breakdown
+        method_breakdown = self.message_stats['detection_method_breakdown']
+        total_detections = sum(method_breakdown.values())
+        
+        # Calculate consensus statistics (for monitoring commands)
+        unanimous_consensus_count = max(0, total_detections - gaps_detected)
+        model_disagreement_count = gaps_detected
+        unanimous_consensus_rate = (unanimous_consensus_count / max(1, total_detections)) if total_detections > 0 else 1.0
         
         return {
-            'message_processing': {
-                'total_messages_processed': self.message_stats['total_messages_processed'],
-                'crisis_responses_given': self.message_stats['crisis_responses_given'],
-                'messages_processed_today': self.message_stats['messages_processed']
-            },
-            'conversation_tracking': {
-                'conversations_started': self.message_stats['conversations_started'],
-                'follow_ups_handled': self.message_stats['follow_ups_handled'],
-                'active_conversations': len(self.active_conversations)
-            },
-            'detection_methods': self.message_stats['detection_method_breakdown'].copy(),
-            'v3_ensemble_features': self.message_stats['v3_features'].copy()
+            # Core processing statistics
+            'total_messages_processed': self.message_stats['total_messages_processed'],
+            'crisis_responses_given': self.message_stats['crisis_responses_given'],
+            'messages_processed': self.message_stats['messages_processed'],  # Alias
+            'crisis_detected': self.message_stats['crisis_detected'],  # Alias
+            
+            # Conversation tracking (backward compatibility)
+            'conversations_started': self.message_stats['conversations_started'],
+            'follow_ups_handled': self.message_stats['follow_ups_handled'],
+            'ignored_follow_ups': self.message_stats['ignored_follow_ups'],
+            'intrusion_attempts_blocked': self.message_stats['intrusion_attempts_blocked'],
+            'crisis_overrides_triggered': self.message_stats['crisis_overrides_triggered'],
+            'multiple_conversations_same_channel': self.message_stats['multiple_conversations_same_channel'],
+            
+            # Rate limiting
+            'rate_limits_hit': self.message_stats['rate_limits_hit'],
+            'daily_limits_hit': self.message_stats['daily_limits_hit'],
+            
+            # Detection method breakdown
+            'detection_method_breakdown': method_breakdown.copy(),
+            
+            # V3.0 Ensemble Features - formatted for monitoring commands
+            'ensemble_analyses_performed': ensemble_analyses,
+            'gaps_detected': gaps_detected,
+            'staff_reviews_flagged': staff_reviews,
+            'gap_detection_rate': gap_detection_rate,
+            'staff_review_rate': staff_review_rate,
+            
+            # Consensus analysis (for ensemble_stats command)
+            'unanimous_consensus_count': unanimous_consensus_count,
+            'model_disagreement_count': model_disagreement_count,
+            'unanimous_consensus_rate': unanimous_consensus_rate,
+            
+            # Active conversations
+            'active_conversations': len(self.active_conversations),
+            
+            # Derived rates and percentages
+            'detection_rate': (crisis_given / total_processed),
+            'success_rate_percent': max(0.0, 100.0 - (
+                (self.message_stats['rate_limits_hit'] + self.message_stats['daily_limits_hit']) * 100.0 / total_processed
+            )),
+            
+            # V3.0 features grouped (for backward compatibility)
+            'v3_ensemble_features': {
+                'ensemble_analyses': ensemble_analyses,
+                'gaps_detected_count': gaps_detected,
+                'staff_reviews_triggered': staff_reviews,
+                'gap_detection_rate': gap_detection_rate,
+                'staff_review_rate': staff_review_rate
+            }
         }
+
+    def get_message_handler_stats(self) -> Dict:
+        """Get statistics for monitoring commands (calls get_enhanced_stats for compatibility)"""
+        return self.get_enhanced_stats()
 
 # Aliases for backward compatibility
 EnhancedMessageHandler = MessageHandler
