@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 import logging
 from datetime import datetime, timezone
-from utils.resource_managers import ResourceCleanupMixin, graceful_shutdown
+from bot.utils.resource_managers import ResourceCleanupMixin, graceful_shutdown
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Step 1: Initialize Claude API
         logger.info("🧠 Initializing Claude API...")
         try:
-            from integrations.claude_api import ClaudeAPI
+            from bot.integrations.claude_api import ClaudeAPI
             self.claude_api = ClaudeAPI(self.config)
             logger.info("✅ Claude API initialized")
         except Exception as e:
@@ -89,7 +89,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Step 2: Initialize keyword detector
         logger.info("🔍 Initializing keyword detector...")
         try:
-            from utils.keyword_detector import KeywordDetector
+            from bot.utils.keyword_detector import KeywordDetector
             self.keyword_detector = KeywordDetector()
             logger.info("✅ Keyword detector initialized")
         except Exception as e:
@@ -99,7 +99,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         # Step 3: Initialize NLP client
         logger.info("🧠 Initializing NLP client...")
         try:
-            from integrations.nlp_integration import NLPClient
+            from bot.integrations.nlp_integration import NLPClient
             nlp_url = self.config.get('GLOBAL_NLP_API_URL', 'http://10.20.30.253:8881')
             self.nlp_client = NLPClient(nlp_url)
             
@@ -117,8 +117,8 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Step 2: Initialize enhanced handlers WITHOUT security
         logger.info("🚨 Initializing enhanced handlers...")
-        from handlers.crisis_handler import CrisisHandler
-        from handlers.message_handler import MessageHandler
+        from bot.handlers.crisis_handler import CrisisHandler
+        from bot.handlers.message_handler import MessageHandler
         
         self.crisis_handler = CrisisHandler(self, self.config)
         
