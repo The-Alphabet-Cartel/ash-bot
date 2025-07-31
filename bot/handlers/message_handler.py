@@ -353,7 +353,7 @@ class MessageHandler:
             del self.active_conversations[user_id]
     
     def get_enhanced_stats(self) -> Dict:
-        """Get enhanced statistics including v3.0 features"""
+        """Get enhanced statistics including v3.0 features AND backward compatibility fields"""
         
         base_stats = {
             'messages_processed': self.message_stats['messages_processed'],
@@ -361,7 +361,18 @@ class MessageHandler:
             'detection_rate': (
                 self.message_stats['crisis_detected'] / max(1, self.message_stats['messages_processed'])
             ),
-            'method_breakdown': self.message_stats['detection_method_breakdown'].copy()
+            'method_breakdown': self.message_stats['detection_method_breakdown'].copy(),
+            # Add backward compatibility fields that monitoring commands expect
+            'conversations_started': self.message_stats['conversations_started'],
+            'follow_ups_handled': self.message_stats['follow_ups_handled'],
+            'ignored_follow_ups': self.message_stats['ignored_follow_ups'],
+            'intrusion_attempts_blocked': self.message_stats['intrusion_attempts_blocked'],
+            'crisis_overrides_triggered': self.message_stats['crisis_overrides_triggered'],
+            'crisis_responses_given': self.message_stats['crisis_responses_given'],
+            'total_messages_processed': self.message_stats['total_messages_processed'],
+            'rate_limits_hit': self.message_stats['rate_limits_hit'],
+            'daily_limits_hit': self.message_stats['daily_limits_hit'],
+            'multiple_conversations_same_channel': self.message_stats['multiple_conversations_same_channel']
         }
         
         # Add v3.0 specific statistics
