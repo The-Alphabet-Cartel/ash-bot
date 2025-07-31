@@ -13,6 +13,7 @@ import asyncio
 import aiohttp
 import logging
 import time
+import os
 from typing import Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,22 @@ class EnhancedNLPClient:
     maintaining backward compatibility with existing bot_manager imports.
     """
     
-    def __init__(self, nlp_url: str, timeout: int = 30, retry_attempts: int = 3):
+    def __init__(self, nlp_url: Optional[str] = None, timeout: int = 30, retry_attempts: int = 3):
+        """
+        Initialize Enhanced NLP Client with backward compatibility
+        
+        Args:
+            nlp_url: NLP service URL (if None, builds from environment variables)
+            timeout: Request timeout in seconds
+            retry_attempts: Number of retry attempts on failure
+        """
+        
+        # Build URL from environment if not provided (backward compatibility)
+        if nlp_url is None:
+            nlp_host = os.getenv('GLOBAL_NLP_API_HOST', '10.20.30.253')
+            nlp_port = os.getenv('GLOBAL_NLP_API_PORT', '8881')
+            nlp_url = f"http://{nlp_host}:{nlp_port}"
+        
         self.nlp_url = nlp_url.rstrip('/')
         self.timeout = timeout
         self.retry_attempts = retry_attempts
@@ -33,7 +49,7 @@ class EnhancedNLPClient:
         self.last_health_check = 0
         self.health_check_interval = 300  # 5 minutes
         
-        logger.info(f"🧠 NLP Integration initialized: {self.nlp_url}")
+        logger.info(f"🧠 Enhanced NLP Integration initialized: {self.nlp_url}")
         logger.info(f"   ⏱️ Timeout: {self.timeout}s")
         logger.info(f"   🔄 Retry attempts: {self.retry_attempts}")
     
@@ -96,6 +112,10 @@ class EnhancedNLPClient:
             if not self.service_healthy:
                 logger.warning("🔌 NLP Service unavailable - skipping analysis")
                 return None
+
+# Backward compatibility aliases
+NLPIntegration = EnhancedNLPClient
+RemoteNLPClient = EnhancedNLPClient  # For existing imports
         
         for attempt in range(self.retry_attempts):
             try:
@@ -270,7 +290,3 @@ class EnhancedNLPClient:
         except Exception as e:
             logger.debug(f"Error getting ensemble metrics: {e}")
             return None
-
-# Backward compatibility aliases
-NLPIntegration = EnhancedNLPClient
-RemoteNLPClient = EnhancedNLPClient  # For existing imports
