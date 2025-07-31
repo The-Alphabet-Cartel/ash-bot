@@ -140,7 +140,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Load Crisis Commands
         try:
-            from commands.crisis_commands import CrisisKeywordCommands
+            from bot.commands.crisis_commands import CrisisKeywordCommands
             await self.add_cog(CrisisKeywordCommands(self))
             logger.info("✅ Loaded Crisis Commands cog")
         except Exception as e:
@@ -149,7 +149,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Load Monitoring Commands
         try:
-            from commands.monitoring_commands import MonitoringCommands
+            from bot.commands.monitoring_commands import MonitoringCommands
             await self.add_cog(MonitoringCommands(self))
             logger.info("✅ Loaded Monitoring Commands cog")
         except Exception as e:
@@ -158,7 +158,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
 
         # Load Enhanced Learning Commands (replaces false_positive_commands)
         try:
-            from commands.enhanced_learning_commands import EnhancedLearningCommands
+            from bot.commands.enhanced_learning_commands import EnhancedLearningCommands
             await self.add_cog(EnhancedLearningCommands(self))
             logger.info("✅ Loaded Enhanced Learning Commands cog")
         except Exception as e:
