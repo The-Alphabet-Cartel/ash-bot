@@ -17,9 +17,12 @@ from typing import Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
-class NLPIntegration:
+class EnhancedNLPClient:
     """
     Enhanced NLP service integration for v3.0 ensemble responses
+    
+    This replaces the existing RemoteNLPClient with v3.0 capabilities while
+    maintaining backward compatibility with existing bot_manager imports.
     """
     
     def __init__(self, nlp_url: str, timeout: int = 30, retry_attempts: int = 3):
@@ -93,6 +96,10 @@ class NLPIntegration:
             if not self.service_healthy:
                 logger.warning("🔌 NLP Service unavailable - skipping analysis")
                 return None
+
+# Backward compatibility aliases
+NLPIntegration = EnhancedNLPClient
+RemoteNLPClient = EnhancedNLPClient  # For existing imports
         
         for attempt in range(self.retry_attempts):
             try:
