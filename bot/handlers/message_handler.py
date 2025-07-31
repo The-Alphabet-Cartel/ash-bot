@@ -19,11 +19,44 @@ logger = logging.getLogger(__name__)
 class MessageHandler:
     """Enhanced message handler for v3.0 NLP integration"""
     
-    def __init__(self, bot, keyword_detector, nlp_client, config):
+    def __init__(self, bot, claude_api=None, nlp_client=None, keyword_detector=None, crisis_handler=None, config=None, security_manager=None):
+        """
+        Enhanced initialization with flexible parameter support for backward compatibility
+        
+        Args:
+            bot: Discord bot instance
+            claude_api: Claude API integration (optional)
+            nlp_client: NLP client instance (required)
+            keyword_detector: Keyword detector instance (required)
+            crisis_handler: Crisis handler instance (optional)
+            config: Configuration manager (required)
+            security_manager: Security manager (optional)
+        """
+        
         self.bot = bot
-        self.keyword_detector = keyword_detector
+        self.claude_api = claude_api
         self.nlp_client = nlp_client
+        self.keyword_detector = keyword_detector
+        self.crisis_handler = crisis_handler
         self.config = config
+        self.security_manager = security_manager
+        
+        # Handle missing required components gracefully
+        if not self.nlp_client:
+            logger.warning("⚠️ NLP client not provided - NLP analysis will be skipped")
+        
+        if not self.keyword_detector:
+            logger.warning("⚠️ Keyword detector not provided - keyword detection will be skipped")
+        
+        if not self.config:
+            logger.warning("⚠️ Config not provided - using defaults")
+            self.conversation_timeout = 300
+        else:
+            # Handle both config.get() and config.get_int() methods
+            if hasattr(config, 'get_int'):
+                self.conversation_timeout = config.get_int('BOT_CONVERSATION_TIMEOUT', 300)
+            else:
+                self.conversation_timeout = config.get('BOT_CONVERSATION_TIMEOUT', 300)
         
         # Enhanced statistics tracking
         self.message_stats = {
@@ -44,9 +77,14 @@ class MessageHandler:
         
         # Conversation tracking (existing logic)
         self.active_conversations = {}
-        self.conversation_timeout = config.get('BOT_CONVERSATION_TIMEOUT', 300)
         
+        # Log initialization status
         logger.info("📨 Enhanced Message Handler initialized for v3.0")
+        logger.info(f"   🧠 NLP Client: {'✅ Available' if self.nlp_client else '❌ Missing'}")
+        logger.info(f"   🔤 Keyword Detector: {'✅ Available' if self.keyword_detector else '❌ Missing'}")
+        logger.info(f"   🚨 Crisis Handler: {'✅ Available' if self.crisis_handler else '❌ Missing'}")
+        logger.info(f"   🔐 Security Manager: {'✅ Available' if self.security_manager else '❌ Missing'}")
+        logger.info(f"   💬 Conversation timeout: {self.conversation_timeout}s")
     
     async def _perform_hybrid_detection(self, message: Message) -> Dict:
         """
@@ -54,38 +92,46 @@ class MessageHandler:
         Maintains existing safety-first logic while leveraging new features
         """
         
-        # Method 1: Keyword detection (always runs first)
-        keyword_result = self.keyword_detector.check_message(message.content)
-        logger.info(f"🔤 Keyword detection: {keyword_result['crisis_level']} (needs_response: {keyword_result['needs_response']})")
+        # Method 1: Keyword detection (always runs first, if available)
+        keyword_result = {'needs_response': False, 'crisis_level': 'none', 'detected_categories': []}
+        
+        if self.keyword_detector:
+            keyword_result = self.keyword_detector.check_message(message.content)
+            logger.info(f"🔤 Keyword detection: {keyword_result['crisis_level']} (needs_response: {keyword_result['needs_response']})")
+        else:
+            logger.warning("🔤 Keyword detector not available - skipping keyword analysis")
         
         # Method 2: NLP analysis with v3.0 ensemble (if available)
         nlp_result = None
-        try:
-            nlp_result = await self.nlp_client.analyze_message(
-                message.content,
-                str(message.author.id),
-                str(message.channel.id)
-            )
-            if nlp_result:
-                logger.info(f"🧠 NLP v3.0 analysis: {nlp_result.get('crisis_level', 'none')} "
-                           f"(confidence: {nlp_result.get('confidence_score', 0):.3f}) "
-                           f"via {nlp_result.get('method', 'unknown')}")
-                
-                # Log v3.0 specific features
-                if nlp_result.get('gaps_detected'):
-                    logger.warning(f"⚠️ Model disagreement detected - message: {message.id}")
-                    self.message_stats['v3_features']['gaps_detected_count'] += 1
-                    self._log_gap_details(message, nlp_result)
-                
-                if nlp_result.get('requires_staff_review'):
-                    logger.info(f"👥 Staff review flagged by ensemble - message: {message.id}")
-                    self.message_stats['v3_features']['staff_reviews_triggered'] += 1
-                
-                self.message_stats['v3_features']['ensemble_analyses'] += 1
-            else:
-                logger.info("🧠 NLP analysis returned None")
-        except Exception as e:
-            logger.warning(f"🧠 NLP analysis failed: {e}")
+        if self.nlp_client:
+            try:
+                nlp_result = await self.nlp_client.analyze_message(
+                    message.content,
+                    str(message.author.id),
+                    str(message.channel.id)
+                )
+                if nlp_result:
+                    logger.info(f"🧠 NLP v3.0 analysis: {nlp_result.get('crisis_level', 'none')} "
+                               f"(confidence: {nlp_result.get('confidence_score', 0):.3f}) "
+                               f"via {nlp_result.get('method', 'unknown')}")
+                    
+                    # Log v3.0 specific features
+                    if nlp_result.get('gaps_detected'):
+                        logger.warning(f"⚠️ Model disagreement detected - message: {message.id}")
+                        self.message_stats['v3_features']['gaps_detected_count'] += 1
+                        self._log_gap_details(message, nlp_result)
+                    
+                    if nlp_result.get('requires_staff_review'):
+                        logger.info(f"👥 Staff review flagged by ensemble - message: {message.id}")
+                        self.message_stats['v3_features']['staff_reviews_triggered'] += 1
+                    
+                    self.message_stats['v3_features']['ensemble_analyses'] += 1
+                else:
+                    logger.info("🧠 NLP analysis returned None")
+            except Exception as e:
+                logger.warning(f"🧠 NLP analysis failed: {e}")
+        else:
+            logger.warning("🧠 NLP client not available - skipping NLP analysis")
         
         # Combine results using existing hybrid logic with v3.0 enhancements
         final_result = self._combine_detection_results_v3(keyword_result, nlp_result)
@@ -295,3 +341,7 @@ class MessageHandler:
         base_stats['v3_ensemble_features'] = v3_stats
         
         return base_stats
+
+
+# Backward compatibility alias for bot_manager
+EnhancedMessageHandler = MessageHandler
