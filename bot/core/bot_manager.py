@@ -7,8 +7,8 @@ import discord
 from discord.ext import commands
 import logging
 from datetime import datetime, timezone
-from utils.resource_managers import ResourceCleanupMixin, graceful_shutdown
-from utils.security import get_security_manager
+from bot.utils.resource_managers import ResourceCleanupMixin, graceful_shutdown
+from bot.utils.security import get_security_manager
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
             logger.info(f"🌐 Initializing API server on {api_host}:{api_port}...")
             
             # Import and create API server instance
-            from api.api_server import setup_api_server
+            from bot.api.api_server import setup_api_server
             self.api_server = setup_api_server(self, api_host, api_port)
             
             # Register cleanup for API server
@@ -134,9 +134,9 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Step 1: Initialize integrations with resource management
         logger.info("🔌 Initializing integrations with resource management...")
-        from integrations.claude_api import ClaudeAPI
-        from integrations.nlp_integration import EnhancedNLPClient
-        from utils.keyword_detector import KeywordDetector
+        from bot.integrations.claude_api import ClaudeAPI
+        from bot.integrations.nlp_integration import EnhancedNLPClient
+        from bot.utils.keyword_detector import KeywordDetector
         
         # Pass config to ClaudeAPI
         self.claude_api = ClaudeAPI(self.config)
@@ -192,8 +192,8 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Step 2: Initialize enhanced handlers with security
         logger.info("🚨 Initializing enhanced handlers with security...")
-        from handlers.crisis_handler import CrisisHandler
-        from handlers.message_handler import EnhancedMessageHandler
+        from bot.handlers.crisis_handler import CrisisHandler
+        from bot.handlers.message_handler import EnhancedMessageHandler
         
         self.crisis_handler = CrisisHandler(self, self.config)
         
@@ -215,7 +215,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Load Crisis Commands
         try:
-            from commands.crisis_commands import CrisisKeywordCommands
+            from bot.commands.crisis_commands import CrisisKeywordCommands
             await self.add_cog(CrisisKeywordCommands(self))
             logger.info("✅ Loaded Crisis Commands cog")
         except Exception as e:
@@ -224,7 +224,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
         
         # Load Monitoring Commands
         try:
-            from commands.monitoring_commands import MonitoringCommands
+            from bot.commands.monitoring_commands import MonitoringCommands
             await self.add_cog(MonitoringCommands(self))
             logger.info("✅ Loaded Monitoring Commands cog")
         except Exception as e:
@@ -233,7 +233,7 @@ class AshBot(commands.Bot, ResourceCleanupMixin):
 
         # Load NEW Ensemble Commands (replaces old individual learning system)
         try:
-            from commands.ensemble_commands import EnsembleCommands
+            from bot.commands.ensemble_commands import EnsembleCommands
             await self.add_cog(EnsembleCommands(self))
             logger.info("✅ Loaded Ensemble Commands cog (three-model system)")
         except Exception as e:
