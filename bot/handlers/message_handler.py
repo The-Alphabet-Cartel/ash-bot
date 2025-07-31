@@ -353,45 +353,86 @@ class MessageHandler:
             del self.active_conversations[user_id]
     
     def get_enhanced_stats(self) -> Dict:
-        """Get enhanced statistics including v3.0 features AND backward compatibility fields"""
+        """
+        Get enhanced statistics including v3.0 features AND all backward compatibility fields
+        This method ensures monitoring commands get all expected statistics fields
+        """
         
-        base_stats = {
-            'messages_processed': self.message_stats['messages_processed'],
-            'crisis_detected': self.message_stats['crisis_detected'],
-            'detection_rate': (
-                self.message_stats['crisis_detected'] / max(1, self.message_stats['messages_processed'])
-            ),
-            'method_breakdown': self.message_stats['detection_method_breakdown'].copy(),
-            # Add backward compatibility fields that monitoring commands expect
+        # Calculate derived statistics
+        total_processed = max(1, self.message_stats['total_messages_processed'])
+        crisis_given = self.message_stats['crisis_responses_given']
+        
+        # V3.0 ensemble statistics
+        v3_features = self.message_stats['v3_features']
+        ensemble_analyses = v3_features['ensemble_analyses']
+        gaps_detected = v3_features['gaps_detected_count']
+        staff_reviews = v3_features['staff_reviews_triggered']
+        
+        # Calculate rates
+        gap_detection_rate = (gaps_detected / max(1, ensemble_analyses)) if ensemble_analyses > 0 else 0.0
+        staff_review_rate = (staff_reviews / max(1, ensemble_analyses)) if ensemble_analyses > 0 else 0.0
+        
+        # Detection method breakdown
+        method_breakdown = self.message_stats['detection_method_breakdown']
+        total_detections = sum(method_breakdown.values())
+        
+        # Calculate consensus statistics (for monitoring commands)
+        unanimous_consensus_count = max(0, total_detections - gaps_detected)
+        model_disagreement_count = gaps_detected
+        unanimous_consensus_rate = (unanimous_consensus_count / max(1, total_detections)) if total_detections > 0 else 1.0
+        
+        return {
+            # Core processing statistics
+            'total_messages_processed': self.message_stats['total_messages_processed'],
+            'crisis_responses_given': self.message_stats['crisis_responses_given'],
+            'messages_processed': self.message_stats['messages_processed'],  # Alias
+            'crisis_detected': self.message_stats['crisis_detected'],  # Alias
+            
+            # Conversation tracking (backward compatibility)
             'conversations_started': self.message_stats['conversations_started'],
             'follow_ups_handled': self.message_stats['follow_ups_handled'],
             'ignored_follow_ups': self.message_stats['ignored_follow_ups'],
             'intrusion_attempts_blocked': self.message_stats['intrusion_attempts_blocked'],
             'crisis_overrides_triggered': self.message_stats['crisis_overrides_triggered'],
-            'crisis_responses_given': self.message_stats['crisis_responses_given'],
-            'total_messages_processed': self.message_stats['total_messages_processed'],
+            'multiple_conversations_same_channel': self.message_stats['multiple_conversations_same_channel'],
+            
+            # Rate limiting
             'rate_limits_hit': self.message_stats['rate_limits_hit'],
             'daily_limits_hit': self.message_stats['daily_limits_hit'],
-            'multiple_conversations_same_channel': self.message_stats['multiple_conversations_same_channel']
+            
+            # Detection method breakdown
+            'detection_method_breakdown': method_breakdown.copy(),
+            
+            # V3.0 Ensemble Features - formatted for monitoring commands
+            'ensemble_analyses_performed': ensemble_analyses,
+            'gaps_detected': gaps_detected,
+            'staff_reviews_flagged': staff_reviews,
+            'gap_detection_rate': gap_detection_rate,
+            'staff_review_rate': staff_review_rate,
+            
+            # Consensus analysis (for ensemble_stats command)
+            'unanimous_consensus_count': unanimous_consensus_count,
+            'model_disagreement_count': model_disagreement_count,
+            'unanimous_consensus_rate': unanimous_consensus_rate,
+            
+            # Active conversations
+            'active_conversations': len(self.active_conversations),
+            
+            # Derived rates and percentages
+            'detection_rate': (crisis_given / total_processed),
+            'success_rate_percent': max(0.0, 100.0 - (
+                (self.message_stats['rate_limits_hit'] + self.message_stats['daily_limits_hit']) * 100.0 / total_processed
+            )),
+            
+            # V3.0 features grouped (for backward compatibility)
+            'v3_ensemble_features': {
+                'ensemble_analyses': ensemble_analyses,
+                'gaps_detected_count': gaps_detected,
+                'staff_reviews_triggered': staff_reviews,
+                'gap_detection_rate': gap_detection_rate,
+                'staff_review_rate': staff_review_rate
+            }
         }
-        
-        # Add v3.0 specific statistics
-        v3_stats = self.message_stats['v3_features'].copy()
-        if v3_stats['ensemble_analyses'] > 0:
-            v3_stats['gap_detection_rate'] = (
-                v3_stats['gaps_detected_count'] / v3_stats['ensemble_analyses']
-            )
-            v3_stats['staff_review_rate'] = (
-                v3_stats['staff_reviews_triggered'] / v3_stats['ensemble_analyses']
-            )
-        else:
-            v3_stats['gap_detection_rate'] = 0.0
-            v3_stats['staff_review_rate'] = 0.0
-        
-        base_stats['v3_ensemble_features'] = v3_stats
-        
-        return base_stats
-
 
 # Backward compatibility alias for bot_manager
 EnhancedMessageHandler = MessageHandler
