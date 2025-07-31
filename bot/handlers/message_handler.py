@@ -100,15 +100,84 @@ class MessageHandler:
     async def _perform_hybrid_detection(self, message: Message) -> Dict:
         """
         Enhanced hybrid detection with v3.0 NLP support
-        Maintains existing safety-first logic while leveraging new features
+        ADDED: Message content validation to prevent empty message errors
         """
+        
+        # CRITICAL VALIDATION: Check message content before processing
+        if not hasattr(message, 'content'):
+            logger.error(f"❌ CRITICAL: Message object has no content attribute!")
+            logger.error(f"   🔍 Message object: {type(message)}")
+            logger.error(f"   📋 Message attributes: {dir(message)}")
+            return {
+                'needs_response': False,
+                'crisis_level': 'none',
+                'method': 'validation_error',
+                'confidence': 0.0,
+                'detected_categories': [],
+                'error': 'Message has no content attribute'
+            }
+        
+        message_content = getattr(message, 'content', '')
+        
+        if message_content is None:
+            logger.error(f"❌ CRITICAL: Message.content is None!")
+            logger.error(f"   👤 Author: {getattr(message, 'author', 'unknown')}")
+            logger.error(f"   📍 Channel: {getattr(message, 'channel', 'unknown')}")
+            return {
+                'needs_response': False,
+                'crisis_level': 'none',
+                'method': 'validation_error',
+                'confidence': 0.0,
+                'detected_categories': [],
+                'error': 'Message content is None'
+            }
+        
+        if not isinstance(message_content, str):
+            logger.error(f"❌ CRITICAL: Message.content is not a string!")
+            logger.error(f"   📝 Content type: {type(message_content)}")
+            logger.error(f"   📝 Content value: {repr(message_content)}")
+            return {
+                'needs_response': False,
+                'crisis_level': 'none',
+                'method': 'validation_error',
+                'confidence': 0.0,
+                'detected_categories': [],
+                'error': f'Message content is {type(message_content)}, not string'
+            }
+        
+        if not message_content.strip():
+            logger.error(f"❌ CRITICAL: Message.content is empty or whitespace!")
+            logger.error(f"   📝 Raw content: {repr(message_content)}")
+            logger.error(f"   📏 Length: {len(message_content)}")
+            logger.error(f"   👤 Author: {getattr(message, 'author', 'unknown')}")
+            logger.error(f"   📍 Channel: {getattr(message, 'channel', 'unknown')}")
+            
+            # Log stack trace to find who's calling with empty messages
+            import traceback
+            logger.error(f"   🔍 Call stack:")
+            for line in traceback.format_stack():
+                logger.error(f"     {line.strip()}")
+            
+            return {
+                'needs_response': False,
+                'crisis_level': 'none',
+                'method': 'validation_error',
+                'confidence': 0.0,
+                'detected_categories': [],
+                'error': 'Message content is empty'
+            }
+        
+        logger.debug(f"✅ Message validation passed: '{message_content[:50]}...' (length: {len(message_content)})")
         
         # Method 1: Keyword detection (always runs first, if available)
         keyword_result = {'needs_response': False, 'crisis_level': 'none', 'detected_categories': []}
         
         if self.keyword_detector:
-            keyword_result = self.keyword_detector.check_message(message.content)
-            logger.info(f"🔤 Keyword detection: {keyword_result['crisis_level']} (needs_response: {keyword_result['needs_response']})")
+            try:
+                keyword_result = self.keyword_detector.check_message(message_content)
+                logger.info(f"🔤 Keyword detection: {keyword_result['crisis_level']} (needs_response: {keyword_result['needs_response']})")
+            except Exception as e:
+                logger.error(f"🔤 Keyword detector error: {e}")
         else:
             logger.warning("🔤 Keyword detector not available - skipping keyword analysis")
         
@@ -116,8 +185,9 @@ class MessageHandler:
         nlp_result = None
         if self.nlp_client:
             try:
+                logger.debug(f"🧠 Calling NLP client with: '{message_content[:50]}...'")
                 nlp_result = await self.nlp_client.analyze_message(
-                    message.content,
+                    message_content,  # Use the validated content
                     str(message.author.id),
                     str(message.channel.id)
                 )
@@ -158,6 +228,77 @@ class MessageHandler:
             self.message_stats['detection_method_breakdown'][method] += 1
         
         return final_result
+
+    def _combine_detection_results_v3(self, keyword_result: Dict, nlp_result: Optional[Dict]) -> Dict:
+        """
+        Enhanced hybrid decision logic with v3.0 NLP features
+        Maintains existing safety-first approach while leveraging ensemble insights
+        """
+        
+        # If NLP unavailable, use keywords only (existing fallback)
+        if not nlp_result:
+            self.message_stats['detection_method_breakdown']['keyword_only'] += 1
+            return {
+                'needs_response': keyword_result['needs_response'],
+                'crisis_level': keyword_result['crisis_level'],
+                'method': 'keyword_only',
+                'confidence': 0.9 if keyword_result['needs_response'] else 0.0,
+                'detected_categories': keyword_result['detected_categories'],
+                'requires_staff_review': keyword_result['crisis_level'] == 'high',  # v3.0 field
+                'gaps_detected': False,  # v3.0 field
+                'processing_time_ms': 0
+            }
+
+        # Both methods available - enhanced hybrid logic
+        keyword_level = keyword_result['crisis_level']
+        nlp_level = nlp_result.get('crisis_level', 'none')
+        
+        # Crisis level hierarchy (existing safety-first logic)
+        hierarchy = {'none': 0, 'low': 1, 'medium': 2, 'high': 3}
+        
+        # Use the higher of the two crisis levels (safety-first approach)
+        if hierarchy[keyword_level] >= hierarchy[nlp_level]:
+            final_level = keyword_level
+            method = 'keyword_primary'
+            confidence = 0.9 if keyword_result['needs_response'] else 0.0
+            staff_review = keyword_level == 'high'
+        else:
+            final_level = nlp_level
+            method = 'nlp_primary'
+            confidence = nlp_result.get('confidence_score', 0.5)
+            # v3.0 enhancement: use ensemble's staff review recommendation
+            staff_review = nlp_result.get('requires_staff_review', final_level == 'high')
+        
+        self.message_stats['detection_method_breakdown']['hybrid_detection'] += 1
+        
+        # Build enhanced result with v3.0 features
+        result = {
+            'needs_response': final_level != 'none',
+            'crisis_level': final_level,
+            'method': method,
+            'confidence': confidence,
+            'detected_categories': keyword_result['detected_categories'] + nlp_result.get('detected_categories', []),
+            'keyword_result': keyword_level,
+            'nlp_result': nlp_level
+        }
+        
+        # Add v3.0 specific fields
+        result.update({
+            'requires_staff_review': staff_review,
+            'gaps_detected': nlp_result.get('gaps_detected', False),
+            'processing_time_ms': nlp_result.get('processing_time_ms', 0),
+            'model_info': nlp_result.get('model_info', 'unknown'),
+            'ensemble_details': nlp_result.get('ensemble_details', {}),
+            'reasoning': nlp_result.get('reasoning', '')
+        })
+        
+        # Special handling for gap situations
+        if result['gaps_detected']:
+            # When models disagree, be more conservative about staff review
+            result['requires_staff_review'] = True
+            logger.info(f"🔍 Gap detected - forcing staff review for safety")
+        
+        return result
     
     async def _perform_enhanced_hybrid_detection(self, message: Message) -> Dict:
         """
