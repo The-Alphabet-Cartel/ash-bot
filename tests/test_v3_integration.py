@@ -3,7 +3,7 @@
 V3.0 Integration Test Script
 
 Test the updated ash-bot integration with the new v3.0 NLP response structure.
-This script validates that the bot can properly process the three-model ensemble responses.
+This script validates that the bot can properly process the Three Zero-Shot Model Ensemble responses.
 
 Usage:
     cd ash/ash-bot
@@ -195,7 +195,7 @@ async def test_v3_integration():
                 if r.get('ensemble_details'):
                     v3_features_found.append("Ensemble analysis")
                 if r.get('method', '').startswith('three_model'):
-                    v3_features_found.append("Three-model ensemble")
+                    v3_features_found.append("Three Zero-Shot Model Ensemble")
         
         if v3_features_found:
             unique_features = list(set(v3_features_found))
