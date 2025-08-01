@@ -70,8 +70,8 @@ async def main():
         logger.error(f"💥 Configuration test failed: {e}")
         sys.exit(1)
 
-# Bot event to handle staff hand-off of crisis events.
-@bot.event
+# Events to handle staff hand-off of crisis events.
+@AshBot.event
 async def on_reaction_add(reaction, user):
     """Handle reaction-based staff handoffs"""
     
@@ -84,7 +84,7 @@ async def on_reaction_add(reaction, user):
         await bot.message_handler.handle_reaction_add(reaction, user)
 
 # Optional: Also handle reaction removal if needed
-@bot.event 
+@AshBot.event
 async def on_reaction_remove(reaction, user):
     """Handle reaction removal (optional - for undoing accidental handoffs)"""
     # Could implement undo functionality here if desired
