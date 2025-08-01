@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Core Bot Manager - Final Fixed Version with Correct Imports
+Core Bot Manager - CLEANED VERSION (Security Manager Removed)
 """
 
 import discord
@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 class AshBot(commands.Bot):
-    """Enhanced Ash Bot - Fixed Imports Version"""
+    """Enhanced Ash Bot - CLEANED VERSION"""
     
     def __init__(self, config):
         self.config = config
@@ -39,15 +39,18 @@ class AshBot(commands.Bot):
         self.api_server = None
         self.start_time = datetime.now(timezone.utc)
         
-        logger.info("🤖 AshBot initialized with fixed imports")
+        logger.info("🤖 AshBot initialized (CLEANED VERSION - No Security Manager)")
     
     async def setup_hook(self):
-        """Setup hook - initialize components with fixed imports"""
-        logger.info("🔄 Starting setup_hook with fixed imports...")
+        """Setup hook - initialize components"""
+        logger.info("🔄 Starting setup_hook (CLEANED VERSION)...")
         
         try:
             # Initialize components
-            await self._initialize_components_fixed()
+            await self._initialize_components_cleaned()
+            
+            # Initialize API Server
+            await self._initialize_api_server()
             
             # Add command cogs
             await self._load_command_cogs()
@@ -55,7 +58,7 @@ class AshBot(commands.Bot):
             # Sync commands globally
             await self._sync_slash_commands()
             
-            logger.info("✅ Setup completed successfully with fixed imports")
+            logger.info("✅ Setup completed successfully (CLEANED VERSION)")
             return True
             
         except Exception as e:
@@ -63,9 +66,9 @@ class AshBot(commands.Bot):
             logger.exception("Full setup_hook traceback:")
             return False
     
-    async def _initialize_components_fixed(self):
-        """Initialize components with correct import names"""
-        logger.info("🔧 Initializing components with fixed imports...")
+    async def _initialize_components_cleaned(self):
+        """Initialize components with CLEANED imports"""
+        logger.info("🔧 Initializing components (CLEANED VERSION)...")
         
         # Step 1: Initialize Claude API
         logger.info("🧠 Initializing Claude API...")
@@ -96,7 +99,9 @@ class AshBot(commands.Bot):
         logger.info("🧠 Initializing NLP client...")
         try:
             from bot.integrations.nlp_integration import EnhancedNLPClient
-            nlp_url = self.config.get('GLOBAL_NLP_API_URL', 'http://10.20.30.253:8881')
+            nlp_host = self.config.get('GLOBAL_NLP_API_HOST', '10.20.30.253')
+            nlp_port = self.config.get('GLOBAL_NLP_API_PORT', '8881')
+            nlp_url = f"http://{nlp_host}:{nlp_port}"
             self.nlp_client = EnhancedNLPClient(nlp_url)
             
             # Test connection
@@ -131,16 +136,39 @@ class AshBot(commands.Bot):
                 self.keyword_detector,
                 self.crisis_handler,
                 self.config
+                # NOTE: No security_manager parameter
             )
             logger.info("✅ Message handler initialized")
         except Exception as e:
             logger.error(f"❌ Message handler initialization failed: {e}")
             raise
         
-        logger.info("✅ All components initialized successfully")
+        logger.info("✅ All components initialized successfully (CLEANED VERSION)")
+
+    async def _initialize_api_server(self):
+        """Initialize API Server"""
+        logger.info("🌐 Initializing API Server...")
+        try:
+            from bot.api.api_server import setup_api_server
+            
+            api_host = self.config.get('GLOBAL_BOT_API_HOST', '0.0.0.0')
+            api_port = self.config.get_int('GLOBAL_BOT_API_PORT', 8882)
+            
+            self.api_server = setup_api_server(self, api_host, api_port)
+            
+            # Start the API server
+            api_started = await self.api_server.start_server()
+            if api_started:
+                logger.info("✅ API Server started successfully")
+            else:
+                logger.warning("⚠️ API Server failed to start")
+                
+        except Exception as e:
+            logger.warning(f"⚠️ API Server initialization failed: {e}")
+            self.api_server = None
 
     async def _load_command_cogs(self):
-        """Load command cogs with fixed imports"""
+        """Load command cogs"""
         cog_errors = []
         
         # Load Crisis Commands
@@ -165,20 +193,10 @@ class AshBot(commands.Bot):
         try:
             from bot.commands.ensemble_commands import EnsembleCommands
             await self.add_cog(EnsembleCommands(self))
-            logger.info("✅ Loaded Ensemble Commands cog (enhanced learning + v3.0 features)")
+            logger.info("✅ Loaded Ensemble Commands cog")
         except ImportError as import_err:
             logger.error(f"❌ Failed to import Ensemble Commands: {import_err}")
-            # Try alternative import method using setup function
-            try:
-                import bot.commands.ensemble_commands as ensemble_module
-                if hasattr(ensemble_module, 'setup'):
-                    await ensemble_module.setup(self)
-                    logger.info("✅ Loaded Ensemble Commands via setup function")
-                else:
-                    cog_errors.append(f"EnsembleCommands: setup function not found")
-            except Exception as setup_err:
-                logger.error(f"❌ Failed to load via setup: {setup_err}")
-                cog_errors.append(f"EnsembleCommands: {import_err}")
+            cog_errors.append(f"EnsembleCommands: {import_err}")
         except Exception as e:
             logger.error(f"❌ Failed to load Ensemble Commands: {e}")
             cog_errors.append(f"EnsembleCommands: {e}")
@@ -245,10 +263,10 @@ class AshBot(commands.Bot):
             )
         )
         
-        logger.info("🎉 Ash Bot fully operational with fixed imports")
+        logger.info("🎉 Ash Bot fully operational (CLEANED VERSION)")
     
     async def on_message(self, message):
-        """FIXED: Message handler with proper error handling"""
+        """CLEANED: Message handler with proper error handling"""
         
         # CRITICAL FIX #1: Never process the bot's own messages
         if message.author == self.user:
@@ -278,10 +296,10 @@ class AshBot(commands.Bot):
         
         logger.debug(f"📨 Processing message from {message.author} in {message.channel}")
         
-        # CRITICAL FIX: Call the message handler properly
+        # CLEANED: Call the message handler properly
         if self.message_handler:
             try:
-                # Use the handle_message method from our fixed message handler
+                # Use the handle_message method from our cleaned message handler
                 await self.message_handler.handle_message(message)
                     
             except Exception as e:
@@ -307,6 +325,10 @@ class AshBot(commands.Bot):
         logger.info("🛑 Starting shutdown...")
         
         try:
+            # Stop API server
+            if self.api_server and hasattr(self.api_server, 'stop_server'):
+                await self.api_server.stop_server()
+            
             # Close components if they have close methods
             if self.claude_api and hasattr(self.claude_api, 'close'):
                 await self.claude_api.close()
