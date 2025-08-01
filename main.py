@@ -57,6 +57,28 @@ async def main():
         
         logger.info("🚀 Starting modular bot (CLEANED)...")
         
+        # Add reaction event handlers AFTER creating the bot instance
+        @bot.event
+        async def on_reaction_add(reaction, user):
+            """Handle reaction-based staff handoffs"""
+            
+            # Only process reactions in guilds (not DMs)
+            if not reaction.message.guild:
+                return
+            
+            # Let the message handler process the reaction
+            if hasattr(bot, 'message_handler') and bot.message_handler:
+                await bot.message_handler.handle_reaction_add(reaction, user)
+        
+        # Optional: Also handle reaction removal if needed
+        @bot.event
+        async def on_reaction_remove(reaction, user):
+            """Handle reaction removal (optional - for undoing accidental handoffs)"""
+            # Could implement undo functionality here if desired
+            pass
+        
+        logger.info("🚀 Starting modular bot (CLEANED)...")
+
         # Get Discord token
         token = config.get('BOT_DISCORD_TOKEN')
         if not token:
@@ -69,26 +91,6 @@ async def main():
     except Exception as e:
         logger.error(f"💥 Configuration test failed: {e}")
         sys.exit(1)
-
-# Events to handle staff hand-off of crisis events.
-@AshBot.event
-async def on_reaction_add(reaction, user):
-    """Handle reaction-based staff handoffs"""
-    
-    # Only process reactions in guilds (not DMs)
-    if not reaction.message.guild:
-        return
-    
-    # Let the message handler process the reaction
-    if hasattr(bot, 'message_handler') and bot.message_handler:
-        await bot.message_handler.handle_reaction_add(reaction, user)
-
-# Optional: Also handle reaction removal if needed
-@AshBot.event
-async def on_reaction_remove(reaction, user):
-    """Handle reaction removal (optional - for undoing accidental handoffs)"""
-    # Could implement undo functionality here if desired
-    pass
 
 if __name__ == "__main__":
     try:
