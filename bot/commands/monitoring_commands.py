@@ -1,6 +1,6 @@
 """
 Enhanced Monitoring Commands - FIXED with detection_breakdown removed
-Updated for three-model ensemble support
+Updated for Three Zero-Shot Model Ensemble support
 """
 
 import discord
@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 class MonitoringCommands(commands.Cog):
-    """Enhanced monitoring commands for the three-model ensemble bot"""
+    """Enhanced monitoring commands for the Three Zero-Shot Model Ensemble bot"""
     
     def __init__(self, bot):
         self.bot = bot
@@ -52,7 +52,7 @@ class MonitoringCommands(commands.Cog):
         try:
             embed = discord.Embed(
                 title="🖥️ Ash Bot v2.0 - Enhanced System Status",
-                description="Three-model ensemble with gap detection",
+                description="Three Zero-Shot Model Ensemble with gap detection",
                 color=discord.Color.blue(),
                 timestamp=datetime.now(timezone.utc)
             )
@@ -77,7 +77,7 @@ class MonitoringCommands(commands.Cog):
                     stats = self.bot.message_handler.get_enhanced_stats()
                     
                     embed.add_field(
-                        name="📨 Three-Model Ensemble",
+                        name="📨 Three Zero-Shot Model Ensemble",
                         value=f"**Messages Processed:** {stats['total_messages_processed']}\n"
                              f"**Crisis Responses:** {stats['crisis_responses_given']}\n"
                              f"**Ensemble Analyses:** {stats['ensemble_analyses_performed']}\n"
@@ -127,7 +127,7 @@ class MonitoringCommands(commands.Cog):
             
             # NLP Service
             if hasattr(self.bot, 'nlp_client') and self.bot.nlp_client:
-                service_status.append("✅ NLP Service (Three-Model Ensemble)")
+                service_status.append("✅ NLP Service (Three Zero-Shot Model Ensemble)")
             else:
                 service_status.append("❌ NLP Service")
             
@@ -166,7 +166,7 @@ class MonitoringCommands(commands.Cog):
                 inline=False
             )
             
-            embed.set_footer(text="Three-Model Ensemble System | Ash v2.0")
+            embed.set_footer(text="Three Zero-Shot Model Ensemble System | Ash v2.0")
             
             await interaction.response.send_message(embed=embed, ephemeral=True)
             
@@ -178,9 +178,9 @@ class MonitoringCommands(commands.Cog):
                 ephemeral=True
             )
     
-    @app_commands.command(name="ensemble_stats", description="View three-model ensemble statistics")
+    @app_commands.command(name="ensemble_stats", description="View Three Zero-Shot Model Ensemble statistics")
     async def ensemble_stats(self, interaction: discord.Interaction):
-        """View detailed three-model ensemble statistics"""
+        """View detailed Three Zero-Shot Model Ensemble statistics"""
         
         if not await self._check_crisis_role(interaction):
             return
@@ -196,7 +196,7 @@ class MonitoringCommands(commands.Cog):
             stats = self.bot.message_handler.get_enhanced_stats()
             
             embed = discord.Embed(
-                title="🎯 Three-Model Ensemble Statistics",
+                title="🎯 Three Zero-Shot Model Ensemble Statistics",
                 description="Detailed breakdown of ensemble performance",
                 color=discord.Color.purple()
             )
@@ -253,7 +253,7 @@ class MonitoringCommands(commands.Cog):
                 inline=False
             )
             
-            embed.set_footer(text="Three-Model Ensemble: Depression • Sentiment • Emotional Distress")
+            embed.set_footer(text="Three Zero-Shot Model Ensemble: Depression • Sentiment • Emotional Distress")
             
             await interaction.response.send_message(embed=embed, ephemeral=True)
             
@@ -527,7 +527,7 @@ class MonitoringCommands(commands.Cog):
             
             # Create response embed - SAME AS BEFORE
             embed = discord.Embed(
-                title="🧪 Three-Model Ensemble Analysis Test",
+                title="🧪 Three Zero-Shot Model Ensemble Analysis Test",
                 description=f"**Test Message:** `{test_message[:100]}{'...' if len(test_message) > 100 else ''}`",
                 color=discord.Color.blue()
             )
@@ -558,12 +558,12 @@ class MonitoringCommands(commands.Cog):
                     inline=True
                 )
             
-            # Three-Model Ensemble Results (from final decision)
+            # Three Zero-Shot Model Ensemble Results (from final decision)
             if analysis_results['nlp_analysis']:
                 nlp_result = analysis_results['nlp_analysis']
                 if 'error' in nlp_result:
                     embed.add_field(
-                        name="🎯 Three-Model Ensemble",
+                        name="🎯 Three Zero-Shot Model Ensemble",
                         value=f"❌ Error: {nlp_result['error'][:50]}...",
                         inline=True
                     )
@@ -584,7 +584,7 @@ class MonitoringCommands(commands.Cog):
                         ensemble_text += f"\n🔍 **Gaps Detected:** Yes"
                     
                     embed.add_field(
-                        name="🎯 Three-Model Ensemble",
+                        name="🎯 Three Zero-Shot Model Ensemble",
                         value=ensemble_text,
                         inline=True
                     )
@@ -609,7 +609,7 @@ class MonitoringCommands(commands.Cog):
                                 )
             else:
                 embed.add_field(
-                    name="🎯 Three-Model Ensemble",
+                    name="🎯 Three Zero-Shot Model Ensemble",
                     value="❌ NLP service not available",
                     inline=True
                 )
