@@ -38,19 +38,20 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Set working directory
 WORKDIR /app
 
-# Create non-root user for security
-RUN groupadd -r botuser && useradd -r -g botuser -u 1001 botuser
+# Create non-root user with matching UID/GID for consistency across containers
+RUN groupadd -r -g 1001 ash && \
+    useradd -r -g 1001 -u 1001 ash
 
 # Create necessary directories with proper ownership
 RUN mkdir -p logs data tests api && \
-    chown -R botuser:botuser /app && \
+    chown -R ash:ash /app && \
     chmod 755 /app
 
 # Copy bot application code
-COPY --chown=botuser:botuser . .
+COPY --chown=ash:ash . .
 
 # Switch to non-root user
-USER botuser
+USER ash
 
 # Set default environment variables
 ENV TZ="America/Los_Angeles"
