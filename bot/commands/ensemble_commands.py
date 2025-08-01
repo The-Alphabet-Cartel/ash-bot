@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Three-Model Ensemble Learning Commands for Ash Bot v3.0
+Three Zero-Shot Model Ensemble Learning Commands for Ash Bot v3.0
 Replaces the old individual learning system with modern ensemble approach
 """
 
@@ -17,14 +17,14 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 class EnsembleCommands(commands.Cog):
-    """Discord commands for the three-model ensemble learning system"""
+    """Discord commands for the Three Zero-Shot Model Ensemble learning system"""
     
     def __init__(self, bot):
         self.bot = bot
         self.crisis_response_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID', '0'))
         self.nlp_client = getattr(bot, 'nlp_client', None)
         
-        logger.info("🎯 Three-model ensemble commands loaded for Ash Bot v3.0")
+        logger.info("🎯 Three Zero-Shot Model Ensemble commands loaded for Ash Bot v3.0")
     
     async def _check_crisis_role(self, interaction: discord.Interaction) -> bool:
         """Check if user has crisis response role"""
@@ -65,7 +65,7 @@ class EnsembleCommands(commands.Cog):
         detected_level: str,
         correct_level: str
     ):
-        """Report a false positive detection for learning using three-model ensemble"""
+        """Report a false positive detection for learning using Three Zero-Shot Model Ensemble"""
         
         if not await self._check_crisis_role(interaction):
             return
@@ -106,7 +106,7 @@ class EnsembleCommands(commands.Cog):
         if success:
             embed = discord.Embed(
                 title="✅ False Positive Reported",
-                description="Three-model ensemble system updated with your report",
+                description="Three Zero-Shot Model Ensemble system updated with your report",
                 color=discord.Color.green()
             )
             
@@ -155,7 +155,7 @@ class EnsembleCommands(commands.Cog):
         should_detect_level: str,
         actually_detected: str = "none"
     ):
-        """Report a missed crisis detection for learning using three-model ensemble"""
+        """Report a missed crisis detection for learning using Three Zero-Shot Model Ensemble"""
         
         if not await self._check_crisis_role(interaction):
             return
@@ -196,7 +196,7 @@ class EnsembleCommands(commands.Cog):
         if success:
             embed = discord.Embed(
                 title="✅ Missed Crisis Reported",
-                description="Three-model ensemble system updated with your report",
+                description="Three Zero-Shot Model Ensemble system updated with your report",
                 color=discord.Color.orange()
             )
             
@@ -220,9 +220,9 @@ class EnsembleCommands(commands.Cog):
                 ephemeral=True
             )
     
-    @app_commands.command(name="learning_ensemble_stats", description="View three-model ensemble performance statistics")
+    @app_commands.command(name="learning_ensemble_stats", description="View Three Zero-Shot Model Ensemble performance statistics")
     async def learning_ensemble_stats(self, interaction: discord.Interaction):
-        """View comprehensive three-model ensemble learning statistics"""
+        """View comprehensive Three Zero-Shot Model Ensemble learning statistics"""
         
         if not await self._check_crisis_role(interaction):
             return
@@ -264,7 +264,7 @@ class EnsembleCommands(commands.Cog):
                 return
             
             embed = discord.Embed(
-                title="🎯 Three-Model Ensemble Statistics",
+                title="🎯 Three Zero-Shot Model Ensemble Statistics",
                 description="Performance overview of the ensemble learning system",
                 color=discord.Color.blue()
             )
@@ -336,7 +336,7 @@ class EnsembleCommands(commands.Cog):
                     inline=True
                 )
             
-            embed.set_footer(text="Ash Bot v3.0 - Three-Model Ensemble System")
+            embed.set_footer(text="Ash Bot v3.0 - Three Zero-Shot Model Ensemble System")
             
             await interaction.followup.send(embed=embed, ephemeral=True)
             
@@ -427,4 +427,4 @@ class EnsembleCommands(commands.Cog):
 async def setup(bot):
     """Setup function for the ensemble commands cog"""
     await bot.add_cog(EnsembleCommands(bot))
-    logger.info("✅ Three-model ensemble commands cog loaded")
+    logger.info("✅ Three Zero-Shot Model Ensemble commands cog loaded")
