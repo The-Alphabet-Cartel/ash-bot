@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-NLP Integration - FIXED for v3.0 Response Structure
-Updated to use correct NLP service endpoints
-
-This module handles communication with the ash-nlp service v3.0 which now uses
-a three-model ensemble approach with enhanced response structure.
+NLP Integration - v3.0 CLEANED VERSION
+Removed all backward compatibility aliases and redundant methods
+Uses correct NLP service endpoints for three-model ensemble
 """
 
 import asyncio
@@ -19,13 +17,13 @@ logger = logging.getLogger(__name__)
 
 class EnhancedNLPClient:
     """
-    Enhanced NLP service integration for v3.0 ensemble responses
-    FIXED to use correct endpoints: /analyze_false_positive, /analyze_false_negative
+    v3.0 NLP service integration for three-model ensemble responses
+    CLEANED: Uses correct endpoints and removes all redundant methods
     """
     
     def __init__(self, nlp_url: Optional[str] = None, timeout: int = 30, retry_attempts: int = 3):
         """
-        Initialize Enhanced NLP Client with backward compatibility
+        Initialize v3.0 Enhanced NLP Client
         
         Args:
             nlp_url: NLP service URL (if None, builds from environment variables)
@@ -33,7 +31,7 @@ class EnhancedNLPClient:
             retry_attempts: Number of retry attempts on failure
         """
         
-        # Build URL from environment if not provided (backward compatibility)
+        # Build URL from environment if not provided
         if nlp_url is None:
             nlp_host = os.getenv('GLOBAL_NLP_API_HOST', '10.20.30.253')
             nlp_port = os.getenv('GLOBAL_NLP_API_PORT', '8881')
@@ -46,12 +44,12 @@ class EnhancedNLPClient:
         self.last_health_check = 0
         self.health_check_interval = 300  # 5 minutes
         
-        logger.info(f"🧠 Enhanced NLP Integration initialized: {self.nlp_url}")
+        logger.info(f"🧠 v3.0 NLP Integration initialized: {self.nlp_url}")
         logger.info(f"   ⏱️ Timeout: {self.timeout}s")
         logger.info(f"   🔄 Retry attempts: {self.retry_attempts}")
     
     async def test_connection(self) -> bool:
-        """Test connection to NLP service with v3.0 health endpoint"""
+        """Test connection to v3.0 NLP service with ensemble health endpoint"""
         current_time = time.time()
         
         # Skip frequent health checks
@@ -75,85 +73,70 @@ class EnhancedNLPClient:
                         model_info = health_data.get('model_loaded', 'unknown')
                         
                         if status == 'healthy':
-                            logger.info(f"✅ NLP Service healthy: models loaded = {model_info}")
+                            logger.info(f"✅ v3.0 NLP Service healthy: models loaded = {model_info}")
                             self.service_healthy = True
                             return True
                         else:
-                            logger.warning(f"⚠️ NLP Service unhealthy: {status}")
+                            logger.warning(f"⚠️ v3.0 NLP Service unhealthy: {status}")
                             self.service_healthy = False
                             return False
                     else:
-                        logger.warning(f"🔌 NLP Service health check failed: HTTP {response.status}")
+                        logger.warning(f"🔌 v3.0 NLP Service health check failed: HTTP {response.status}")
                         self.service_healthy = False
                         return False
                         
         except asyncio.TimeoutError:
-            logger.warning(f"⏰ NLP Service health check timeout: {self.nlp_url}")
+            logger.warning(f"⏰ v3.0 NLP Service health check timeout: {self.nlp_url}")
             self.service_healthy = False
             return False
         except Exception as e:
-            logger.warning(f"🔌 NLP Service health check failed: {e}")
+            logger.warning(f"🔌 v3.0 NLP Service health check failed: {e}")
             self.service_healthy = False
             return False
     
     async def analyze_message(self, message_content: str, user_id: str = "unknown", channel_id: str = "unknown") -> Optional[Dict]:
         """
         Analyze message using v3.0 NLP service with three-model ensemble
-        Enhanced with debugging to track empty message issue
+        CLEANED: Enhanced validation and proper error handling
         """
         
-        # ENHANCED DEBUGGING: Track exactly what's being sent
-        logger.info(f"🧠 NLP analyze_message called:")
-        logger.info(f"   📝 Content: '{message_content}' (length: {len(message_content) if message_content else 'None'})")
-        logger.info(f"   👤 User ID: '{user_id}'")
-        logger.info(f"   📍 Channel ID: '{channel_id}'")
+        # ENHANCED VALIDATION: Track exactly what's being sent
+        logger.debug(f"🧠 v3.0 NLP analyze_message called:")
+        logger.debug(f"   📝 Content: '{message_content}' (length: {len(message_content) if message_content else 'None'})")
+        logger.debug(f"   👤 User ID: '{user_id}'")
+        logger.debug(f"   📍 Channel ID: '{channel_id}'")
         
-        # Validate input - CRITICAL CHECK
+        # CRITICAL VALIDATION
         if message_content is None:
-            logger.error(f"❌ CRITICAL: message_content is None! Caller should handle this.")
-            logger.error(f"   👤 User ID: {user_id}")
-            logger.error(f"   📍 Channel ID: {channel_id}")
+            logger.error(f"❌ CRITICAL: message_content is None!")
             return None
             
         if not isinstance(message_content, str):
             logger.error(f"❌ CRITICAL: message_content is not a string! Type: {type(message_content)}")
-            logger.error(f"   📝 Content: {repr(message_content)}")
             return None
             
         if not message_content.strip():
             logger.error(f"❌ CRITICAL: message_content is empty or whitespace only!")
-            logger.error(f"   📝 Raw content: {repr(message_content)}")
-            logger.error(f"   👤 User ID: {user_id}")
-            logger.error(f"   📍 Channel ID: {channel_id}")
-            
-            # Log stack trace to find out who's calling with empty messages
-            import traceback
-            logger.error(f"   🔍 Call stack:")
-            for line in traceback.format_stack():
-                logger.error(f"     {line.strip()}")
-            
             return None
         
         if not self.service_healthy:
             # Try to reconnect
             await self.test_connection()
             if not self.service_healthy:
-                logger.warning("🔌 NLP Service unavailable - skipping analysis")
+                logger.warning("🔌 v3.0 NLP Service unavailable - skipping analysis")
                 return None
         
         for attempt in range(self.retry_attempts):
             try:
-                # FIXED: Use proper timestamp format that the v3.0 API expects
+                # v3.0 payload format
                 payload = {
-                    "message": message_content.strip(),  # Ensure we trim whitespace
+                    "message": message_content.strip(),
                     "user_id": str(user_id),
                     "channel_id": str(channel_id)
                 }
                 
-                logger.debug(f"🧠 Sending NLP request (attempt {attempt + 1}):")
+                logger.debug(f"🧠 Sending v3.0 NLP request (attempt {attempt + 1}):")
                 logger.debug(f"   📝 Message: '{payload['message']}' (length: {len(payload['message'])})")
-                logger.debug(f"   👤 User: {payload['user_id']}")
-                logger.debug(f"   📍 Channel: {payload['channel_id']}")
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
@@ -169,50 +152,34 @@ class EnhancedNLPClient:
                             try:
                                 raw_data = await response.json()
                             except Exception as json_error:
-                                logger.error(f"❌ Failed to parse JSON response: {json_error}")
-                                logger.error(f"   Raw response: {response_text[:200]}...")
+                                logger.error(f"❌ Failed to parse v3.0 JSON response: {json_error}")
                                 return None
                             
                             # Process v3.0 response structure
                             processed_data = self._process_v3_response(raw_data)
                             
-                            logger.debug(f"✅ NLP v3.0 analysis successful:")
+                            logger.debug(f"✅ v3.0 NLP analysis successful:")
                             logger.debug(f"   📊 Crisis Level: {processed_data['crisis_level']}")
                             logger.debug(f"   🎯 Confidence: {processed_data['confidence_score']:.3f}")
                             logger.debug(f"   🔍 Method: {processed_data['method']}")
-                            logger.debug(f"   ⏱️ Processing Time: {processed_data.get('processing_time_ms', 0):.1f}ms")
                             
                             # Log v3.0 specific features
                             if processed_data.get('gaps_detected'):
-                                logger.info(f"⚠️ Model disagreement detected - staff review recommended")
+                                logger.info(f"⚠️ v3.0 Model disagreement detected - staff review recommended")
                             
                             if processed_data.get('requires_staff_review'):
-                                logger.info(f"👥 Staff review required for this analysis")
+                                logger.info(f"👥 v3.0 Staff review required for this analysis")
                             
                             return processed_data
                             
                         elif response.status == 422:
                             # Validation error - don't retry
-                            logger.error(f"❌ NLP Service validation error: {response_text}")
-                            logger.error(f"   📝 Payload that failed validation: {payload}")
+                            logger.error(f"❌ v3.0 NLP Service validation error: {response_text}")
                             return None
                             
                         elif response.status == 500:
                             # Internal server error - log details and retry
-                            logger.error(f"❌ NLP Service internal error (attempt {attempt + 1}/{self.retry_attempts}):")
-                            logger.error(f"   📝 Error response: {response_text[:200]}...")
-                            logger.error(f"   📦 Payload that caused error: {payload}")
-                            
-                            # Check if it's the empty message error specifically
-                            if "Empty message" in response_text:
-                                logger.error(f"🔍 EMPTY MESSAGE ERROR DETECTED!")
-                                logger.error(f"   📝 Our payload message: '{payload['message']}'")
-                                logger.error(f"   📏 Our payload message length: {len(payload['message'])}")
-                                logger.error(f"   🔢 Our payload message repr: {repr(payload['message'])}")
-                                
-                                # This suggests the server is seeing something different than what we sent
-                                # Don't retry - this is a logic error, not a temporary issue
-                                return None
+                            logger.error(f"❌ v3.0 NLP Service internal error (attempt {attempt + 1}/{self.retry_attempts})")
                             
                             if attempt < self.retry_attempts - 1:
                                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
@@ -222,17 +189,16 @@ class EnhancedNLPClient:
                             
                         elif response.status == 503:
                             # Service temporarily unavailable - retry
-                            logger.warning(f"🔄 NLP Service busy (attempt {attempt + 1}/{self.retry_attempts})")
+                            logger.warning(f"🔄 v3.0 NLP Service busy (attempt {attempt + 1}/{self.retry_attempts})")
                             if attempt < self.retry_attempts - 1:
                                 await asyncio.sleep(2 ** attempt)  # Exponential backoff
                                 continue
                         else:
-                            logger.error(f"❌ NLP Service error: HTTP {response.status}")
-                            logger.error(f"   📝 Response: {response_text[:200]}...")
+                            logger.error(f"❌ v3.0 NLP Service error: HTTP {response.status}")
                             return None
                             
             except asyncio.TimeoutError:
-                logger.warning(f"⏰ NLP Service timeout (attempt {attempt + 1}/{self.retry_attempts})")
+                logger.warning(f"⏰ v3.0 NLP Service timeout (attempt {attempt + 1}/{self.retry_attempts})")
                 if attempt < self.retry_attempts - 1:
                     await asyncio.sleep(1)
                     continue
@@ -241,7 +207,7 @@ class EnhancedNLPClient:
                     return None
                     
             except Exception as e:
-                logger.error(f"🔌 NLP Service connection error: {e}")
+                logger.error(f"🔌 v3.0 NLP Service connection error: {e}")
                 if attempt < self.retry_attempts - 1:
                     await asyncio.sleep(1)
                     continue
@@ -272,7 +238,7 @@ class EnhancedNLPClient:
         processed.update({
             'requires_staff_review': raw_response.get('requires_staff_review', False),
             'gaps_detected': raw_response.get('gaps_detected', False),
-            'model_info': raw_response.get('model_info', 'unknown'),
+            'model_info': raw_response.get('model_info', 'three_model_ensemble'),
             'timestamp': raw_response.get('timestamp', time.time())
         })
         
@@ -293,27 +259,22 @@ class EnhancedNLPClient:
             # Log interesting ensemble behavior
             predictions = ensemble_analysis.get('predictions', {})
             if len(set(predictions.values())) > 1:  # Models disagreed
-                logger.info(f"🔍 Model disagreement detected:")
+                logger.info(f"🔍 v3.0 Model disagreement detected:")
                 for model, prediction in predictions.items():
                     confidence = ensemble_analysis.get('confidence_scores', {}).get(model, 0.0)
                     logger.info(f"   {model}: {prediction} (confidence: {confidence:.3f})")
-        
-        # Handle thresholds information for monitoring
-        thresholds = analysis.get('thresholds_used', {})
-        if thresholds:
-            processed['thresholds_used'] = thresholds
         
         return processed
     
     async def send_staff_feedback(self, message_content: str, correct_level: str, detected_level: str, correction_type: str) -> bool:
         """
-        FIXED: Send staff feedback using correct NLP service endpoints
+        v3.0 Send staff feedback using correct NLP service endpoints
         
         Uses /analyze_false_positive or /analyze_false_negative based on correction_type
         """
         
         if not self.service_healthy:
-            logger.warning("🔌 NLP Service unavailable - cannot send feedback")
+            logger.warning("🔌 v3.0 NLP Service unavailable - cannot send feedback")
             return False
         
         try:
@@ -325,11 +286,11 @@ class EnhancedNLPClient:
                     "detected_level": detected_level,
                     "correct_level": correct_level,
                     "context": {
-                        "source": "discord_bot",
+                        "source": "discord_bot_v3",
                         "timestamp": time.time(),
                         "correction_type": correction_type
                     },
-                    "severity_score": 1.0  # Default severity
+                    "severity_score": 1.0
                 }
             elif correction_type == 'false_negative':
                 endpoint = '/analyze_false_negative'
@@ -338,18 +299,17 @@ class EnhancedNLPClient:
                     "should_detect_level": correct_level,
                     "actually_detected": detected_level,
                     "context": {
-                        "source": "discord_bot",
+                        "source": "discord_bot_v3",
                         "timestamp": time.time(),
                         "correction_type": correction_type
                     },
-                    "severity_score": 1.0  # Default severity
+                    "severity_score": 1.0
                 }
             else:
                 logger.error(f"❌ Unknown correction type: {correction_type}")
                 return False
             
-            logger.info(f"📝 Sending staff feedback: {correction_type} - {detected_level} → {correct_level}")
-            logger.debug(f"🎯 Using endpoint: {endpoint}")
+            logger.info(f"📝 Sending v3.0 staff feedback: {correction_type} - {detected_level} → {correct_level}")
             
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -364,7 +324,7 @@ class EnhancedNLPClient:
                     if response.status == 200:
                         feedback_result = await response.json()
                         
-                        logger.info(f"✅ Staff feedback sent successfully:")
+                        logger.info(f"✅ v3.0 Staff feedback sent successfully:")
                         logger.info(f"   📊 Correction Type: {correction_type}")
                         logger.info(f"   📈 Patterns Learned: {feedback_result.get('patterns_discovered', 0)}")
                         logger.info(f"   🎯 Adjustments Made: {feedback_result.get('confidence_adjustments', 0)}")
@@ -373,72 +333,23 @@ class EnhancedNLPClient:
                         return True
                         
                     elif response.status == 404:
-                        logger.error(f"❌ Endpoint not found: {endpoint}")
-                        logger.error(f"   Available endpoints should be: /analyze_false_positive, /analyze_false_negative")
+                        logger.error(f"❌ v3.0 Endpoint not found: {endpoint}")
                         return False
                         
                     elif response.status == 422:
-                        logger.error(f"❌ Staff feedback validation error: {response_text}")
-                        logger.error(f"   📦 Payload that failed: {payload}")
+                        logger.error(f"❌ v3.0 Staff feedback validation error: {response_text}")
                         return False
                         
                     else:
-                        logger.error(f"❌ Staff feedback failed: HTTP {response.status}")
-                        logger.error(f"   Response: {response_text[:200]}...")
+                        logger.error(f"❌ v3.0 Staff feedback failed: HTTP {response.status}")
                         return False
                         
         except Exception as e:
-            logger.error(f"🔌 Error sending staff feedback: {e}")
+            logger.error(f"🔌 Error sending v3.0 staff feedback: {e}")
             return False
 
-    async def get_service_stats(self) -> Optional[Dict[str, Any]]:
-        """Get v3.0 service statistics for monitoring"""
-        
-        if not self.service_healthy:
-            return None
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.nlp_url}/stats",
-                    timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        logger.warning(f"Failed to get NLP stats: HTTP {response.status}")
-                        return None
-                        
-        except Exception as e:
-            logger.warning(f"Error getting NLP stats: {e}")
-            return None
-    
-    async def get_ensemble_metrics(self) -> Optional[Dict[str, Any]]:
-        """Get v3.0 ensemble-specific metrics"""
-        
-        if not self.service_healthy:
-            return None
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.nlp_url}/ensemble_metrics",
-                    timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        logger.debug(f"Ensemble metrics not available: HTTP {response.status}")
-                        return None
-                        
-        except Exception as e:
-            logger.debug(f"Error getting ensemble metrics: {e}")
-            return None
-
     async def get_ensemble_stats(self) -> Optional[Dict[str, Any]]:
-        """Get comprehensive ensemble statistics for ensemble commands"""
+        """Get comprehensive v3.0 ensemble statistics for ensemble commands"""
         
         if not self.service_healthy:
             return None
@@ -496,19 +407,19 @@ class EnhancedNLPClient:
                             'retrieved_at': time.time()
                         }
                         
-                        logger.debug(f"📊 Retrieved ensemble stats successfully")
+                        logger.debug(f"📊 Retrieved v3.0 ensemble stats successfully")
                         return ensemble_stats
                         
                     else:
-                        logger.warning(f"Failed to get ensemble stats: HTTP {response.status}")
+                        logger.warning(f"Failed to get v3.0 ensemble stats: HTTP {response.status}")
                         return None
                         
         except Exception as e:
-            logger.warning(f"Error getting ensemble stats: {e}")
+            logger.warning(f"Error getting v3.0 ensemble stats: {e}")
             return None
 
     async def get_learning_statistics(self) -> Optional[Dict[str, Any]]:
-        """Get learning system statistics using correct endpoint"""
+        """Get v3.0 learning system statistics using correct endpoint"""
         
         if not self.service_healthy:
             return None
@@ -550,20 +461,20 @@ class EnhancedNLPClient:
                         # Learning statistics not implemented
                         return {
                             'learning_enabled': False,
-                            'message': 'Learning statistics not available',
+                            'message': 'v3.0 Learning statistics not available',
                             'retrieved_at': time.time()
                         }
                         
                     else:
-                        logger.warning(f"Failed to get learning statistics: HTTP {response.status}")
+                        logger.warning(f"Failed to get v3.0 learning statistics: HTTP {response.status}")
                         return None
                         
         except Exception as e:
-            logger.warning(f"Error getting learning statistics: {e}")
+            logger.warning(f"Error getting v3.0 learning statistics: {e}")
             return None
 
     async def test_ensemble_connection(self) -> Dict[str, Any]:
-        """Test ensemble connection and return detailed status"""
+        """Test v3.0 ensemble connection and return detailed status"""
         
         connection_status = {
             'service_available': False,
@@ -595,7 +506,7 @@ class EnhancedNLPClient:
                             health_data.get('model_loaded', False)
                         )
                         
-                        # Check for ensemble-specific features
+                        # Check for v3.0 ensemble-specific features
                         hardware_info = health_data.get('hardware_info', {})
                         ensemble_info = hardware_info.get('ensemble_info', {})
                         
@@ -612,7 +523,3 @@ class EnhancedNLPClient:
             connection_status['error_message'] = str(e)
         
         return connection_status
-
-# Backward compatibility aliases
-NLPIntegration = EnhancedNLPClient
-RemoteNLPClient = EnhancedNLPClient  # For existing imports
