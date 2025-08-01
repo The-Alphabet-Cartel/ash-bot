@@ -512,39 +512,39 @@ class MessageHandler:
             logger.info(f"💬 Conversation expired for user {user_id} (duration: {duration:.1f}s)")
             del self.active_conversations[user_id]
 
-def start_conversation_tracking(self, user_id: int, crisis_level: str, channel_id: int):
-        """Enhanced conversation tracking with multiple conversation support"""
-        
-        # Check if there's already a conversation in this channel
-        existing_conversation = self._get_active_conversation_in_channel(channel_id)
-        
-        if existing_conversation:
-            existing_user_id, existing_data = existing_conversation
-            logger.warning(f"⚠️ Starting new conversation while another is active:")
-            logger.warning(f"   📍 Channel: {channel_id}")
-            logger.warning(f"   👤 Existing: User {existing_user_id} ({existing_data['crisis_level']} crisis)")
-            logger.warning(f"   🆕 New: User {user_id} ({crisis_level} crisis)")
+    def start_conversation_tracking(self, user_id: int, crisis_level: str, channel_id: int):
+            """Enhanced conversation tracking with multiple conversation support"""
             
-            # Track this situation in stats
-            self.message_stats['multiple_conversations_same_channel'] += 1
-        
-        self.active_conversations[user_id] = {
-            'start_time': time.time(),
-            'crisis_level': crisis_level,
-            'channel_id': channel_id,
-            'follow_up_count': 0,
-            'escalations': 0,
-            'initial_crisis_level': crisis_level,
-            'is_crisis_override': existing_conversation is not None  # Track if this overrode another conversation
-        }
-        
-        self.message_stats['conversations_started'] += 1
-        logger.info(f"💬 Started enhanced conversation tracking:")
-        logger.info(f"   👤 User: {user_id}")
-        logger.info(f"   🚨 Crisis level: {crisis_level}")
-        logger.info(f"   📍 Channel: {channel_id}")
-        logger.info(f"   🔄 Override situation: {'Yes' if existing_conversation else 'No'}")
-        logger.info(f"   📊 Total conversations today: {self.message_stats['conversations_started']}")
+            # Check if there's already a conversation in this channel
+            existing_conversation = self._get_active_conversation_in_channel(channel_id)
+            
+            if existing_conversation:
+                existing_user_id, existing_data = existing_conversation
+                logger.warning(f"⚠️ Starting new conversation while another is active:")
+                logger.warning(f"   📍 Channel: {channel_id}")
+                logger.warning(f"   👤 Existing: User {existing_user_id} ({existing_data['crisis_level']} crisis)")
+                logger.warning(f"   🆕 New: User {user_id} ({crisis_level} crisis)")
+                
+                # Track this situation in stats
+                self.message_stats['multiple_conversations_same_channel'] += 1
+            
+            self.active_conversations[user_id] = {
+                'start_time': time.time(),
+                'crisis_level': crisis_level,
+                'channel_id': channel_id,
+                'follow_up_count': 0,
+                'escalations': 0,
+                'initial_crisis_level': crisis_level,
+                'is_crisis_override': existing_conversation is not None  # Track if this overrode another conversation
+            }
+            
+            self.message_stats['conversations_started'] += 1
+            logger.info(f"💬 Started enhanced conversation tracking:")
+            logger.info(f"   👤 User: {user_id}")
+            logger.info(f"   🚨 Crisis level: {crisis_level}")
+            logger.info(f"   📍 Channel: {channel_id}")
+            logger.info(f"   🔄 Override situation: {'Yes' if existing_conversation else 'No'}")
+            logger.info(f"   📊 Total conversations today: {self.message_stats['conversations_started']}")
 
     async def _handle_conversation_followup(self, message: Message):
         """Handle conversation follow-up"""
