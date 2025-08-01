@@ -9,7 +9,6 @@ import os
 from typing import Optional
 import aiohttp
 import json
-from contextlib import asynccontextmanager
 from bot.core.ash_character import format_ash_prompt, get_crisis_addition, get_response_templates
 
 logger = logging.getLogger(__name__)
@@ -39,11 +38,6 @@ class ClaudeAPI:
         self.calls_today = 0
         self.last_call_time = 0
         self.min_call_interval = 1.0  # Minimum seconds between calls
-
-        # Resource management
-        from bot.utils.resource_managers import ResourceCleanupMixin
-        self._cleanup_mixin = ResourceCleanupMixin()
-        self._cleanup_mixin.register_cleanup(self.close)
 
         if not self.api_key:
             logger.error("GLOBAL_CLAUDE_API_KEY not found in configuration or environment variables")
@@ -164,15 +158,18 @@ class ClaudeAPI:
         logger.info(f"Reset daily counter from {old_count} to 0")
     
     async def close(self):
-        """Enhanced cleanup using resource management"""
-        logger.info("🔄 Claude API cleanup starting...")
+        """v3.0 cleanup"""
+        logger.info("🔄 Claude API v3.0 cleanup starting...")
         
         try:
-            # Use resource manager cleanup
-            from bot.utils.resource_managers import session_manager
-            await session_manager.close_session("claude")
+            # Use session manager if available
+            try:
+                from bot.utils.resource_managers import session_manager
+                await session_manager.close_session("claude")
+            except ImportError:
+                logger.debug("Session manager not available")
             
-            logger.info("✅ Claude API cleanup completed")
+            logger.info("✅ Claude API v3.0 cleanup completed")
             
         except Exception as e:
             logger.debug(f"Minor Claude API cleanup issue: {e}")
@@ -191,14 +188,3 @@ class ClaudeAPI:
 class ClaudeAPIError(Exception):
     """Custom exception for Claude API errors"""
     pass
-
-# Async context manager for proper session handling
-class AsyncClaudeAPI:
-    def __init__(self, config=None):
-        self.api = ClaudeAPI(config)
-    
-    async def __aenter__(self):
-        return self.api
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.api.close()
