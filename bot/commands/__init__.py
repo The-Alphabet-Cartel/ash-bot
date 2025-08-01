@@ -1,9 +1,13 @@
+"""
+Discord slash commands for Ash Bot v3.0
+"""
+
 from .crisis_commands import CrisisKeywordCommands
 from .monitoring_commands import MonitoringCommands
-from .enhanced_learning_commands import EnhancedLearningCommands
+from .ensemble_commands import EnsembleCommands
 
 __all__ = [
     'CrisisKeywordCommands',
-    'MonitoringCommands', 
-    'EnhancedLearningCommands'
+    'MonitoringCommands',
+    'EnsembleCommands'
 ]

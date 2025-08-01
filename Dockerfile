@@ -47,12 +47,14 @@ RUN mkdir -p logs data tests api && \
     chmod 755 /app
 
 # Copy bot application code
-COPY --chown=botuser:botuser ./bot .
+COPY --chown=botuser:botuser . .
 
 # Switch to non-root user
 USER botuser
 
 # Set default environment variables
+ENV TZ="America/Los_Angeles"
+
 ENV GLOBAL_PYTHONUNBUFFERED="1"
 
 # Core Bot Configuration
@@ -66,6 +68,7 @@ ENV GLOBAL_CLAUDE_MODEL="claude-sonnet-4-20250514"
 ENV BOT_RESOURCES_CHANNEL_ID=""
 ENV BOT_CRISIS_RESPONSE_CHANNEL_ID=""
 ENV BOT_ALLOWED_CHANNELS=""
+ENV BOT_GAP_NOTIFICATION_CHANNEL_ID=""
 
 ## Staff and Crisis Team defaults
 ENV BOT_STAFF_PING_USER=""
@@ -93,12 +96,16 @@ ENV BOT_MAX_DAILY_CALLS="1000"
 ENV BOT_RATE_LIMIT_PER_USER="10"
 
 ## Conversation Isolation defaults
-ENV BOT_CONVERSATION_REQUIRES_MENTION="false"
-ENV BOT_CONVERSATION_TRIGGER_PHRASES="ash,hey ash,ash help,,@ash"
+ENV BOT_CONVERSATION_REQUIRES_MENTION="true"
+ENV BOT_CONVERSATION_TRIGGER_PHRASES="ash,hey ash,ash help,@ash"
 ENV BOT_CONVERSATION_ALLOW_STARTERS="false"
 ENV BOT_CONVERSATION_SETUP_INSTRUCTIONS="true"
 ENV BOT_CONVERSATION_LOG_ATTEMPTS="true"
 ENV BOT_CONVERSATION_TIMEOUT="300"
+ENV BOT_CRISIS_OVERRIDE_LEVELS="medium,high"
+
+## Three-Model Ensemble Configuration
+ENV BOT_ENABLE_GAP_NOTIFICATIONS="true"
 
 # Expose API server port
 EXPOSE 8882

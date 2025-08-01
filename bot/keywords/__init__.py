@@ -1,5 +1,5 @@
 """
-Keywords package for Ash Bot Crisis Detection System
+Keywords package for Ash Bot v3.0
 
 This package contains modular keyword files for different crisis levels:
 - high_crisis.py: Suicidal ideation, self-harm, immediate danger

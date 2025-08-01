@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ash Discord Bot - Modular Entry Point
+Ash Discord Bot - Modular Entry Point - CLEANED VERSION
 """
 
 import asyncio
@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 bot_dir = Path(__file__).parent
 sys.path.insert(0, str(bot_dir))
 
-from utils.logging_utils import setup_logging
-from core.config_manager import ConfigManager
+from bot.utils.logging_utils import setup_logging
+from bot.core.config_manager import ConfigManager
 
 # Load environment variables
 load_dotenv()
@@ -24,24 +24,24 @@ def print_startup_banner():
     """Print Ash's startup banner"""
     banner = """
     ╔══════════════════════════════════════╗
-    ║              ASH BOT v2.0            ║
-    ║     The Alphabet Cartel's            ║
-    ║       Mental Health Sage             ║
-    ║         Modular Architecture         ║
+    ║           ASH BOT v3.0               ║
+    ║       The Alphabet Cartel's          ║
+    ║        Mental Health Sage            ║
+    ║        Modular Architecture          ║
     ║                                      ║
     ║  "Building chosen family,            ║
-    ║   one conversation at a time."       ║
+    ║      one conversation at a time."    ║
     ╚══════════════════════════════════════╝
     """
     print(banner)
 
 async def main():
-    """Main entry point for Ash bot"""
+    """Main entry point for Ash bot - CLEANED VERSION"""
     print_startup_banner()
     
     # Setup logging first
     logger = setup_logging()
-    logger.info("🚀 Starting Ash Bot v2.0 (Modular Architecture)...")
+    logger.info("🚀 Starting Ash Bot v3.0 (Modular Architecture - CLEANED)...")
     
     try:
         # Test configuration loading
@@ -50,13 +50,35 @@ async def main():
         logger.info("✅ Configuration loaded successfully")
         
         # Initialize and start the bot
-        from core.bot_manager import AshBot
+        from bot.core.bot_manager import AshBot
         
-        logger.info("🤖 Creating modular bot instance...")
+        logger.info("🤖 Creating modular bot instance (CLEANED)...")
         bot = AshBot(config)
         
-        logger.info("🚀 Starting modular bot...")
+        logger.info("🚀 Starting modular bot (CLEANED)...")
         
+        # Add reaction event handlers AFTER creating the bot instance
+        @bot.event
+        async def on_reaction_add(reaction, user):
+            """Handle reaction-based staff handoffs"""
+            
+            # Only process reactions in guilds (not DMs)
+            if not reaction.message.guild:
+                return
+            
+            # Let the message handler process the reaction
+            if hasattr(bot, 'message_handler') and bot.message_handler:
+                await bot.message_handler.handle_reaction_add(reaction, user)
+        
+        # Optional: Also handle reaction removal if needed
+        @bot.event
+        async def on_reaction_remove(reaction, user):
+            """Handle reaction removal (optional - for undoing accidental handoffs)"""
+            # Could implement undo functionality here if desired
+            pass
+        
+        logger.info("🚀 Starting modular bot (CLEANED)...")
+
         # Get Discord token
         token = config.get('BOT_DISCORD_TOKEN')
         if not token:
