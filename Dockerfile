@@ -38,9 +38,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Set working directory
 WORKDIR /app
 
-# Create non-root user with matching UID/GID for consistency across containers
+# Create non-root user with /app as home directory (no separate home dir)
 RUN groupadd -g 1001 ash && \
-    useradd -g 1001 -u 1001 ash
+    useradd -g 1001 -u 1001 -d /app -M ash
 
 # Create necessary directories with proper ownership
 RUN mkdir -p logs data tests api && \
