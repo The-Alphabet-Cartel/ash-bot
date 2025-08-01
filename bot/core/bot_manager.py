@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Core Bot Manager - CLEANED VERSION (Security Manager Removed)
+Core Bot Manager - v3.0 CLEANED VERSION
+Removed all backward compatibility aliases and legacy code
 """
 
 import discord
@@ -11,7 +12,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 class AshBot(commands.Bot):
-    """Enhanced Ash Bot - CLEANED VERSION"""
+    """Ash Bot v3.0 - Three-Model Ensemble Architecture"""
     
     def __init__(self, config):
         self.config = config
@@ -28,7 +29,7 @@ class AshBot(commands.Bot):
             help_command=None
         )
         
-        # Enhanced component references
+        # v3.0 Component references
         self.claude_api = None
         self.nlp_client = None
         self.keyword_detector = None
@@ -39,15 +40,15 @@ class AshBot(commands.Bot):
         self.api_server = None
         self.start_time = datetime.now(timezone.utc)
         
-        logger.info("🤖 AshBot initialized (CLEANED VERSION - No Security Manager)")
+        logger.info("🤖 AshBot v3.0 initialized - Three-Model Ensemble Architecture")
     
     async def setup_hook(self):
-        """Setup hook - initialize components"""
-        logger.info("🔄 Starting setup_hook (CLEANED VERSION)...")
+        """Setup hook - initialize v3.0 components"""
+        logger.info("🔄 Starting v3.0 setup_hook...")
         
         try:
-            # Initialize components
-            await self._initialize_components_cleaned()
+            # Initialize v3.0 components
+            await self._initialize_v3_components()
             
             # Initialize API Server
             await self._initialize_api_server()
@@ -58,17 +59,17 @@ class AshBot(commands.Bot):
             # Sync commands globally
             await self._sync_slash_commands()
             
-            logger.info("✅ Setup completed successfully (CLEANED VERSION)")
+            logger.info("✅ v3.0 Setup completed successfully")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Setup hook failed: {e}")
+            logger.error(f"❌ v3.0 Setup hook failed: {e}")
             logger.exception("Full setup_hook traceback:")
             return False
     
-    async def _initialize_components_cleaned(self):
-        """Initialize components with CLEANED imports"""
-        logger.info("🔧 Initializing components (CLEANED VERSION)...")
+    async def _initialize_v3_components(self):
+        """Initialize v3.0 components - no legacy compatibility"""
+        logger.info("🔧 Initializing v3.0 components...")
         
         # Step 1: Initialize Claude API
         logger.info("🧠 Initializing Claude API...")
@@ -78,7 +79,7 @@ class AshBot(commands.Bot):
             logger.info("✅ Claude API initialized")
         except Exception as e:
             logger.error(f"❌ Claude API initialization failed: {e}")
-            self.claude_api = None
+            raise  # Fail fast in v3.0
         
         # Step 2: Initialize keyword detector
         logger.info("🔍 Initializing keyword detector...")
@@ -88,15 +89,10 @@ class AshBot(commands.Bot):
             logger.info("✅ Keyword detector initialized")
         except Exception as e:
             logger.error(f"❌ Keyword detector initialization failed: {e}")
-            # Create a dummy keyword detector to prevent crashes
-            class DummyKeywordDetector:
-                def check_message(self, content):
-                    return {'needs_response': False, 'crisis_level': 'none', 'detected_categories': []}
-            self.keyword_detector = DummyKeywordDetector()
-            logger.warning("⚠️ Using dummy keyword detector")
+            raise  # Fail fast in v3.0
         
         # Step 3: Initialize NLP client
-        logger.info("🧠 Initializing NLP client...")
+        logger.info("🧠 Initializing v3.0 NLP client...")
         try:
             from bot.integrations.nlp_integration import EnhancedNLPClient
             nlp_host = self.config.get('GLOBAL_NLP_API_HOST', '10.20.30.253')
@@ -107,26 +103,27 @@ class AshBot(commands.Bot):
             # Test connection
             health = await self.nlp_client.test_connection()
             if health:
-                logger.info("✅ NLP client connected successfully")
+                logger.info("✅ v3.0 NLP client connected successfully")
             else:
-                logger.warning("⚠️ NLP client initialized but health check failed")
+                logger.error("❌ v3.0 NLP client health check failed")
+                raise ConnectionError("NLP service unavailable")
                 
         except Exception as e:
-            logger.warning(f"⚠️ NLP client initialization failed: {e}")
-            self.nlp_client = None
+            logger.error(f"❌ v3.0 NLP client initialization failed: {e}")
+            raise  # Fail fast in v3.0
         
         # Step 4: Initialize crisis handler
-        logger.info("🚨 Initializing crisis handler...")
+        logger.info("🚨 Initializing v3.0 crisis handler...")
         try:
             from bot.handlers.crisis_handler import CrisisHandler
             self.crisis_handler = CrisisHandler(self, self.config)
-            logger.info("✅ Crisis handler initialized")
+            logger.info("✅ v3.0 Crisis handler initialized")
         except Exception as e:
-            logger.error(f"❌ Crisis handler initialization failed: {e}")
+            logger.error(f"❌ v3.0 Crisis handler initialization failed: {e}")
             raise
         
         # Step 5: Initialize message handler
-        logger.info("📨 Initializing message handler...")
+        logger.info("📨 Initializing v3.0 message handler...")
         try:
             from bot.handlers.message_handler import MessageHandler
             self.message_handler = MessageHandler(
@@ -136,18 +133,17 @@ class AshBot(commands.Bot):
                 self.keyword_detector,
                 self.crisis_handler,
                 self.config
-                # NOTE: No security_manager parameter
             )
-            logger.info("✅ Message handler initialized")
+            logger.info("✅ v3.0 Message handler initialized")
         except Exception as e:
-            logger.error(f"❌ Message handler initialization failed: {e}")
+            logger.error(f"❌ v3.0 Message handler initialization failed: {e}")
             raise
         
-        logger.info("✅ All components initialized successfully (CLEANED VERSION)")
+        logger.info("✅ All v3.0 components initialized successfully")
 
     async def _initialize_api_server(self):
-        """Initialize API Server"""
-        logger.info("🌐 Initializing API Server...")
+        """Initialize v3.0 API Server"""
+        logger.info("🌐 Initializing v3.0 API Server...")
         try:
             from bot.api.api_server import setup_api_server
             
@@ -159,72 +155,53 @@ class AshBot(commands.Bot):
             # Start the API server
             api_started = await self.api_server.start_server()
             if api_started:
-                logger.info("✅ API Server started successfully")
+                logger.info("✅ v3.0 API Server started successfully")
             else:
-                logger.warning("⚠️ API Server failed to start")
+                raise RuntimeError("API Server failed to start")
                 
         except Exception as e:
-            logger.warning(f"⚠️ API Server initialization failed: {e}")
-            self.api_server = None
+            logger.error(f"❌ v3.0 API Server initialization failed: {e}")
+            raise  # Fail fast in v3.0
 
     async def _load_command_cogs(self):
-        """Load command cogs"""
-        cog_errors = []
+        """Load v3.0 command cogs"""
         
         # Load Crisis Commands
         try:
             from bot.commands.crisis_commands import CrisisKeywordCommands
             await self.add_cog(CrisisKeywordCommands(self))
-            logger.info("✅ Loaded Crisis Commands cog")
+            logger.info("✅ Loaded v3.0 Crisis Commands cog")
         except Exception as e:
             logger.error(f"❌ Failed to load Crisis Commands: {e}")
-            cog_errors.append(f"CrisisCommands: {e}")
+            raise
         
         # Load Monitoring Commands
         try:
             from bot.commands.monitoring_commands import MonitoringCommands
             await self.add_cog(MonitoringCommands(self))
-            logger.info("✅ Loaded Monitoring Commands cog")
+            logger.info("✅ Loaded v3.0 Monitoring Commands cog")
         except Exception as e:
             logger.error(f"❌ Failed to load Monitoring Commands: {e}")
-            cog_errors.append(f"MonitoringCommands: {e}")
+            raise
 
-        # Load Ensemble Commands (enhanced learning + v3.0 features)
+        # Load Ensemble Commands (v3.0 feature)
         try:
             from bot.commands.ensemble_commands import EnsembleCommands
             await self.add_cog(EnsembleCommands(self))
-            logger.info("✅ Loaded Ensemble Commands cog (enhanced learning + v3.0 features)")
-        except ImportError as import_err:
-            logger.error(f"❌ Failed to import Ensemble Commands: {import_err}")
-            logger.error(f"   📝 Make sure bot/commands/ensemble_commands.py exists")
-            # Try alternative import method using setup function
-            try:
-                import bot.commands.ensemble_commands as ensemble_module
-                if hasattr(ensemble_module, 'setup'):
-                    await ensemble_module.setup(self)
-                    logger.info("✅ Loaded Ensemble Commands via setup function")
-                else:
-                    cog_errors.append(f"EnsembleCommands: setup function not found")
-            except Exception as setup_err:
-                logger.error(f"❌ Failed to load via setup: {setup_err}")
-                cog_errors.append(f"EnsembleCommands: {import_err}")
+            logger.info("✅ Loaded v3.0 Ensemble Commands cog")
         except Exception as e:
-            logger.error(f"❌ Failed to load Ensemble Commands: {e}")
-            cog_errors.append(f"EnsembleCommands: {e}")
-
-        # Log cog loading errors
-        if cog_errors:
-            logger.warning(f"⚠️ Cog loading errors: {cog_errors}")
+            logger.error(f"❌ Failed to load v3.0 Ensemble Commands: {e}")
+            raise
 
     async def _sync_slash_commands(self):
-        """Sync slash commands"""
+        """Sync v3.0 slash commands"""
         total_commands = len([cmd for cmd in self.tree.walk_commands()])
-        logger.info(f"📋 Found {total_commands} commands in tree before sync")
+        logger.info(f"📋 Found {total_commands} v3.0 commands in tree before sync")
         
-        logger.info("🌍 Syncing slash commands globally...")
+        logger.info("🌍 Syncing v3.0 slash commands globally...")
         try:
             synced = await self.tree.sync()
-            logger.info(f"✅ Global sync successful: {len(synced)} commands")
+            logger.info(f"✅ v3.0 Global sync successful: {len(synced)} commands")
             
             # Log each synced command
             for cmd in synced:
@@ -233,16 +210,16 @@ class AshBot(commands.Bot):
             return True
             
         except Exception as sync_error:
-            logger.error(f"❌ Command sync failed: {sync_error}")
-            return False
+            logger.error(f"❌ v3.0 Command sync failed: {sync_error}")
+            raise
     
     async def on_ready(self):
-        """Bot ready event"""
-        logger.info(f'✅ {self.user} has awakened in The Alphabet Cartel')
+        """Bot ready event - v3.0"""
+        logger.info(f'✅ {self.user} has awakened in The Alphabet Cartel (v3.0)')
         
-        # Log service status
-        logger.info(f"🧠 NLP Server: {'Connected' if self.nlp_client else 'Not Connected'}")
-        logger.info(f"🔍 Learning System: {'Enabled' if self.config.get_bool('GLOBAL_ENABLE_LEARNING_SYSTEM') else 'Disabled'}")
+        # Log v3.0 service status
+        logger.info(f"🧠 v3.0 NLP Server: {'Connected' if self.nlp_client else 'Not Connected'}")
+        logger.info(f"🔍 v3.0 Learning System: {'Enabled' if self.config.get_bool('GLOBAL_ENABLE_LEARNING_SYSTEM') else 'Disabled'}")
         
         # Log guild information
         guild = discord.utils.get(self.guilds, id=self.config.get_int('BOT_GUILD_ID'))
@@ -255,85 +232,64 @@ class AshBot(commands.Bot):
                 perms = bot_member.guild_permissions
                 logger.info(f'Bot permissions: send_messages={perms.send_messages}, use_application_commands={perms.use_application_commands}')
         
-        # Verify slash commands are registered
-        try:
-            app_commands = await self.tree.fetch_commands()
-            logger.info(f"🔍 Verified {len(app_commands)} commands registered with Discord:")
-            for cmd in app_commands:
-                logger.info(f"   ✅ /{cmd.name}")
-                
-        except Exception as e:
-            logger.error(f"❌ Failed to fetch registered commands: {e}")
-        
         # Set bot status
         await self.change_presence(
             status=discord.Status.online,
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name="for crisis patterns | /ash_help"
+                name="for crisis patterns | v3.0 ensemble"
             )
         )
         
-        logger.info("🎉 Ash Bot fully operational (CLEANED VERSION)")
+        logger.info("🎉 Ash Bot v3.0 fully operational (Three-Model Ensemble)")
     
     async def on_message(self, message):
-        """CLEANED: Message handler with proper error handling"""
+        """v3.0 Message handler with strict validation"""
         
-        # CRITICAL FIX #1: Never process the bot's own messages
+        # CRITICAL: Never process the bot's own messages
         if message.author == self.user:
-            logger.debug(f"🤖 Ignoring bot's own message")
             return
         
-        # CRITICAL FIX #2: Never process any bot messages
+        # CRITICAL: Never process any bot messages
         if message.author.bot:
-            logger.debug(f"🤖 Ignoring bot message from {message.author}")
             return
         
-        # CRITICAL FIX #3: Handle empty messages gracefully
+        # CRITICAL: Handle empty messages gracefully
         if not message.content or not message.content.strip():
-            logger.debug(f"📭 Ignoring empty message from {message.author}")
             return
         
         # Basic guild validation
         if not message.guild or message.guild.id != self.config.get_int('BOT_GUILD_ID'):
-            logger.debug(f"🚫 Wrong guild: {message.guild.id if message.guild else 'DM'}")
             return
         
-        # SIMPLIFIED channel validation
+        # Channel validation
         allowed_channels = self.config.get_allowed_channels()
         if allowed_channels and message.channel.id not in allowed_channels:
-            logger.debug(f"🚫 Message from non-allowed channel: {message.channel.id}")
             return
         
-        logger.debug(f"📨 Processing message from {message.author} in {message.channel}")
+        logger.debug(f"📨 Processing v3.0 message from {message.author} in {message.channel}")
         
-        # CLEANED: Call the message handler properly
-        if self.message_handler:
+        # v3.0 Message handling
+        try:
+            await self.message_handler.handle_message(message)
+        except Exception as e:
+            logger.error(f"❌ Error in v3.0 message handler: {e}")
+            logger.exception("Full traceback:")
             try:
-                # Use the handle_message method from our cleaned message handler
-                await self.message_handler.handle_message(message)
-                    
-            except Exception as e:
-                logger.error(f"❌ Error in message handler: {e}")
-                logger.exception("Full traceback:")
-                # Add error reaction to message
-                try:
-                    await message.add_reaction('❌')
-                except:
-                    pass  # Don't fail if we can't add reactions
-        else:
-            logger.warning("⚠️ Message handler not ready")
+                await message.add_reaction('❌')
+            except:
+                pass
         
-        # Process commands (in case any text commands are still used)
+        # Process commands
         await self.process_commands(message)
 
     async def on_command_error(self, ctx, error):
-        """Handle command errors"""
-        logger.error(f"Command error in {ctx.command}: {error}")
+        """Handle command errors - v3.0"""
+        logger.error(f"v3.0 Command error in {ctx.command}: {error}")
     
     async def close(self):
-        """Enhanced cleanup"""
-        logger.info("🛑 Starting shutdown...")
+        """v3.0 Enhanced cleanup"""
+        logger.info("🛑 Starting v3.0 shutdown...")
         
         try:
             # Stop API server
@@ -347,12 +303,9 @@ class AshBot(commands.Bot):
             if self.nlp_client and hasattr(self.nlp_client, 'close'):
                 await self.nlp_client.close()
         except Exception as e:
-            logger.error(f"❌ Error during cleanup: {e}")
+            logger.error(f"❌ Error during v3.0 cleanup: {e}")
         
         # Close parent
         await super().close()
         
-        logger.info("✅ Shutdown complete")
-
-# Export for backwards compatibility
-AshBotEnhanced = AshBot
+        logger.info("✅ v3.0 Shutdown complete")
