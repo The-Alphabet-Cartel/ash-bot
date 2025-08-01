@@ -1,5 +1,5 @@
 """
-Data Management Package for Ash Bot
+Data Management Package for Ash Bot v3.0
 Handles persistent storage for custom keywords and statistics
 """
 
