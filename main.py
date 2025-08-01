@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ash Discord Bot - Modular Entry Point
+Ash Discord Bot - Modular Entry Point - CLEANED VERSION
 """
 
 import asyncio
@@ -24,24 +24,24 @@ def print_startup_banner():
     """Print Ash's startup banner"""
     banner = """
     ╔══════════════════════════════════════╗
-    ║              ASH BOT v2.0            ║
-    ║     The Alphabet Cartel's            ║
-    ║       Mental Health Sage             ║
-    ║         Modular Architecture         ║
+    ║           ASH BOT v3.0               ║
+    ║       The Alphabet Cartel's          ║
+    ║        Mental Health Sage            ║
+    ║        Modular Architecture          ║
     ║                                      ║
     ║  "Building chosen family,            ║
-    ║   one conversation at a time."       ║
+    ║      one conversation at a time."    ║
     ╚══════════════════════════════════════╝
     """
     print(banner)
 
 async def main():
-    """Main entry point for Ash bot"""
+    """Main entry point for Ash bot - CLEANED VERSION"""
     print_startup_banner()
     
     # Setup logging first
     logger = setup_logging()
-    logger.info("🚀 Starting Ash Bot v2.0 (Modular Architecture)...")
+    logger.info("🚀 Starting Ash Bot v3.0 (Modular Architecture - CLEANED)...")
     
     try:
         # Test configuration loading
@@ -52,10 +52,10 @@ async def main():
         # Initialize and start the bot
         from bot.core.bot_manager import AshBot
         
-        logger.info("🤖 Creating modular bot instance...")
+        logger.info("🤖 Creating modular bot instance (CLEANED)...")
         bot = AshBot(config)
         
-        logger.info("🚀 Starting modular bot...")
+        logger.info("🚀 Starting modular bot (CLEANED)...")
         
         # Get Discord token
         token = config.get('BOT_DISCORD_TOKEN')
