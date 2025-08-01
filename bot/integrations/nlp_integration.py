@@ -2,7 +2,7 @@
 """
 NLP Integration - v3.0 CLEANED VERSION
 Removed all backward compatibility aliases and redundant methods
-Uses correct NLP service endpoints for three-model ensemble
+Uses correct NLP service endpoints for Three Zero-Shot Model Ensemble
 """
 
 import asyncio
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class EnhancedNLPClient:
     """
-    v3.0 NLP service integration for three-model ensemble responses
+    v3.0 NLP service integration for Three Zero-Shot Model Ensemble responses
     CLEANED: Uses correct endpoints and removes all redundant methods
     """
     
@@ -96,7 +96,7 @@ class EnhancedNLPClient:
     
     async def analyze_message(self, message_content: str, user_id: str = "unknown", channel_id: str = "unknown") -> Optional[Dict]:
         """
-        Analyze message using v3.0 NLP service with three-model ensemble
+        Analyze message using v3.0 NLP service with Three Zero-Shot Model Ensemble
         CLEANED: Enhanced validation and proper error handling
         """
         
