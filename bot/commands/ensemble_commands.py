@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 """
-Three-Model Ensemble Learning Commands for Ash Bot
+Three-Model Ensemble Learning Commands for Ash Bot v3.0
 Replaces the old individual learning system with modern ensemble approach
 """
 
@@ -23,7 +24,7 @@ class EnsembleCommands(commands.Cog):
         self.crisis_response_role_id = int(os.getenv('BOT_CRISIS_RESPONSE_ROLE_ID', '0'))
         self.nlp_client = getattr(bot, 'nlp_client', None)
         
-        logger.info("🎯 Three-model ensemble commands loaded")
+        logger.info("🎯 Three-model ensemble commands loaded for Ash Bot v3.0")
     
     async def _check_crisis_role(self, interaction: discord.Interaction) -> bool:
         """Check if user has crisis response role"""
@@ -233,10 +234,33 @@ class EnsembleCommands(commands.Cog):
             ensemble_stats = await self._get_ensemble_stats()
             
             if not ensemble_stats:
-                await interaction.followup.send(
-                    "❌ Could not retrieve ensemble statistics. Please try again later.",
-                    ephemeral=True
+                embed = discord.Embed(
+                    title="❌ Ensemble Statistics Unavailable",
+                    description="Could not retrieve ensemble statistics. This could be because:\n\n"
+                               "• The NLP service is not running\n"
+                               "• The NLP service doesn't support ensemble stats yet\n"
+                               "• Network connectivity issues",
+                    color=discord.Color.red()
                 )
+                
+                # Add basic bot info if available
+                if hasattr(self.bot, 'nlp_client'):
+                    if self.bot.nlp_client:
+                        embed.add_field(
+                            name="🔧 Troubleshooting Info",
+                            value="✅ NLP client is configured\n"
+                                  "❓ Check NLP service logs for errors",
+                            inline=False
+                        )
+                    else:
+                        embed.add_field(
+                            name="🔧 Troubleshooting Info", 
+                            value="❌ NLP client is not initialized\n"
+                                  "Check bot configuration",
+                            inline=False
+                        )
+                
+                await interaction.followup.send(embed=embed, ephemeral=True)
                 return
             
             embed = discord.Embed(
@@ -312,10 +336,13 @@ class EnsembleCommands(commands.Cog):
                     inline=True
                 )
             
+            embed.set_footer(text="Ash Bot v3.0 - Three-Model Ensemble System")
+            
             await interaction.followup.send(embed=embed, ephemeral=True)
             
         except Exception as e:
             logger.error(f"Error getting ensemble stats: {e}")
+            logger.exception("Full traceback:")
             await interaction.followup.send(
                 "❌ Error retrieving ensemble statistics. Please try again or contact an administrator.",
                 ephemeral=True
