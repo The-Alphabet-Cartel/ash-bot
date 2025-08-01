@@ -1,5 +1,5 @@
 """
-Logs Package for Ash Bot
+Logs Package for Ash Bot v3.0
 Utilities for log file management and analysis
 """
 
