@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
 NLP Integration - FIXED for v3.0 Response Structure
+Updated to use correct NLP service endpoints
 
 This module handles communication with the ash-nlp service v3.0 which now uses
 a three-model ensemble approach with enhanced response structure.
-
-Repository: https://github.com/The-Alphabet-Cartel/ash-bot
-Location: ash/ash-bot/bot/integrations/nlp_integration.py
 """
 
 import asyncio
@@ -22,9 +20,7 @@ logger = logging.getLogger(__name__)
 class EnhancedNLPClient:
     """
     Enhanced NLP service integration for v3.0 ensemble responses
-    
-    This replaces the existing RemoteNLPClient with v3.0 capabilities while
-    maintaining backward compatibility with existing bot_manager imports.
+    FIXED to use correct endpoints: /analyze_false_positive, /analyze_false_negative
     """
     
     def __init__(self, nlp_url: Optional[str] = None, timeout: int = 30, retry_attempts: int = 3):
@@ -309,6 +305,92 @@ class EnhancedNLPClient:
         
         return processed
     
+    async def send_staff_feedback(self, message_content: str, correct_level: str, detected_level: str, correction_type: str) -> bool:
+        """
+        FIXED: Send staff feedback using correct NLP service endpoints
+        
+        Uses /analyze_false_positive or /analyze_false_negative based on correction_type
+        """
+        
+        if not self.service_healthy:
+            logger.warning("🔌 NLP Service unavailable - cannot send feedback")
+            return False
+        
+        try:
+            # Determine which endpoint to use based on correction type
+            if correction_type == 'false_positive':
+                endpoint = '/analyze_false_positive'
+                payload = {
+                    "message": message_content.strip(),
+                    "detected_level": detected_level,
+                    "correct_level": correct_level,
+                    "context": {
+                        "source": "discord_bot",
+                        "timestamp": time.time(),
+                        "correction_type": correction_type
+                    },
+                    "severity_score": 1.0  # Default severity
+                }
+            elif correction_type == 'false_negative':
+                endpoint = '/analyze_false_negative'
+                payload = {
+                    "message": message_content.strip(),
+                    "should_detect_level": correct_level,
+                    "actually_detected": detected_level,
+                    "context": {
+                        "source": "discord_bot",
+                        "timestamp": time.time(),
+                        "correction_type": correction_type
+                    },
+                    "severity_score": 1.0  # Default severity
+                }
+            else:
+                logger.error(f"❌ Unknown correction type: {correction_type}")
+                return False
+            
+            logger.info(f"📝 Sending staff feedback: {correction_type} - {detected_level} → {correct_level}")
+            logger.debug(f"🎯 Using endpoint: {endpoint}")
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.nlp_url}{endpoint}",
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                    headers={'Content-Type': 'application/json'}
+                ) as response:
+                    
+                    response_text = await response.text()
+                    
+                    if response.status == 200:
+                        feedback_result = await response.json()
+                        
+                        logger.info(f"✅ Staff feedback sent successfully:")
+                        logger.info(f"   📊 Correction Type: {correction_type}")
+                        logger.info(f"   📈 Patterns Learned: {feedback_result.get('patterns_discovered', 0)}")
+                        logger.info(f"   🎯 Adjustments Made: {feedback_result.get('confidence_adjustments', 0)}")
+                        logger.info(f"   🔄 Learning Applied: {feedback_result.get('learning_applied', False)}")
+                        
+                        return True
+                        
+                    elif response.status == 404:
+                        logger.error(f"❌ Endpoint not found: {endpoint}")
+                        logger.error(f"   Available endpoints should be: /analyze_false_positive, /analyze_false_negative")
+                        return False
+                        
+                    elif response.status == 422:
+                        logger.error(f"❌ Staff feedback validation error: {response_text}")
+                        logger.error(f"   📦 Payload that failed: {payload}")
+                        return False
+                        
+                    else:
+                        logger.error(f"❌ Staff feedback failed: HTTP {response.status}")
+                        logger.error(f"   Response: {response_text[:200]}...")
+                        return False
+                        
+        except Exception as e:
+            logger.error(f"🔌 Error sending staff feedback: {e}")
+            return False
+
     async def get_service_stats(self) -> Optional[Dict[str, Any]]:
         """Get v3.0 service statistics for monitoring"""
         
@@ -425,93 +507,8 @@ class EnhancedNLPClient:
             logger.warning(f"Error getting ensemble stats: {e}")
             return None
 
-    async def send_staff_feedback(self, message_content: str, correct_level: str, detected_level: str, correction_type: str) -> bool:
-        """Send staff feedback to the ensemble learning system"""
-        
-        if not self.service_healthy:
-            logger.warning("🔌 NLP Service unavailable - cannot send feedback")
-            return False
-        
-        try:
-            # Prepare feedback payload
-            feedback_payload = {
-                "message": message_content.strip(),
-                "staff_correction": {
-                    "detected_level": detected_level,
-                    "correct_level": correct_level,
-                    "correction_type": correction_type,
-                    "timestamp": time.time()
-                },
-                "feedback_type": "staff_review",
-                "source": "discord_bot"
-            }
-            
-            logger.debug(f"📝 Sending staff feedback: {correction_type} - {detected_level} → {correct_level}")
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.nlp_url}/staff_feedback",
-                    json=feedback_payload,
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                    headers={'Content-Type': 'application/json'}
-                ) as response:
-                    
-                    response_text = await response.text()
-                    
-                    if response.status == 200:
-                        feedback_result = await response.json()
-                        
-                        logger.info(f"✅ Staff feedback sent successfully:")
-                        logger.info(f"   📊 Correction Type: {correction_type}")
-                        logger.info(f"   📈 Pattern Learning: {feedback_result.get('patterns_learned', 0)} patterns")
-                        logger.info(f"   🎯 Threshold Adjustments: {feedback_result.get('thresholds_adjusted', 0)}")
-                        
-                        return True
-                        
-                    elif response.status == 404:
-                        # Staff feedback endpoint not available - try alternative endpoint
-                        logger.info("Staff feedback endpoint not available, trying learning endpoint")
-                        return await self._send_learning_feedback_fallback(feedback_payload)
-                        
-                    elif response.status == 422:
-                        logger.error(f"❌ Staff feedback validation error: {response_text}")
-                        return False
-                        
-                    else:
-                        logger.error(f"❌ Staff feedback failed: HTTP {response.status}")
-                        logger.error(f"   Response: {response_text[:200]}...")
-                        return False
-                        
-        except Exception as e:
-            logger.error(f"🔌 Error sending staff feedback: {e}")
-            return False
-
-    async def _send_learning_feedback_fallback(self, feedback_payload: Dict) -> bool:
-        """Fallback method for sending learning feedback if staff_feedback endpoint is unavailable"""
-        
-        try:
-            # Try the general learning endpoint
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.nlp_url}/learning_feedback",
-                    json=feedback_payload,
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                    headers={'Content-Type': 'application/json'}
-                ) as response:
-                    
-                    if response.status == 200:
-                        logger.info("✅ Learning feedback sent via fallback endpoint")
-                        return True
-                    else:
-                        logger.warning(f"⚠️ Fallback learning feedback failed: HTTP {response.status}")
-                        return False
-                        
-        except Exception as e:
-            logger.warning(f"⚠️ Fallback learning feedback error: {e}")
-            return False
-
     async def get_learning_statistics(self) -> Optional[Dict[str, Any]]:
-        """Get learning system statistics"""
+        """Get learning system statistics using correct endpoint"""
         
         if not self.service_healthy:
             return None
@@ -528,14 +525,24 @@ class EnhancedNLPClient:
                         
                         # Format for ensemble commands
                         return {
-                            'learning_enabled': learning_data.get('learning_enabled', False),
-                            'total_feedback_records': learning_data.get('total_feedback_records', 0),
-                            'successful_learning_updates': learning_data.get('successful_learning_updates', 0),
-                            'failed_learning_updates': learning_data.get('failed_learning_updates', 0),
-                            'patterns_discovered': learning_data.get('patterns_discovered', 0),
-                            'threshold_adjustments': learning_data.get('threshold_adjustments', 0),
-                            'model_improvements': learning_data.get('model_improvements', {}),
-                            'last_learning_update': learning_data.get('last_learning_update', None),
+                            'learning_enabled': learning_data.get('learning_system_status') == 'active',
+                            'total_feedback_records': (
+                                learning_data.get('total_false_positives_processed', 0) + 
+                                learning_data.get('total_false_negatives_processed', 0)
+                            ),
+                            'successful_learning_updates': learning_data.get('total_adjustments_made', 0),
+                            'failed_learning_updates': 0,  # Not tracked separately
+                            'patterns_discovered': (
+                                learning_data.get('false_positive_patterns_learned', 0) +
+                                learning_data.get('false_negative_patterns_learned', 0)
+                            ),
+                            'threshold_adjustments': learning_data.get('total_adjustments_made', 0),
+                            'model_improvements': {
+                                'sensitivity_increases': learning_data.get('sensitivity_increases', 0),
+                                'sensitivity_decreases': learning_data.get('sensitivity_decreases', 0),
+                                'global_sensitivity': learning_data.get('global_sensitivity', 1.0)
+                            },
+                            'last_learning_update': learning_data.get('last_update', None),
                             'retrieved_at': time.time()
                         }
                         
