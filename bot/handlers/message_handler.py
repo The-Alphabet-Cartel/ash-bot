@@ -55,8 +55,9 @@ class MessageHandler:
             'daily_limits_hit': 0,
             'ignored_follow_ups': 0,
             'intrusion_attempts_blocked': 0,
-            'crisis_overrides_triggered': 0,
+            'crisis_overrides_triggered': 0,  # Now tracks ALL new crises during active conversations
             'multiple_conversations_same_channel': 0,
+            'staff_handoffs_completed': 0,
             'detection_method_breakdown': {
                 'keyword_only': 0,
                 'nlp_primary': 0,
@@ -95,10 +96,11 @@ class MessageHandler:
         logger.info(f"   💬 Conversation timeout: {self.conversation_timeout}s")
         logger.info(f"   🎯 Guild ID: {self.guild_id}")
         logger.info(f"   🛡️ Conversation isolation: ENABLED")
+        logger.info(f"   👮 Staff handoff system: ENABLED")
 
     async def handle_message(self, message: Message):
         """
-        ENHANCED MESSAGE HANDLER WITH CHANNEL-LEVEL CONVERSATION ISOLATION
+        ENHANCED MESSAGE HANDLER WITH CHANNEL-LEVEL CONVERSATION ISOLATION AND STAFF HANDOFF
         """
         
         self.message_stats['total_messages_processed'] += 1
@@ -120,6 +122,16 @@ class MessageHandler:
         if active_conversation_in_channel:
             conversation_owner_id, conversation_data = active_conversation_in_channel
             
+            # STAFF HANDOFF CHECK: Before anything else, check if this is a staff member taking over
+            if (user_id != conversation_owner_id and 
+                not message.author.bot and 
+                self._is_crisis_response_staff(user_id, message.guild.id) and
+                self._check_staff_handoff_message(message.content)):
+                
+                logger.warning(f"👮 STAFF HANDOFF: Crisis response staff taking over conversation")
+                await self._handle_staff_handoff(message, conversation_owner_id, conversation_data)
+                return
+            
             if user_id == conversation_owner_id:
                 # This is the conversation owner - check if they properly triggered continuation
                 should_respond = self._should_respond_in_conversation(message, user_id)
@@ -128,14 +140,15 @@ class MessageHandler:
                 else:
                     self._log_conversation_attempt(message, conversation_data, "no mention or trigger phrase")
             else:
-                # SAFETY OVERRIDE: Check if this is a NEW CRISIS that needs immediate response
-                crisis_override_needed = await self._check_crisis_override(message)
+                # Different user - check if this is ANY crisis that needs response
+                crisis_detected = await self._check_crisis_override(message)
                 
-                if crisis_override_needed:
-                    # This is a genuine crisis - respond immediately despite active conversation
-                    logger.warning(f"🚨 CRISIS OVERRIDE: New crisis detected during active conversation")
-                    logger.warning(f"   👤 Active conversation owner: {conversation_owner_id}")
+                if crisis_detected:
+                    # This is ANY crisis - respond immediately (allows multiple simultaneous conversations)
+                    logger.warning(f"🆘 NEW CRISIS: Responding to additional crisis user during active conversation")
+                    logger.warning(f"   👤 Existing conversation owner: {conversation_owner_id}")
                     logger.warning(f"   🆘 New crisis user: {user_id} ({message.author.display_name})")
+                    logger.warning(f"   🤝 Multiple conversations now active in channel")
                     await self._handle_potential_crisis(message)
                 else:
                     # Not a crisis - STRICT BLOCK
@@ -155,37 +168,159 @@ class MessageHandler:
         
         return None
 
+    def _is_crisis_response_staff(self, user_id: int, guild_id: int) -> bool:
+        """Check if user is a member of the crisis response team"""
+        
+        try:
+            if not self.config:
+                logger.debug("No config available for staff role check")
+                return False
+            
+            # Get the crisis response role ID from config
+            crisis_role_id = None
+            if hasattr(self.config, 'get_int'):
+                crisis_role_id = self.config.get_int('BOT_CRISIS_RESPONSE_ROLE_ID')
+            elif hasattr(self.config, 'get'):
+                crisis_role_id = self.config.get('BOT_CRISIS_RESPONSE_ROLE_ID')
+            
+            if not crisis_role_id:
+                logger.debug("No crisis response role ID configured")
+                return False
+            
+            # Get the guild and user
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                logger.debug(f"Could not find guild {guild_id}")
+                return False
+            
+            member = guild.get_member(user_id)
+            if not member:
+                logger.debug(f"Could not find member {user_id} in guild {guild_id}")
+                return False
+            
+            # Check if user has the crisis response role
+            has_role = any(role.id == int(crisis_role_id) for role in member.roles)
+            
+            if has_role:
+                logger.info(f"✅ Crisis response staff confirmed: {member.display_name} ({user_id})")
+            else:
+                logger.debug(f"❌ Not crisis response staff: {member.display_name} ({user_id})")
+            
+            return has_role
+            
+        except Exception as e:
+            logger.error(f"Error checking crisis response staff status: {e}")
+            return False
+
+    def _check_staff_handoff_message(self, message_content: str) -> bool:
+        """Check if message contains staff handoff phrases"""
+        
+        handoff_phrases = [
+            "i can take it from here",
+            "i'll take it from here", 
+            "i've got this",
+            "i have this",
+            "ash you can step back",
+            "ash step back",
+            "staff has this",
+            "we have this covered",
+            "i'm taking over",
+            "taking over now",
+            "ash stop",
+            "ash end conversation",
+            "end conversation ash"
+        ]
+        
+        message_lower = message_content.lower().strip()
+        
+        for phrase in handoff_phrases:
+            if phrase in message_lower:
+                logger.info(f"✅ Staff handoff phrase detected: '{phrase}'")
+                return True
+        
+        return False
+
+    async def _handle_staff_handoff(self, message: Message, conversation_owner_id: int, conversation_data: dict):
+        """Handle staff member taking over a crisis conversation"""
+        
+        try:
+            staff_member = message.author
+            
+            logger.warning(f"👥 STAFF HANDOFF INITIATED:")
+            logger.warning(f"   👤 Crisis user: {conversation_owner_id}")
+            logger.warning(f"   👮 Staff member: {staff_member.display_name} ({staff_member.id})")
+            logger.warning(f"   📍 Channel: {message.channel.name}")
+            logger.warning(f"   🚨 Crisis level: {conversation_data.get('crisis_level', 'unknown')}")
+            logger.warning(f"   ⏱️ Conversation duration: {time.time() - conversation_data.get('start_time', 0):.1f}s")
+            
+            # Send handoff confirmation to the channel
+            handoff_message = (
+                f"✅ **Crisis Response Team Engaged**\n\n"
+                f"{staff_member.mention} has taken over this situation. "
+                f"I'm stepping back now to let our trained crisis response team provide direct support.\n\n"
+                f"*🔒 This crisis conversation is now closed. Our team has you covered.*"
+            )
+            
+            await message.reply(handoff_message)
+            
+            # End the conversation tracking
+            if conversation_owner_id in self.active_conversations:
+                conversation = self.active_conversations[conversation_owner_id]
+                
+                # Log handoff statistics
+                self.message_stats['staff_handoffs_completed'] += 1
+                
+                # Remove from active conversations
+                del self.active_conversations[conversation_owner_id]
+                
+                logger.warning(f"✅ Staff handoff completed - conversation terminated")
+                logger.info(f"   📊 Follow-ups handled: {conversation.get('follow_up_count', 0)}")
+                logger.info(f"   📈 Escalations: {conversation.get('escalations', 0)}")
+                logger.info(f"   👮 Staff member: {staff_member.display_name}")
+            
+            # Optional: Add reaction to confirm handoff
+            try:
+                await message.add_reaction('👮')  # Police officer emoji for staff
+                await message.add_reaction('✅')  # Checkmark for confirmation
+            except Exception as e:
+                logger.debug(f"Could not add handoff reactions: {e}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error handling staff handoff: {e}")
+            try:
+                await message.reply("⚠️ Error processing staff handoff. Please contact system administrator.")
+            except:
+                pass
+
     async def _check_crisis_override(self, message: Message) -> bool:
-        """Check if a message contains crisis indicators that override conversation isolation"""
+        """Check if a message contains ANY crisis indicators - all crises get responses"""
         
         try:
             # Perform crisis detection without starting a conversation
             detection_result = await self._perform_enhanced_hybrid_detection(message)
             crisis_level = detection_result.get('crisis_level', 'none')
             
-            # Only override for medium and high crises (configurable)
-            override_levels = ['medium', 'high']  # Default since config might not have get method
-            if self.config and hasattr(self.config, 'get'):
-                override_levels = self.config.get('BOT_CRISIS_OVERRIDE_LEVELS', 'medium,high').split(',')
-                override_levels = [level.strip().lower() for level in override_levels]
-            
-            should_override = crisis_level in override_levels
+            # ANY crisis level (low, medium, high) should get a response
+            should_override = crisis_level != 'none'
             
             if should_override:
-                logger.warning(f"🚨 Crisis override triggered:")
+                logger.warning(f"🚨 NEW CRISIS detected during active conversation:")
                 logger.warning(f"   📊 Crisis level: {crisis_level}")
                 logger.warning(f"   🔍 Detection method: {detection_result.get('method', 'unknown')}")
                 logger.warning(f"   📈 Confidence: {detection_result.get('confidence', 0):.2f}")
                 logger.warning(f"   👤 User: {message.author} ({message.author.id})")
+                logger.warning(f"   ✅ Will respond to this crisis regardless of level")
                 
-                # Track crisis overrides in stats
+                # Track all new crises during active conversations
                 self.message_stats['crisis_overrides_triggered'] += 1
+            else:
+                logger.debug(f"ℹ️ No crisis detected from {message.author} - blocking interaction")
             
             return should_override
             
         except Exception as e:
-            logger.error(f"❌ Error in crisis override check: {e}")
-            # If we can't check, err on the side of caution and allow override
+            logger.error(f"❌ Error in crisis detection: {e}")
+            # If we can't check, err on the side of caution and allow response
             return True
 
     async def _log_conversation_intrusion_attempt(self, message: Message, conversation_data: dict, conversation_owner_id: int):
@@ -719,6 +854,7 @@ class MessageHandler:
             'intrusion_attempts_blocked': self.message_stats['intrusion_attempts_blocked'],
             'crisis_overrides_triggered': self.message_stats['crisis_overrides_triggered'],
             'multiple_conversations_same_channel': self.message_stats['multiple_conversations_same_channel'],
+            'staff_handoffs_completed': self.message_stats['staff_handoffs_completed'],
             
             # Rate limiting
             'rate_limits_hit': self.message_stats['rate_limits_hit'],
