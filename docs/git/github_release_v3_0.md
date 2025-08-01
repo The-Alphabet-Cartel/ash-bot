@@ -199,7 +199,7 @@ ash-bot/
 ```
 
 ### Integration Architecture
-- **Ash NLP Integration**: Seamless integration with three-model ensemble
+- **Ash NLP Integration**: Seamless integration with Three Zero-Shot Model Ensemble
 - **Docker Compose**: Full stack deployment with service orchestration
 - **Health Monitoring**: Comprehensive health checks and dependency monitoring
 - **Graceful Degradation**: Fallback to keyword-only mode if NLP unavailable
