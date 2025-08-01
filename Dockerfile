@@ -104,7 +104,7 @@ ENV BOT_CONVERSATION_LOG_ATTEMPTS="true"
 ENV BOT_CONVERSATION_TIMEOUT="300"
 ENV BOT_CRISIS_OVERRIDE_LEVELS="medium,high"
 
-## Three-Model Ensemble Configuration
+## Three Zero-Shot Model Ensemble Configuration
 ENV BOT_ENABLE_GAP_NOTIFICATIONS="true"
 
 # Expose API server port
