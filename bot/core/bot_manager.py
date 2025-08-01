@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 class AshBot(commands.Bot):
-    """Ash Bot v3.0 - Three-Model Ensemble Architecture"""
+    """Ash Bot v3.0 - Three Zero-Shot Model Ensemble Architecture"""
     
     def __init__(self, config):
         self.config = config
@@ -40,7 +40,7 @@ class AshBot(commands.Bot):
         self.api_server = None
         self.start_time = datetime.now(timezone.utc)
         
-        logger.info("🤖 AshBot v3.0 initialized - Three-Model Ensemble Architecture")
+        logger.info("🤖 AshBot v3.0 initialized - Three Zero-Shot Model Ensemble Architecture")
     
     async def setup_hook(self):
         """Setup hook - initialize v3.0 components"""
@@ -241,7 +241,7 @@ class AshBot(commands.Bot):
             )
         )
         
-        logger.info("🎉 Ash Bot v3.0 fully operational (Three-Model Ensemble)")
+        logger.info("🎉 Ash Bot v3.0 fully operational (Three Zero-Shot Model Ensemble)")
     
     async def on_message(self, message):
         """v3.0 Message handler with strict validation"""
