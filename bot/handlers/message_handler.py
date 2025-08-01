@@ -27,10 +27,10 @@ class MessageHandler:
         
         # Handle missing required components gracefully
         if not self.nlp_client:
-            logger.warning("⚠️ NLP client not provided - NLP analysis will be skipped")
-        
+            raise ValueError("NLP client is required for v3.0")
+
         if not self.keyword_detector:
-            logger.warning("⚠️ Keyword detector not provided - keyword detection will be skipped")
+            raise ValueError("Keyword detector is required for v3.0")
         
         if not self.config:
             logger.warning("⚠️ Config not provided - using defaults")
@@ -47,8 +47,6 @@ class MessageHandler:
         
         # Enhanced statistics tracking
         self.message_stats = {
-            'messages_processed': 0,
-            'crisis_detected': 0,
             'crisis_responses_given': 0,
             'total_messages_processed': 0,
             'conversations_started': 0,
@@ -505,24 +503,6 @@ class MessageHandler:
         
         return False
 
-    # Keep the existing process_message method for backward compatibility
-    async def process_message(self, message: Message) -> Optional[Dict]:
-        """
-        Backward compatibility method - just does detection, doesn't handle response
-        """
-        
-        self.message_stats['messages_processed'] += 1
-        
-        # Perform detection only
-        detection_result = await self._perform_enhanced_hybrid_detection(message)
-        
-        if detection_result['needs_response']:
-            self.message_stats['crisis_detected'] += 1
-            logger.info(f"🚨 Crisis detected: {detection_result['crisis_level']}")
-            return detection_result
-        
-        return None
-
     def get_enhanced_stats(self) -> Dict:
         """
         Get enhanced statistics including v3.0 features AND all backward compatibility fields
@@ -555,10 +535,8 @@ class MessageHandler:
             # Core processing statistics
             'total_messages_processed': self.message_stats['total_messages_processed'],
             'crisis_responses_given': self.message_stats['crisis_responses_given'],
-            'messages_processed': self.message_stats['messages_processed'],  # Alias
-            'crisis_detected': self.message_stats['crisis_detected'],  # Alias
             
-            # Conversation tracking (backward compatibility)
+            # Conversation tracking
             'conversations_started': self.message_stats['conversations_started'],
             'follow_ups_handled': self.message_stats['follow_ups_handled'],
             'ignored_follow_ups': self.message_stats['ignored_follow_ups'],
@@ -603,10 +581,3 @@ class MessageHandler:
                 'staff_review_rate': staff_review_rate
             }
         }
-
-    def get_message_handler_stats(self) -> Dict:
-        """Get statistics for monitoring commands (calls get_enhanced_stats for compatibility)"""
-        return self.get_enhanced_stats()
-
-# Aliases for backward compatibility
-EnhancedMessageHandler = MessageHandler
