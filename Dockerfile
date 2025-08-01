@@ -53,6 +53,9 @@ COPY --chown=ash:ash . .
 # Switch to non-root user
 USER ash
 
+# Set working directory
+WORKDIR /app
+
 # Set default environment variables
 ENV TZ="America/Los_Angeles"
 ENV PYTHONUNBUFFERED="1"
