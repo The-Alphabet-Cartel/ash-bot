@@ -139,7 +139,7 @@ class MessageHandler:
                     await self._handle_potential_crisis(message)
                 else:
                     # Not a crisis - STRICT BLOCK
-                    self._log_conversation_intrusion_attempt(message, conversation_data, conversation_owner_id)
+                    await self._log_conversation_intrusion_attempt(message, conversation_data, conversation_owner_id)
                     logger.info(f"🛡️ STRICT ISOLATION: Blocked non-crisis message from {message.author.display_name} during active conversation")
                     return
         else:
@@ -188,7 +188,7 @@ class MessageHandler:
             # If we can't check, err on the side of caution and allow override
             return True
 
-    def _log_conversation_intrusion_attempt(self, message: Message, conversation_data: dict, conversation_owner_id: int):
+    async def _log_conversation_intrusion_attempt(self, message: Message, conversation_data: dict, conversation_owner_id: int):
         """Enhanced logging for blocked intrusion attempts"""
         
         logger.warning(f"🚨 CONVERSATION INTRUSION BLOCKED:")
