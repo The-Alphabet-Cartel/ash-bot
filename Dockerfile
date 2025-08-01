@@ -55,8 +55,9 @@ USER ash
 
 # Set default environment variables
 ENV TZ="America/Los_Angeles"
-
-ENV GLOBAL_PYTHONUNBUFFERED="1"
+ENV PYTHONUNBUFFERED="1"
+ENV PYTHONDONTWRITEBYTECODE="1"
+ENV PYTHONPATH="/app"
 
 # Core Bot Configuration
 ## Discord Configuration
