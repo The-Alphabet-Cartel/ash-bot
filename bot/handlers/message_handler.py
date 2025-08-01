@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-Message Handler - Enhanced for v3.0 NLP Integration - CORRECTED VERSION
-
-This is the CORRECT MessageHandler class, not CrisisHandler.
+Message Handler - CLEANED VERSION (Security Manager Removed)
 """
 
 import logging
@@ -13,11 +11,11 @@ from discord import Message
 logger = logging.getLogger(__name__)
 
 class MessageHandler:
-    """Enhanced message handler for v3.0 NLP integration - CORRECTED"""
+    """Enhanced message handler - CLEANED VERSION"""
     
-    def __init__(self, bot, claude_api=None, nlp_client=None, keyword_detector=None, crisis_handler=None, config=None, security_manager=None):
+    def __init__(self, bot, claude_api=None, nlp_client=None, keyword_detector=None, crisis_handler=None, config=None):
         """
-        Enhanced initialization - SECURITY MANAGER IS NOW OPTIONAL
+        CLEANED initialization - security manager removed
         """
         
         self.bot = bot
@@ -26,7 +24,6 @@ class MessageHandler:
         self.keyword_detector = keyword_detector
         self.crisis_handler = crisis_handler
         self.config = config
-        # SECURITY MANAGER IS NOW OPTIONAL AND IGNORED
         
         # Handle missing required components gracefully
         if not self.nlp_client:
@@ -93,7 +90,7 @@ class MessageHandler:
                 self.rate_limit_per_user = config.get('BOT_RATE_LIMIT_PER_USER', 10)
         
         # Log initialization status
-        logger.info("📨 Enhanced Message Handler initialized (CORRECTED VERSION)")
+        logger.info("📨 Enhanced Message Handler initialized (CLEANED VERSION)")
         logger.info(f"   🧠 NLP Client: {'✅ Available' if self.nlp_client else '❌ Missing'}")
         logger.info(f"   🔤 Keyword Detector: {'✅ Available' if self.keyword_detector else '❌ Missing'}")
         logger.info(f"   🚨 Crisis Handler: {'✅ Available' if self.crisis_handler else '❌ Missing'}")
@@ -102,8 +99,7 @@ class MessageHandler:
 
     async def handle_message(self, message: Message):
         """
-        MAIN MESSAGE HANDLER - This is the method that should be called from bot_manager
-        This method actually handles crisis responses, not just detection.
+        MAIN MESSAGE HANDLER - CLEANED VERSION
         """
         
         self.message_stats['total_messages_processed'] += 1
@@ -170,7 +166,7 @@ class MessageHandler:
                 return
             
             # Perform detection
-            detection_result = await self._perform_hybrid_detection(message)
+            detection_result = await self._perform_enhanced_hybrid_detection(message)
             
             logger.warning(f"🔍 DIAGNOSTIC: Detection result: needs_response={detection_result.get('needs_response', False)}, crisis_level={detection_result.get('crisis_level', 'none')}")
             
@@ -246,8 +242,8 @@ class MessageHandler:
             except:
                 pass
 
-    async def _perform_hybrid_detection(self, message: Message) -> Dict:
-        """Perform hybrid crisis detection"""
+    async def _perform_enhanced_hybrid_detection(self, message: Message) -> Dict:
+        """Perform enhanced hybrid crisis detection with v3.0 NLP features"""
         
         # Validate message content
         if not hasattr(message, 'content') or not message.content:
@@ -285,18 +281,18 @@ class MessageHandler:
         else:
             logger.warning("🔤 DIAGNOSTIC: No keyword detector available")
         
-        # Method 2: NLP analysis
+        # Method 2: Enhanced NLP analysis with v3.0 features
         nlp_result = None
         if self.nlp_client:
             try:
-                logger.warning(f"🧠 DIAGNOSTIC: Calling NLP analysis...")
+                logger.warning(f"🧠 DIAGNOSTIC: Calling enhanced NLP analysis...")
                 nlp_result = await self.nlp_client.analyze_message(
                     message_content,
                     str(message.author.id),
                     str(message.channel.id)
                 )
                 if nlp_result:
-                    logger.warning(f"🧠 DIAGNOSTIC: NLP v3.0 analysis: {nlp_result.get('crisis_level', 'none')} "
+                    logger.warning(f"🧠 DIAGNOSTIC: Enhanced NLP v3.0 analysis: {nlp_result.get('crisis_level', 'none')} "
                                f"(confidence: {nlp_result.get('confidence_score', 0):.3f}) "
                                f"via {nlp_result.get('method', 'unknown')}")
                     
@@ -311,13 +307,13 @@ class MessageHandler:
                     
                     self.message_stats['v3_features']['ensemble_analyses'] += 1
                 else:
-                    logger.warning("🧠 DIAGNOSTIC: NLP analysis returned None")
+                    logger.warning("🧠 DIAGNOSTIC: Enhanced NLP analysis returned None")
             except Exception as e:
-                logger.warning(f"🧠 DIAGNOSTIC: NLP analysis failed: {e}")
+                logger.warning(f"🧠 DIAGNOSTIC: Enhanced NLP analysis failed: {e}")
         else:
             logger.warning("🧠 DIAGNOSTIC: No NLP client available")
         
-        # Combine results
+        # Combine results with enhanced logic
         final_result = self._combine_detection_results(keyword_result, nlp_result)
         
         logger.warning(f"⚡ DIAGNOSTIC: Final decision: {final_result.get('crisis_level', 'unknown')} "
@@ -332,7 +328,7 @@ class MessageHandler:
         return final_result
 
     def _combine_detection_results(self, keyword_result: Dict, nlp_result: Optional[Dict]) -> Dict:
-        """Combine keyword and NLP detection results"""
+        """Combine keyword and NLP detection results with enhanced v3.0 logic"""
         
         # If NLP unavailable, use keywords only
         if not nlp_result:
@@ -345,7 +341,7 @@ class MessageHandler:
                 'detected_categories': keyword_result.get('detected_categories', [])
             }
 
-        # Both methods available - hybrid logic
+        # Both methods available - enhanced hybrid logic
         keyword_level = keyword_result.get('crisis_level', 'none')
         nlp_level = nlp_result.get('crisis_level', 'none')
         
@@ -373,7 +369,9 @@ class MessageHandler:
             'keyword_result': keyword_level,
             'nlp_result': nlp_level,
             'requires_staff_review': nlp_result.get('requires_staff_review', final_level == 'high'),
-            'gaps_detected': nlp_result.get('gaps_detected', False)
+            'gaps_detected': nlp_result.get('gaps_detected', False),
+            'ensemble_details': nlp_result.get('ensemble_details', {}),
+            'processing_time_ms': nlp_result.get('processing_time_ms', 0)
         }
 
     # Rate limiting methods
@@ -516,7 +514,7 @@ class MessageHandler:
         self.message_stats['messages_processed'] += 1
         
         # Perform detection only
-        detection_result = await self._perform_hybrid_detection(message)
+        detection_result = await self._perform_enhanced_hybrid_detection(message)
         
         if detection_result['needs_response']:
             self.message_stats['crisis_detected'] += 1
@@ -528,7 +526,6 @@ class MessageHandler:
     def get_enhanced_stats(self) -> Dict:
         """
         Get enhanced statistics including v3.0 features AND all backward compatibility fields
-        This method ensures monitoring commands get all expected statistics fields
         """
         
         # Calculate derived statistics
