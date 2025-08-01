@@ -193,10 +193,21 @@ class AshBot(commands.Bot):
         try:
             from bot.commands.ensemble_commands import EnsembleCommands
             await self.add_cog(EnsembleCommands(self))
-            logger.info("✅ Loaded Ensemble Commands cog")
+            logger.info("✅ Loaded Ensemble Commands cog (enhanced learning + v3.0 features)")
         except ImportError as import_err:
             logger.error(f"❌ Failed to import Ensemble Commands: {import_err}")
-            cog_errors.append(f"EnsembleCommands: {import_err}")
+            logger.error(f"   📝 Make sure bot/commands/ensemble_commands.py exists")
+            # Try alternative import method using setup function
+            try:
+                import bot.commands.ensemble_commands as ensemble_module
+                if hasattr(ensemble_module, 'setup'):
+                    await ensemble_module.setup(self)
+                    logger.info("✅ Loaded Ensemble Commands via setup function")
+                else:
+                    cog_errors.append(f"EnsembleCommands: setup function not found")
+            except Exception as setup_err:
+                logger.error(f"❌ Failed to load via setup: {setup_err}")
+                cog_errors.append(f"EnsembleCommands: {import_err}")
         except Exception as e:
             logger.error(f"❌ Failed to load Ensemble Commands: {e}")
             cog_errors.append(f"EnsembleCommands: {e}")
