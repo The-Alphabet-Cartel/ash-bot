@@ -66,7 +66,7 @@ services:
       - BOT_CONVERSATION_TIMEOUT=${BOT_CONVERSATION_TIMEOUT:-300}
       - BOT_CRISIS_OVERRIDE_LEVELS=${BOT_CRISIS_OVERRIDE_LEVELS:-medium,high}
       
-      # Three-Model Ensemble Configuration
+      # Three Zero-Shot Model Ensemble Configuration
       - BOT_ENABLE_GAP_NOTIFICATIONS=${BOT_ENABLE_GAP_NOTIFICATIONS:-true}
       - BOT_GAP_NOTIFICATION_CHANNEL_ID=${BOT_GAP_NOTIFICATION_CHANNEL_ID}
 
