@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Message Handler - CLEANED VERSION (Security Manager Removed)
+Message Handler - ENHANCED VERSION WITH CRISIS CONVERSATION ISOLATION
 """
 
 import logging
@@ -11,11 +11,11 @@ from discord import Message
 logger = logging.getLogger(__name__)
 
 class MessageHandler:
-    """Enhanced message handler - CLEANED VERSION"""
+    """Enhanced message handler with full conversation isolation"""
     
     def __init__(self, bot, claude_api=None, nlp_client=None, keyword_detector=None, crisis_handler=None, config=None):
         """
-        CLEANED initialization - security manager removed
+        Enhanced initialization with conversation isolation
         """
         
         self.bot = bot
@@ -88,62 +88,63 @@ class MessageHandler:
                 self.rate_limit_per_user = config.get('BOT_RATE_LIMIT_PER_USER', 10)
         
         # Log initialization status
-        logger.info("📨 Enhanced Message Handler initialized (CLEANED VERSION)")
+        logger.info("📨 Enhanced Message Handler initialized with CONVERSATION ISOLATION")
         logger.info(f"   🧠 NLP Client: {'✅ Available' if self.nlp_client else '❌ Missing'}")
         logger.info(f"   🔤 Keyword Detector: {'✅ Available' if self.keyword_detector else '❌ Missing'}")
         logger.info(f"   🚨 Crisis Handler: {'✅ Available' if self.crisis_handler else '❌ Missing'}")
         logger.info(f"   💬 Conversation timeout: {self.conversation_timeout}s")
         logger.info(f"   🎯 Guild ID: {self.guild_id}")
+        logger.info(f"   🛡️ Conversation isolation: ENABLED")
 
     async def handle_message(self, message: Message):
-            """
-            ENHANCED MESSAGE HANDLER WITH CHANNEL-LEVEL CONVERSATION ISOLATION
-            """
+        """
+        ENHANCED MESSAGE HANDLER WITH CHANNEL-LEVEL CONVERSATION ISOLATION
+        """
+        
+        self.message_stats['total_messages_processed'] += 1
+        
+        logger.info(f"📨 DIAGNOSTIC: Handling message from {message.author}: '{message.content[:50]}...'")
+        
+        # Basic filtering
+        if not self._should_process_message(message):
+            return
+        
+        # Clean up expired conversations
+        self.cleanup_expired_conversations()
+        
+        user_id = message.author.id
+        
+        # CRITICAL: Check if ANY user has an active conversation in this channel
+        active_conversation_in_channel = self._get_active_conversation_in_channel(message.channel.id)
+        
+        if active_conversation_in_channel:
+            conversation_owner_id, conversation_data = active_conversation_in_channel
             
-            self.message_stats['total_messages_processed'] += 1
-            
-            logger.info(f"📨 DIAGNOSTIC: Handling message from {message.author}: '{message.content[:50]}...'")
-            
-            # Basic filtering
-            if not self._should_process_message(message):
-                return
-            
-            # Clean up expired conversations
-            self.cleanup_expired_conversations()
-            
-            user_id = message.author.id
-            
-            # CRITICAL: Check if ANY user has an active conversation in this channel
-            active_conversation_in_channel = self._get_active_conversation_in_channel(message.channel.id)
-            
-            if active_conversation_in_channel:
-                conversation_owner_id, conversation_data = active_conversation_in_channel
-                
-                if user_id == conversation_owner_id:
-                    # This is the conversation owner - check if they properly triggered continuation
-                    should_respond = self._should_respond_in_conversation(message, user_id)
-                    if should_respond:
-                        await self._handle_conversation_followup(message)
-                    else:
-                        self._log_conversation_attempt(message, conversation_data, "no mention or trigger phrase")
+            if user_id == conversation_owner_id:
+                # This is the conversation owner - check if they properly triggered continuation
+                should_respond = self._should_respond_in_conversation(message, user_id)
+                if should_respond:
+                    await self._handle_conversation_followup(message)
                 else:
-                    # SAFETY OVERRIDE: Check if this is a NEW CRISIS that needs immediate response
-                    crisis_override_needed = await self._check_crisis_override(message)
-                    
-                    if crisis_override_needed:
-                        # This is a genuine crisis - respond immediately despite active conversation
-                        logger.warning(f"🚨 CRISIS OVERRIDE: New crisis detected during active conversation")
-                        logger.warning(f"   👤 Active conversation owner: {conversation_owner_id}")
-                        logger.warning(f"   🆘 New crisis user: {user_id} ({message.author.display_name})")
-                        await self._handle_potential_crisis(message)
-                    else:
-                        # Not a crisis - STRICT BLOCK
-                        self._log_conversation_intrusion_attempt(message, conversation_data, conversation_owner_id)
-                        logger.info(f"🛡️ STRICT ISOLATION: Blocked non-crisis message from {message.author.display_name} during active conversation")
-                        return
+                    self._log_conversation_attempt(message, conversation_data, "no mention or trigger phrase")
             else:
-                # No active conversations in this channel - normal crisis detection
-                await self._handle_potential_crisis(message)
+                # SAFETY OVERRIDE: Check if this is a NEW CRISIS that needs immediate response
+                crisis_override_needed = await self._check_crisis_override(message)
+                
+                if crisis_override_needed:
+                    # This is a genuine crisis - respond immediately despite active conversation
+                    logger.warning(f"🚨 CRISIS OVERRIDE: New crisis detected during active conversation")
+                    logger.warning(f"   👤 Active conversation owner: {conversation_owner_id}")
+                    logger.warning(f"   🆘 New crisis user: {user_id} ({message.author.display_name})")
+                    await self._handle_potential_crisis(message)
+                else:
+                    # Not a crisis - STRICT BLOCK
+                    self._log_conversation_intrusion_attempt(message, conversation_data, conversation_owner_id)
+                    logger.info(f"🛡️ STRICT ISOLATION: Blocked non-crisis message from {message.author.display_name} during active conversation")
+                    return
+        else:
+            # No active conversations in this channel - normal crisis detection
+            await self._handle_potential_crisis(message)
 
     def _get_active_conversation_in_channel(self, channel_id: int) -> Optional[tuple]:
         """Get the active conversation in a specific channel (if any)"""
@@ -513,52 +514,54 @@ class MessageHandler:
             del self.active_conversations[user_id]
 
     def start_conversation_tracking(self, user_id: int, crisis_level: str, channel_id: int):
-            """Enhanced conversation tracking with multiple conversation support"""
+        """Enhanced conversation tracking with multiple conversation support"""
+        
+        # Check if there's already a conversation in this channel
+        existing_conversation = self._get_active_conversation_in_channel(channel_id)
+        
+        if existing_conversation:
+            existing_user_id, existing_data = existing_conversation
+            logger.warning(f"⚠️ Starting new conversation while another is active:")
+            logger.warning(f"   📍 Channel: {channel_id}")
+            logger.warning(f"   👤 Existing: User {existing_user_id} ({existing_data['crisis_level']} crisis)")
+            logger.warning(f"   🆕 New: User {user_id} ({crisis_level} crisis)")
             
-            # Check if there's already a conversation in this channel
-            existing_conversation = self._get_active_conversation_in_channel(channel_id)
-            
-            if existing_conversation:
-                existing_user_id, existing_data = existing_conversation
-                logger.warning(f"⚠️ Starting new conversation while another is active:")
-                logger.warning(f"   📍 Channel: {channel_id}")
-                logger.warning(f"   👤 Existing: User {existing_user_id} ({existing_data['crisis_level']} crisis)")
-                logger.warning(f"   🆕 New: User {user_id} ({crisis_level} crisis)")
-                
-                # Track this situation in stats
-                self.message_stats['multiple_conversations_same_channel'] += 1
-            
-            self.active_conversations[user_id] = {
-                'start_time': time.time(),
-                'crisis_level': crisis_level,
-                'channel_id': channel_id,
-                'follow_up_count': 0,
-                'escalations': 0,
-                'initial_crisis_level': crisis_level,
-                'is_crisis_override': existing_conversation is not None  # Track if this overrode another conversation
-            }
-            
-            self.message_stats['conversations_started'] += 1
-            logger.info(f"💬 Started enhanced conversation tracking:")
-            logger.info(f"   👤 User: {user_id}")
-            logger.info(f"   🚨 Crisis level: {crisis_level}")
-            logger.info(f"   📍 Channel: {channel_id}")
-            logger.info(f"   🔄 Override situation: {'Yes' if existing_conversation else 'No'}")
-            logger.info(f"   📊 Total conversations today: {self.message_stats['conversations_started']}")
+            # Track this situation in stats
+            self.message_stats['multiple_conversations_same_channel'] += 1
+        
+        self.active_conversations[user_id] = {
+            'start_time': time.time(),
+            'crisis_level': crisis_level,
+            'channel_id': channel_id,
+            'follow_up_count': 0,
+            'escalations': 0,
+            'initial_crisis_level': crisis_level,
+            'is_crisis_override': existing_conversation is not None  # Track if this overrode another conversation
+        }
+        
+        self.message_stats['conversations_started'] += 1
+        logger.info(f"💬 Started enhanced conversation tracking:")
+        logger.info(f"   👤 User: {user_id}")
+        logger.info(f"   🚨 Crisis level: {crisis_level}")
+        logger.info(f"   📍 Channel: {channel_id}")
+        logger.info(f"   🔄 Override situation: {'Yes' if existing_conversation else 'No'}")
+        logger.info(f"   📊 Total conversations today: {self.message_stats['conversations_started']}")
 
     async def _handle_conversation_followup(self, message: Message):
-        """Handle conversation follow-up"""
+        """Handle conversation follow-up with enhanced isolation logic"""
         
         user_id = message.author.id
         conversation = self.active_conversations[user_id]
         
         # Only respond in same channel
         if message.channel.id != conversation['channel_id']:
+            logger.debug(f"💬 Wrong channel for follow-up from {message.author}")
             return
         
-        # Check if user properly triggered continuation (simplified)
+        # Check if user properly triggered continuation (enhanced)
         if not self._should_respond_in_conversation(message, user_id):
             logger.info(f"💬 Ignoring follow-up from {message.author} - no trigger")
+            self.message_stats['ignored_follow_ups'] += 1
             return
         
         self.message_stats['follow_ups_handled'] += 1
@@ -566,11 +569,26 @@ class MessageHandler:
         try:
             logger.info(f"💬 Handling conversation follow-up from {message.author}")
             
-            # Get response
+            # Check for escalation
+            detection_result = await self._perform_enhanced_hybrid_detection(message)
+            new_level = detection_result.get('crisis_level', 'none')
+            current_level = conversation['crisis_level']
+            
+            # Check if this is an escalation
+            is_escalation = self._is_escalation(current_level, new_level)
+            
+            if is_escalation:
+                logger.warning(f"📈 Crisis escalation detected: {current_level} → {new_level}")
+                conversation['crisis_level'] = new_level
+                conversation['escalations'] += 1
+            
+            # Get response based on current/escalated level
+            effective_level = new_level if is_escalation else current_level
+            
             if self.claude_api:
                 response = await self.claude_api.get_ash_response(
                     message.content,
-                    conversation['crisis_level'],
+                    effective_level,
                     message.author.display_name
                 )
             else:
@@ -581,7 +599,12 @@ class MessageHandler:
             # Update conversation stats
             conversation['follow_up_count'] += 1
             
-            logger.info(f"✅ Follow-up handled (#{conversation['follow_up_count']})")
+            # If escalated, potentially re-trigger crisis alerts
+            if is_escalation and self.crisis_handler:
+                logger.warning(f"🚨 Re-triggering crisis alerts due to escalation to {new_level}")
+                await self.crisis_handler.handle_escalation(message, current_level, new_level)
+            
+            logger.info(f"✅ Follow-up handled (#{conversation['follow_up_count']}, escalation: {is_escalation})")
         
         except Exception as e:
             logger.error(f"❌ Error handling conversation follow-up: {e}")
@@ -650,6 +673,11 @@ class MessageHandler:
         # DEFAULT: Block the message
         logger.debug(f"🚫 BLOCKED: No valid trigger found in message from user {message.author.id}: '{message.content[:30]}...'")
         return False
+
+    def _is_escalation(self, current_level: str, new_level: str) -> bool:
+        """Check if crisis level has escalated"""
+        hierarchy = {'none': 0, 'low': 1, 'medium': 2, 'high': 3}
+        return hierarchy.get(new_level, 0) > hierarchy.get(current_level, 0)
 
     def get_enhanced_stats(self) -> Dict:
         """
