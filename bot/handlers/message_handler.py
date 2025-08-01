@@ -338,10 +338,10 @@ class MessageHandler:
         self.message_stats['intrusion_attempts_blocked'] += 1
         
         # Optional: Add reaction to show the message was seen but ignored
-        try:
-            await message.add_reaction('🔒')  # Lock emoji to indicate conversation is locked
-        except Exception as e:
-            logger.debug(f"Could not add lock reaction: {e}")
+        #try:
+        #    await message.add_reaction('🔒')  # Lock emoji to indicate conversation is locked
+        #except Exception as e:
+        #    logger.debug(f"Could not add lock reaction: {e}")
 
     def _log_conversation_attempt(self, message: Message, conversation_data: dict, reason: str):
         """Log when users try to continue conversations without proper triggers"""
