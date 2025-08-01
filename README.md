@@ -27,7 +27,7 @@ Discord Message → Keyword Detection → Context Analysis → NLP Ensemble → 
 ```
 
 ### Integration Components
-- **[Ash NLP](https://github.com/the-alphabet-cartel/ash-nlp)** - Three-model ensemble crisis detection (Port 8881)
+- **[Ash NLP](https://github.com/the-alphabet-cartel/ash-nlp)** - Three Zero-Shot Model Ensemble crisis detection (Port 8881)
 - **[Ash Dashboard](https://github.com/the-alphabet-cartel/ash-dash)** - Analytics and monitoring (Port 8883) *[Not Yet Implemented]*
 - **[Ash Thrash](https://github.com/the-alphabet-cartel/ash-thrash)** - Testing and validation (Port 8884) *[Not Yet Implemented]*
 
