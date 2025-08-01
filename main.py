@@ -70,6 +70,26 @@ async def main():
         logger.error(f"💥 Configuration test failed: {e}")
         sys.exit(1)
 
+# Bot event to handle staff hand-off of crisis events.
+@bot.event
+async def on_reaction_add(reaction, user):
+    """Handle reaction-based staff handoffs"""
+    
+    # Only process reactions in guilds (not DMs)
+    if not reaction.message.guild:
+        return
+    
+    # Let the message handler process the reaction
+    if hasattr(bot, 'message_handler') and bot.message_handler:
+        await bot.message_handler.handle_reaction_add(reaction, user)
+
+# Optional: Also handle reaction removal if needed
+@bot.event 
+async def on_reaction_remove(reaction, user):
+    """Handle reaction removal (optional - for undoing accidental handoffs)"""
+    # Could implement undo functionality here if desired
+    pass
+
 if __name__ == "__main__":
     try:
         asyncio.run(main())

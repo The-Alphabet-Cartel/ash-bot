@@ -96,7 +96,7 @@ class MessageHandler:
         logger.info(f"   💬 Conversation timeout: {self.conversation_timeout}s")
         logger.info(f"   🎯 Guild ID: {self.guild_id}")
         logger.info(f"   🛡️ Conversation isolation: ENABLED")
-        logger.info(f"   👮 Staff handoff system: ENABLED")
+        logger.info(f"   👮 Staff handoff system: REACTION-BASED (✅)")
 
     async def handle_message(self, message: Message):
         """
@@ -121,16 +121,6 @@ class MessageHandler:
         
         if active_conversation_in_channel:
             conversation_owner_id, conversation_data = active_conversation_in_channel
-            
-            # STAFF HANDOFF CHECK: Before anything else, check if this is a staff member taking over
-            if (user_id != conversation_owner_id and 
-                not message.author.bot and 
-                self._is_crisis_response_staff(user_id, message.guild.id) and
-                self._check_staff_handoff_message(message.content)):
-                
-                logger.warning(f"👮 STAFF HANDOFF: Crisis response staff taking over conversation")
-                await self._handle_staff_handoff(message, conversation_owner_id, conversation_data)
-                return
             
             if user_id == conversation_owner_id:
                 # This is the conversation owner - check if they properly triggered continuation
@@ -212,43 +202,112 @@ class MessageHandler:
             logger.error(f"Error checking crisis response staff status: {e}")
             return False
 
-    def _check_staff_handoff_message(self, message_content: str) -> bool:
-        """Check if message contains staff handoff phrases"""
+    async def handle_reaction_add(self, reaction, user):
+        """Handle reaction-based staff handoffs"""
         
-        handoff_phrases = [
-            "i can take it from here",
-            "i'll take it from here", 
-            "i've got this",
-            "i have this",
-            "ash you can step back",
-            "ash step back",
-            "staff has this",
-            "we have this covered",
-            "i'm taking over",
-            "taking over now",
-            "ash stop",
-            "ash end conversation",
-            "end conversation ash"
-        ]
+        # Only process checkmark reactions from non-bot users
+        if str(reaction.emoji) != '✅' or user.bot:
+            return
         
-        message_lower = message_content.lower().strip()
+        # Check if this is a staff member
+        if not self._is_crisis_response_staff(user.id, reaction.message.guild.id):
+            logger.debug(f"❌ Non-staff user {user.display_name} added checkmark - ignoring")
+            return
         
-        for phrase in handoff_phrases:
-            if phrase in message_lower:
-                logger.info(f"✅ Staff handoff phrase detected: '{phrase}'")
-                return True
+        # Check if the reaction is on an Ash message
+        if reaction.message.author.id != self.bot.user.id:
+            logger.debug(f"✅ Checkmark on non-Ash message - ignoring")
+            return
         
-        return False
+        # Find which conversation this message belongs to
+        conversation_owner_id = self._find_conversation_owner_by_message(reaction.message)
+        
+        if not conversation_owner_id:
+            logger.debug(f"❌ Could not find conversation owner for message {reaction.message.id}")
+            return
+        
+        # Get conversation data
+        conversation_data = self.active_conversations.get(conversation_owner_id)
+        if not conversation_data:
+            logger.debug(f"❌ No active conversation found for user {conversation_owner_id}")
+            return
+        
+        # Perform the handoff
+        logger.warning(f"👮 STAFF HANDOFF VIA REACTION:")
+        logger.warning(f"   ✅ Staff member: {user.display_name} ({user.id})")
+        logger.warning(f"   📝 Reacted to message: {reaction.message.id}")
+        logger.warning(f"   👤 Taking over conversation with: {conversation_owner_id}")
+        
+        await self._execute_staff_handoff(reaction.message, user, conversation_owner_id, conversation_data)
 
-    async def _handle_staff_handoff(self, message: Message, conversation_owner_id: int, conversation_data: dict):
-        """Handle staff member taking over a crisis conversation"""
+    def _find_conversation_owner_by_message(self, message) -> Optional[int]:
+        """Find which conversation owner this Ash message belongs to"""
+        
+        # Strategy 1: Check message content for mentions
+        if message.mentions:
+            for mentioned_user in message.mentions:
+                if mentioned_user.id in self.active_conversations:
+                    logger.debug(f"✅ Found conversation owner via mention: {mentioned_user.id}")
+                    return mentioned_user.id
+        
+        # Strategy 2: Check if message is a reply to a user message
+        if message.reference and message.reference.message_id:
+            try:
+                # Get the original message that Ash replied to
+                original_message = message.channel.get_partial_message(message.reference.message_id)
+                # Note: We can't fetch the message content without an API call,
+                # but we can get the author ID if it's cached
+                if hasattr(message.reference, 'resolved') and message.reference.resolved:
+                    original_author_id = message.reference.resolved.author.id
+                    if original_author_id in self.active_conversations:
+                        logger.debug(f"✅ Found conversation owner via reply: {original_author_id}")
+                        return original_author_id
+            except Exception as e:
+                logger.debug(f"Could not resolve message reference: {e}")
+        
+        # Strategy 3: Check recent messages in this channel
+        # If there's only one active conversation in this channel, it's probably that one
+        channel_conversations = []
+        for user_id, conv_data in self.active_conversations.items():
+            if conv_data['channel_id'] == message.channel.id:
+                channel_conversations.append(user_id)
+        
+        if len(channel_conversations) == 1:
+            logger.debug(f"✅ Found conversation owner via channel isolation: {channel_conversations[0]}")
+            return channel_conversations[0]
+        
+        # Strategy 4: Check message timestamp against conversation start times
+        # Find the conversation that was most recently active when this message was sent
+        message_time = message.created_at.timestamp()
+        best_match = None
+        smallest_time_diff = float('inf')
+        
+        for user_id, conv_data in self.active_conversations.items():
+            if conv_data['channel_id'] == message.channel.id:
+                time_diff = abs(message_time - conv_data['start_time'])
+                if time_diff < smallest_time_diff:
+                    smallest_time_diff = time_diff
+                    best_match = user_id
+        
+        if best_match:
+            logger.debug(f"✅ Found conversation owner via timestamp matching: {best_match}")
+            return best_match
+        
+        logger.debug("❌ Could not determine conversation owner for message")
+        return None
+
+    async def _execute_staff_handoff(self, message, staff_user, conversation_owner_id: int, conversation_data: dict):
+        """Execute the staff handoff process"""
         
         try:
-            staff_member = message.author
+            # Get the crisis user object
+            crisis_user = self.bot.get_user(conversation_owner_id)
+            crisis_user_mention = crisis_user.mention if crisis_user else f"User {conversation_owner_id}"
+            crisis_user_name = crisis_user.display_name if crisis_user else f"User {conversation_owner_id}"
             
-            logger.warning(f"👥 STAFF HANDOFF INITIATED:")
-            logger.warning(f"   👤 Crisis user: {conversation_owner_id}")
-            logger.warning(f"   👮 Staff member: {staff_member.display_name} ({staff_member.id})")
+            logger.warning(f"👥 EXECUTING STAFF HANDOFF:")
+            logger.warning(f"   👤 Crisis user: {crisis_user_name} ({conversation_owner_id})")
+            logger.warning(f"   👮 Staff member: {staff_user.display_name} ({staff_user.id})")
             logger.warning(f"   📍 Channel: {message.channel.name}")
             logger.warning(f"   🚨 Crisis level: {conversation_data.get('crisis_level', 'unknown')}")
             logger.warning(f"   ⏱️ Conversation duration: {time.time() - conversation_data.get('start_time', 0):.1f}s")
@@ -256,37 +315,35 @@ class MessageHandler:
             # Send handoff confirmation to the channel
             handoff_message = (
                 f"✅ **Crisis Response Team Engaged**\n\n"
-                f"{staff_member.mention} has taken over this situation. "
+                f"{staff_user.mention} has taken over the conversation with {crisis_user_mention}. "
                 f"I'm stepping back now to let our trained crisis response team provide direct support.\n\n"
                 f"*🔒 This crisis conversation is now closed. Our team has you covered.*"
             )
             
+            # Reply to the original message to make it clear which conversation was handed off
             await message.reply(handoff_message)
             
-            # End the conversation tracking
-            if conversation_owner_id in self.active_conversations:
-                conversation = self.active_conversations[conversation_owner_id]
-                
-                # Log handoff statistics
-                self.message_stats['staff_handoffs_completed'] += 1
-                
-                # Remove from active conversations
-                del self.active_conversations[conversation_owner_id]
-                
-                logger.warning(f"✅ Staff handoff completed - conversation terminated")
-                logger.info(f"   📊 Follow-ups handled: {conversation.get('follow_up_count', 0)}")
-                logger.info(f"   📈 Escalations: {conversation.get('escalations', 0)}")
-                logger.info(f"   👮 Staff member: {staff_member.display_name}")
+            # Log handoff statistics
+            self.message_stats['staff_handoffs_completed'] += 1
             
-            # Optional: Add reaction to confirm handoff
+            # Remove from active conversations
+            del self.active_conversations[conversation_owner_id]
+            
+            logger.warning(f"✅ Staff handoff completed - conversation terminated")
+            logger.info(f"   📊 Follow-ups handled: {conversation_data.get('follow_up_count', 0)}")
+            logger.info(f"   📈 Escalations: {conversation_data.get('escalations', 0)}")
+            logger.info(f"   👮 Staff member: {staff_user.display_name}")
+            logger.info(f"   🎯 Handoff method: Reaction-based")
+            
+            # Add additional reactions to confirm handoff
             try:
                 await message.add_reaction('👮')  # Police officer emoji for staff
-                await message.add_reaction('✅')  # Checkmark for confirmation
+                await message.add_reaction('🔒')  # Lock emoji to show conversation is closed
             except Exception as e:
-                logger.debug(f"Could not add handoff reactions: {e}")
+                logger.debug(f"Could not add handoff confirmation reactions: {e}")
             
         except Exception as e:
-            logger.error(f"❌ Error handling staff handoff: {e}")
+            logger.error(f"❌ Error executing staff handoff: {e}")
             try:
                 await message.reply("⚠️ Error processing staff handoff. Please contact system administrator.")
             except:
@@ -338,10 +395,10 @@ class MessageHandler:
         self.message_stats['intrusion_attempts_blocked'] += 1
         
         # Optional: Add reaction to show the message was seen but ignored
-        #try:
-        #    await message.add_reaction('🔒')  # Lock emoji to indicate conversation is locked
-        #except Exception as e:
-        #    logger.debug(f"Could not add lock reaction: {e}")
+        try:
+            await message.add_reaction('🔒')  # Lock emoji to indicate conversation is locked
+        except Exception as e:
+            logger.debug(f"Could not add lock reaction: {e}")
 
     def _log_conversation_attempt(self, message: Message, conversation_data: dict, reason: str):
         """Log when users try to continue conversations without proper triggers"""
