@@ -219,7 +219,7 @@ class AshBot(commands.Bot):
         
         # Log v3.0 service status
         logger.info(f"🧠 v3.0 NLP Server: {'Connected' if self.nlp_client else 'Not Connected'}")
-        logger.info(f"🔍 v3.0 Learning System: {'Enabled' if self.config.get_bool('GLOBAL_ENABLE_LEARNING_SYSTEM') else 'Disabled'}")
+        logger.info(f"🔍 v3.0 Learning System: {'Enabled' if self.config.get_bool('GLOBAL_LEARNING_SYSTEM_ENABLED') else 'Disabled'}")
         
         # Log guild information
         guild = discord.utils.get(self.guilds, id=self.config.get_int('BOT_GUILD_ID'))

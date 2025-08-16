@@ -693,7 +693,7 @@ class AshBotAPIServer:
     async def _get_learning_system_status(self) -> Dict:
         """Get learning system status"""
         try:
-            learning_enabled = os.getenv('GLOBAL_ENABLE_LEARNING_SYSTEM', 'false').lower() == 'true'
+            learning_enabled = os.getenv('GLOBAL_LEARNING_SYSTEM_ENABLED', 'false').lower() == 'true'
             
             if learning_enabled:
                 learning_data = await self._load_learning_data()

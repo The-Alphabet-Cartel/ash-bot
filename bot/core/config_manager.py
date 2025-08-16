@@ -220,7 +220,7 @@ class ConfigManager:
             self._config['BOT_STAFF_PING_NAME'] = self._get_config_value('BOT_STAFF_PING_NAME', 'Staff')
             
             # Learning System Configuration
-            self._config['GLOBAL_ENABLE_LEARNING_SYSTEM'] = self._get_config_value('GLOBAL_ENABLE_LEARNING_SYSTEM', 'true').lower() == 'true'
+            self._config['GLOBAL_LEARNING_SYSTEM_ENABLED'] = self._get_config_value('GLOBAL_LEARNING_SYSTEM_ENABLED', 'true').lower() == 'true'
             
             try:
                 self._config['BOT_LEARNING_CONFIDENCE_THRESHOLD'] = float(self._get_config_value('BOT_LEARNING_CONFIDENCE_THRESHOLD', '0.6'))
@@ -299,7 +299,7 @@ class ConfigManager:
             logger.info(f"   🤖 Discord Guild: {self._config['BOT_GUILD_ID']}")
             logger.info(f"   🧠 Claude Model: {self._config['GLOBAL_CLAUDE_MODEL']}")
             logger.info(f"   📡 NLP Service: {self._config['GLOBAL_NLP_API_HOST']}:{self._config['GLOBAL_NLP_API_PORT']}")
-            logger.info(f"   📚 Learning System: {self._config['GLOBAL_ENABLE_LEARNING_SYSTEM']}")
+            logger.info(f"   📚 Learning System: {self._config['GLOBAL_LEARNING_SYSTEM_ENABLED']}")
             logger.info(f"   📝 Log Level: {self._config['GLOBAL_LOG_LEVEL']}")
             
         except Exception as e:
