@@ -130,13 +130,23 @@ NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 
 #### **Benefits of Rule #8**:
 - **Tests the actual implementation**: Not just the logic behind it
-- **Ensures readability for human counterparts**: Key for testing so that we may assist in the testing and troubleshooting sequences
+- **Ensures readability for human counterparts**: Key for testing so that ### **Rule #9: Always ask for the current version of a specific file before making any modifications, changes, or edits to that file - STANDARD**
 
-#### **Rule #9: Always ask for the current version of a specific file before making any modifications, changes, or edits to that file - STANDARD**
+#### **Benefits of Rule #9**:
 - **Prevents wasted time on edits to old code**
 - **Ensures that everyone is on the "same page"**
 - **Reduces confusion between team members**
 - **Reduces frustration between team members**
+
+### **Rule #10: All files need to stay wtihin ~1,000 lines of code - STANDARD**
+- **Code going over ~1,000 lines need to be split into helper files**
+- **Helper files will be stored in the same directory under a sub-directory named `helpers`**
+  - **Helper files will be named `*_helper.py`**
+
+#### **Benefits of Rule #10**:
+- **Manageable file sizes**
+- **Ease of artifact creation**
+- **Less chance of artifacts corrupting**
 
 ---
 
