@@ -33,6 +33,7 @@ https://github.com/the-alphabet-cartel
 ## Instructions
 - All hyperlinks shall be in lower case in the documentation as well as when trying to search GitHub.
 - All references to The Alphabet Cartel or our discord server in documentation files shall include a link to the discord: https://discord.gg/alphabetcartel, as well as to our website: http://alphabetcartel.org.
+- This is a collaborative project, as such do not use accusatory phrasing such as "your code", or "you forgot".  Instead use the inclusive "we" and "our".
 
 ### Coding Philosophy
 - Modular Python Code
