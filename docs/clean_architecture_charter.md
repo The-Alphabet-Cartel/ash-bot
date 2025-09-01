@@ -138,9 +138,9 @@ NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 - **Reduces confusion between team members**
 - **Reduces frustration between team members**
 
-### **Rule #10: All files need to stay within ~1,000 lines of code - STANDARD**
+### **Rule #10: All files need to stay within ~1,000 lines of code (give or take 2%) - STANDARD**
 - **Code going over ~1,000 lines need to be split into helper files**
-- **Helper files will be stored in the same directory under a sub-directory named `helpers`**
+- **Helper files will be stored in the same directory as the file being worked on under a sub-directory named `helpers`**
   - **Helper files will be named `*_helper.py`**
 
 #### **Benefits of Rule #10**:
