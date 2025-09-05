@@ -64,7 +64,7 @@ class MessageHandler:
                 'keyword_primary': 0,
                 'hybrid_detection': 0
             },
-            'v3_features': {
+            'features': {
                 'gaps_detected_count': 0,
                 'staff_reviews_triggered': 0,
                 'ensemble_analyses': 0
@@ -585,13 +585,13 @@ class MessageHandler:
                     # Log v3.0 features
                     if nlp_result.get('gaps_detected'):
                         logger.warning(f"⚠️ DIAGNOSTIC: Model disagreement detected")
-                        self.message_stats['v3_features']['gaps_detected_count'] += 1
+                        self.message_stats['features']['gaps_detected_count'] += 1
                     
                     if nlp_result.get('requires_staff_review'):
                         logger.warning(f"👥 DIAGNOSTIC: Staff review flagged")
-                        self.message_stats['v3_features']['staff_reviews_triggered'] += 1
+                        self.message_stats['features']['staff_reviews_triggered'] += 1
                     
-                    self.message_stats['v3_features']['ensemble_analyses'] += 1
+                    self.message_stats['features']['ensemble_analyses'] += 1
                 else:
                     logger.warning("🧠 DIAGNOSTIC: Enhanced NLP analysis returned None")
             except Exception as e:
@@ -881,10 +881,10 @@ class MessageHandler:
         crisis_given = self.message_stats['crisis_responses_given']
         
         # V3.0 ensemble statistics
-        v3_features = self.message_stats['v3_features']
-        ensemble_analyses = v3_features['ensemble_analyses']
-        gaps_detected = v3_features['gaps_detected_count']
-        staff_reviews = v3_features['staff_reviews_triggered']
+        features = self.message_stats['features']
+        ensemble_analyses = features['ensemble_analyses']
+        gaps_detected = features['gaps_detected_count']
+        staff_reviews = features['staff_reviews_triggered']
         
         # Calculate rates
         gap_detection_rate = (gaps_detected / max(1, ensemble_analyses)) if ensemble_analyses > 0 else 0.0
@@ -942,7 +942,7 @@ class MessageHandler:
             )),
             
             # V3.0 features grouped (for backward compatibility)
-            'v3_ensemble_features': {
+            'ensemble_features': {
                 'ensemble_analyses': ensemble_analyses,
                 'gaps_detected_count': gaps_detected,
                 'staff_reviews_triggered': staff_reviews,
