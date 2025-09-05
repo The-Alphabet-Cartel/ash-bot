@@ -1,0 +1,30 @@
+{
+  "rate_limiting": {
+    "description": "Discord API rate limiting configuration - MAPPED TO EXISTING ENV VARS per Rule #7",
+    "max_messages_per_minute": 30,
+    "max_reactions_per_minute": 10,
+    "cooldown_per_user": "${BOT_RATE_LIMIT_PER_USER}",
+    "defaults": {
+      "max_messages_per_minute": 30,
+      "max_reactions_per_minute": 10,
+      "cooldown_per_user": 10
+    },
+    "validation": {
+      "max_messages_per_minute": {
+        "type": "integer",
+        "range": [1, 60],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "max_reactions_per_minute": {
+        "type": "integer",
+        "range": [1, 30],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "cooldown_per_user": {
+        "type": "integer",
+        "range": [1, 60],
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  }
+}
