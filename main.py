@@ -18,13 +18,13 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Add the bot directory to Python path
-bot_dir = Path(__file__).parent
-sys.path.insert(0, str(bot_dir))
-
+# ============================================================================
+# MANAGER IMPORTS - ALL USING FACTORY FUNCTIONS (Clean Architecture)
+# ============================================================================
 from managers.unified_config import create_unified_config_manager
 from managers.logging_config import create_logging_config_manager
-from bot.core.config_manager import ConfigManager
+from core.config_manager import ConfigManager
+# ============================================================================
 
 # ============================================================================
 # UNIFIED LOGGING SETUP
@@ -100,7 +100,7 @@ def setup_logging(unified_config):
 # ============================================================================
 # UNIFIED MANAGER INITIALIZATION
 # ============================================================================
-def initialize_managers():
+def initialize_managers(unified_config):
     """
     Initialize all managers using factory functions (Clean Architecture v3.1) - Phase 3a Enhanced
     """
@@ -111,7 +111,6 @@ def initialize_managers():
     
     try:
         # Core configuration managers
-        unified_config = create_unified_config_manager()
         logging_config = create_logging_config_manager(unified_config)
         
         managers = {
@@ -126,9 +125,6 @@ def initialize_managers():
         logger.error(f"Manager initialization failed: {e}")
         raise
 # ============================================================================
-
-# Load environment variables
-load_dotenv()
 
 async def main():
     """Main entry point for Ash bot - CLEANED VERSION"""
@@ -170,7 +166,7 @@ async def main():
         logger.info("✅ Configuration loaded successfully")
         
         # Initialize and start the bot
-        from bot.core.bot_manager import AshBot
+        from core.bot_manager import AshBot
         
         logger.info("🤖 Creating modular bot instance...")
         bot = AshBot(bot_config)

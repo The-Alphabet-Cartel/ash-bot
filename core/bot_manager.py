@@ -74,7 +74,7 @@ class AshBot(commands.Bot):
         # Step 1: Initialize Claude API
         logger.info("🧠 Initializing Claude API...")
         try:
-            from bot.integrations.claude_api import ClaudeAPI
+            from integrations.claude_api import ClaudeAPI
             self.claude_api = ClaudeAPI(self.config)
             logger.info("✅ Claude API initialized")
         except Exception as e:
@@ -84,7 +84,7 @@ class AshBot(commands.Bot):
         # Step 2: Initialize keyword detector
         logger.info("🔍 Initializing keyword detector...")
         try:
-            from bot.utils.keyword_detector import KeywordDetector
+            from utils.keyword_detector import KeywordDetector
             self.keyword_detector = KeywordDetector()
             logger.info("✅ Keyword detector initialized")
         except Exception as e:
@@ -94,7 +94,7 @@ class AshBot(commands.Bot):
         # Step 3: Initialize NLP client
         logger.info("🧠 Initializing v3.0 NLP client...")
         try:
-            from bot.integrations.nlp_integration import EnhancedNLPClient
+            from integrations.nlp_integration import EnhancedNLPClient
             nlp_host = self.config.get('GLOBAL_NLP_API_HOST', '10.20.30.253')
             nlp_port = self.config.get('GLOBAL_NLP_API_PORT', '8881')
             nlp_url = f"http://{nlp_host}:{nlp_port}"
@@ -115,7 +115,7 @@ class AshBot(commands.Bot):
         # Step 4: Initialize crisis handler
         logger.info("🚨 Initializing v3.0 crisis handler...")
         try:
-            from bot.handlers.crisis_handler import CrisisHandler
+            from handlers.crisis_handler import CrisisHandler
             self.crisis_handler = CrisisHandler(self, self.config)
             logger.info("✅ v3.0 Crisis handler initialized")
         except Exception as e:
@@ -125,7 +125,7 @@ class AshBot(commands.Bot):
         # Step 5: Initialize message handler
         logger.info("📨 Initializing v3.0 message handler...")
         try:
-            from bot.handlers.message_handler import MessageHandler
+            from handlers.message_handler import MessageHandler
             self.message_handler = MessageHandler(
                 self,
                 self.claude_api,
@@ -145,7 +145,7 @@ class AshBot(commands.Bot):
         """Initialize v3.0 API Server"""
         logger.info("🌐 Initializing v3.0 API Server...")
         try:
-            from bot.api.api_server import setup_api_server
+            from api.api_server import setup_api_server
             
             api_host = self.config.get('GLOBAL_BOT_API_HOST', '0.0.0.0')
             api_port = self.config.get_int('GLOBAL_BOT_API_PORT', 8882)
@@ -168,7 +168,7 @@ class AshBot(commands.Bot):
         
         # Load Crisis Commands
         try:
-            from bot.commands.crisis_commands import CrisisKeywordCommands
+            from commands.crisis_commands import CrisisKeywordCommands
             await self.add_cog(CrisisKeywordCommands(self))
             logger.info("✅ Loaded v3.0 Crisis Commands cog")
         except Exception as e:
@@ -177,7 +177,7 @@ class AshBot(commands.Bot):
         
         # Load Monitoring Commands
         try:
-            from bot.commands.monitoring_commands import MonitoringCommands
+            from commands.monitoring_commands import MonitoringCommands
             await self.add_cog(MonitoringCommands(self))
             logger.info("✅ Loaded v3.0 Monitoring Commands cog")
         except Exception as e:
@@ -186,7 +186,7 @@ class AshBot(commands.Bot):
 
         # Load Ensemble Commands (v3.0 feature)
         try:
-            from bot.commands.ensemble_commands import EnsembleCommands
+            from commands.ensemble_commands import EnsembleCommands
             await self.add_cog(EnsembleCommands(self))
             logger.info("✅ Loaded v3.0 Ensemble Commands cog")
         except Exception as e:

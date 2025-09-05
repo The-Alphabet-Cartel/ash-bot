@@ -9,7 +9,7 @@ import os
 from typing import Optional
 import aiohttp
 import json
-from bot.core.ash_character import format_ash_prompt, get_crisis_addition, get_response_templates
+from core.ash_character import format_ash_prompt, get_crisis_addition, get_response_templates
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class ClaudeAPI:
 
         try:
             # Use the session manager properly
-            from bot.utils.resource_managers import session_manager
+            from utils.resource_managers import session_manager
             
             headers = {
                 'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ class ClaudeAPI:
         try:
             # Use session manager if available
             try:
-                from bot.utils.resource_managers import session_manager
+                from utils.resource_managers import session_manager
                 await session_manager.close_session("claude")
             except ImportError:
                 logger.debug("Session manager not available")

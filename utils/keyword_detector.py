@@ -9,7 +9,9 @@ import re
 import json
 import logging
 from typing import Dict, Any
-from bot.keywords import get_high_crisis_keywords, get_medium_crisis_keywords, get_low_crisis_keywords
+from keywords.high_crisis import get_high_crisis_keywords
+from keywords.medium_crisis import get_medium_crisis_keywords
+from keywords.low_crisis import get_low_crisis_keywords
 
 logger = logging.getLogger(__name__)
 

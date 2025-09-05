@@ -13,14 +13,18 @@
     "resources_channel": "${BOT_RESOURCES_CHANNEL_NAME}",
     "crisis_role": "${BOT_CRISIS_RESPONSE_ROLE_NAME}",
     "staff_member": "${BOT_STAFF_PING_NAME}",
-    "max_response_length": "${BOT_MAX_RESPONSE_LENGTH}",
-    "preferred_response_length": "${BOT_PREFERRED_RESPONSE_LENGTH}",
+    "max_response_char_length": "${BOT_MAX_RESPONSE_CHAR_LENGTH}",
+    "max_response_word_length": "${BOT_MAX_RESPONSE_WORD_LENGTH}",
+    "preferred_response_char_length": "${BOT_PREFERRED_RESPONSE_CHAR_LENGTH}",
+    "preferred_response_word_length": "${BOT_PREFERRED_RESPONSE_WORD_LENGTH}",
     "defaults": {
       "resources_channel": "queer-resources",
-      "crisis_role": "Crisis Response",
+      "crisis_role": "CrisisResponse",
       "staff_member": "PapaBearDoes",
-      "max_response_length": 2000,
-      "preferred_response_length": 500,
+      "max_response_char_length": 2000,
+      "max_response_word_length": 1000,
+      "preferred_response_char_length": 500,
+      "preferred_response_word_length": 50,
     },
     "validation": {
       "resources_channel": {
@@ -32,13 +36,21 @@
       "staff_member": {
         "type": "string"
       },
-      "max_response_length": {
+      "max_response_char_length": {
         "type": "integer",
         "range": [0, 2000]
       },
-      "preferred_response_length": {
+      "max_response_word_length": {
+        "type": "integer",
+        "range": [0, 1000]
+      },
+      "preferred_response_char_length": {
         "type": "integer",
         "range": [0, 2000]
+      },
+      "preferred_response_word_length": {
+        "type": "integer",
+        "range": [0, 1000]
       }
     }
   },
@@ -69,7 +81,7 @@
   },
   
   "response_templates"": {
-    "ash_context_prompt": "You are responding to ${username} in The Alphabet Cartel Discord server.\n\nCrisis level detected: ${crisis_level}\n\nUser's message: \"${user_message}\"\n\nRespond as Ash would - sardonic but caring, validating their experience while offering gentle guidance. Keep responses under 50 words typically, but expand if the situation requires more depth. Use the crisis response additions if appropriate. Focus on direct support without roleplay actions or emotes.\n\nYour response:",
+    "ash_context_prompt": "You are responding to ${username} in The Alphabet Cartel Discord server.\n\nCrisis level detected: ${crisis_level}\n\nUser's message: \"${user_message}\"\n\nRespond as Ash would - sardonic but caring, validating their experience while offering gentle guidance. Keep responses under ${preferred_response_word_length} words typically, but expand if the situation requires more depth. Use the crisis response additions if appropriate. Focus on direct support without roleplay actions or emotes.\n\nYour response:",
     "rate_limited": "I hear you, and I want to help. I'm at my response limit right now, but check #${resources_channel} or reach out to our staff if you need immediate support.",
     "api_error": "I'm having trouble connecting right now. Please reach out to staff or check #${resources_channel} if you need immediate help.",
     "acknowledgment": "I see you, I'll be with you shortly...",
