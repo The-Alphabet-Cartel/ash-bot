@@ -1,0 +1,199 @@
+{
+  "_metadata": {
+    "file_version": "v3.1-1a-2-1",
+    "last_modified": "2025-09-05",
+    "phase": "1a Step 2 - NLP Integration Manager Configuration",
+    "clean_architecture": "v3.1 Compliant"
+  },
+  "server_settings": {
+    "description": "NLP server connection configuration - MAPPED TO EXISTING ENV VARS per Rule #7",
+    "host": "${GLOBAL_NLP_API_HOST}",
+    "port": "${GLOBAL_NLP_API_PORT}",
+    "defaults": {
+      "host": "172.20.0.11",
+      "port": 8881
+    },
+    "validation": {
+      "host": {
+        "type": "string",
+        "required": true,
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "port": {
+        "type": "int",
+        "range": [1, 65535],
+        "required": true,
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  },
+  "connection_settings": {
+    "description": "NLP server connection timeouts and retry configuration",
+    "timeout": "${GLOBAL_REQUEST_TIMEOUT}",
+    "retry_attempts": "${NLP_RETRY_ATTEMPTS}",
+    "health_check_interval": "${NLP_HEALTH_CHECK_INTERVAL}",
+    "defaults": {
+      "timeout": 30,
+      "retry_attempts": 3,
+      "health_check_interval": 300
+    },
+    "validation": {
+      "timeout": {
+        "type": "int",
+        "range": [5, 120],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "retry_attempts": {
+        "type": "int",
+        "range": [1, 10],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "health_check_interval": {
+        "type": "int",
+        "range": [60, 1800],
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  },
+  "endpoints": {
+    "description": "NLP server API endpoints configuration",
+    "analyze": "/analyze",
+    "false_positive": "/analyze_false_positive",
+    "false_negative": "/analyze_false_negative",
+    "stats": "/stats",
+    "health": "/health",
+    "validation": {
+      "analyze": {
+        "type": "string",
+        "required": true
+      },
+      "false_positive": {
+        "type": "string",
+        "required": true
+      },
+      "false_negative": {
+        "type": "string",
+        "required": true
+      },
+      "stats": {
+        "type": "string",
+        "required": true
+      },
+      "health": {
+        "type": "string",
+        "required": true
+      }
+    }
+  },
+  "validation": {
+    "description": "Message validation settings for NLP analysis",
+    "max_message_length": "${NLP_MAX_MESSAGE_LENGTH}",
+    "min_message_length": "${NLP_MIN_MESSAGE_LENGTH}",
+    "allowed_content_types": ["text", "markdown"],
+    "defaults": {
+      "max_message_length": 4000,
+      "min_message_length": 1,
+      "allowed_content_types": ["text", "markdown"]
+    },
+    "validation": {
+      "max_message_length": {
+        "type": "int",
+        "range": [100, 10000],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "min_message_length": {
+        "type": "int",
+        "range": [1, 50],
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  },
+  "analysis_settings": {
+    "description": "NLP analysis configuration and thresholds",
+    "confidence_threshold": "${NLP_CONFIDENCE_THRESHOLD}",
+    "crisis_detection_enabled": "${NLP_CRISIS_DETECTION_ENABLED}",
+    "staff_review_threshold": "${NLP_STAFF_REVIEW_THRESHOLD}",
+    "gap_detection_threshold": "${NLP_GAP_DETECTION_THRESHOLD}",
+    "defaults": {
+      "confidence_threshold": 0.5,
+      "crisis_detection_enabled": true,
+      "staff_review_threshold": 0.7,
+      "gap_detection_threshold": 0.3
+    },
+    "validation": {
+      "confidence_threshold": {
+        "type": "float",
+        "range": [0.0, 1.0],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "crisis_detection_enabled": {
+        "type": "bool",
+        "required": true,
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "staff_review_threshold": {
+        "type": "float",
+        "range": [0.0, 1.0],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "gap_detection_threshold": {
+        "type": "float",
+        "range": [0.0, 1.0],
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  },
+  "feedback_settings": {
+    "description": "Staff feedback and learning system configuration",
+    "feedback_enabled": "${GLOBAL_LEARNING_SYSTEM_ENABLED}",
+    "max_feedback_per_day": "${BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY}",
+    "feedback_timeout": "${NLP_FEEDBACK_TIMEOUT}",
+    "defaults": {
+      "feedback_enabled": true,
+      "max_feedback_per_day": 50,
+      "feedback_timeout": 30
+    },
+    "validation": {
+      "feedback_enabled": {
+        "type": "bool",
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "max_feedback_per_day": {
+        "type": "int",
+        "range": [1, 1000],
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "feedback_timeout": {
+        "type": "int",
+        "range": [5, 120],
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  },
+  "performance": {
+    "description": "Performance monitoring and optimization settings",
+    "log_analysis_time": "${NLP_LOG_ANALYSIS_TIME}",
+    "cache_results": "${NLP_CACHE_RESULTS}",
+    "max_concurrent_requests": "${NLP_MAX_CONCURRENT_REQUESTS}",
+    "defaults": {
+      "log_analysis_time": true,
+      "cache_results": false,
+      "max_concurrent_requests": 5
+    },
+    "validation": {
+      "log_analysis_time": {
+        "type": "bool",
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "cache_results": {
+        "type": "bool",
+        "fallback_behavior": "use_defaults_with_logging"
+      },
+      "max_concurrent_requests": {
+        "type": "int",
+        "range": [1, 20],
+        "fallback_behavior": "use_defaults_with_logging"
+      }
+    }
+  }
+}
