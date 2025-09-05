@@ -48,7 +48,7 @@ class AshBot(commands.Bot):
         
         try:
             # Initialize v3.0 components
-            await self._initialize_v3_components()
+            await self._initialize_components()
             
             # Initialize API Server
             await self._initialize_api_server()
@@ -67,7 +67,7 @@ class AshBot(commands.Bot):
             logger.exception("Full setup_hook traceback:")
             return False
     
-    async def _initialize_v3_components(self):
+    async def _initialize_components(self):
         """Initialize v3.0 components - no legacy compatibility"""
         logger.info("🔧 Initializing v3.0 components...")
         
