@@ -156,7 +156,7 @@ class EnhancedNLPClient:
                                 return None
                             
                             # Process v3.0 response structure
-                            processed_data = self._process_v3_response(raw_data)
+                            processed_data = self._process_response(raw_data)
                             
                             logger.debug(f"✅ v3.0 NLP analysis successful:")
                             logger.debug(f"   📊 Crisis Level: {processed_data['crisis_level']}")
@@ -217,7 +217,7 @@ class EnhancedNLPClient:
         
         return None
 
-    def _process_v3_response(self, raw_response: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_response(self, raw_response: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process v3.0 NLP response into format compatible with existing ash-bot logic
         while preserving new v3.0 features
