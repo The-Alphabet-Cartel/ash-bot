@@ -1,0 +1,101 @@
+{
+  "_metadata": {
+    "file_version": "v3.1-1a-1",
+    "last_modified": "2025-08-30",
+    "clean_architecture": "v3.1",
+    "description": "Unified logging configuration for Ash-Thrash",
+    "compliance": "Clean Architecture Standards",
+    "manager": "LoggingConfigManager"
+  },
+
+  "global_settings": {
+    "description": "Core logging settings",
+    "log_level": "${GLOBAL_LOG_LEVEL}",
+    "log_file": "${BOT_LOG_FILE}",
+    "log_directory": "${BOT_LOGS_DIR}",
+    "enable_console_output": "${GLOBAL_LOGGING_ENABLE_CONSOLE}",
+    "enable_file_output": "${GLOBAL_LOGGING_ENABLE_FILE}",
+    "defaults": {
+      "log_level": "INFO",
+      "log_file": "ash-thrash.log",
+      "log_directory": "./logs",
+      "enable_console_output": true,
+      "enable_file_output": true
+    },
+    "validation": {
+      "log_level": {
+        "type": "string",
+        "allowed_values": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        "description": "Global logging level for the entire system"
+      },
+      "log_file": {
+        "type": "string",
+        "description": "Primary log file name"
+      },
+      "log_directory": {
+        "type": "string",
+        "description": "Directory for log files (created if missing)"
+      },
+      "enable_console_output": {
+        "type": "boolean",
+        "description": "Enable logging output to console/stdout"
+      },
+      "enable_file_output": {
+        "type": "boolean",
+        "description": "Enable logging output to file"
+      }
+    }
+  },
+
+  "detailed_logging": {
+    "description": "Granular logging controls for different system components",
+    "enable_detailed": "${BOT_LOGGING_ENABLE_DETAILED}",
+    "include_raw_labels": "${BOT_LOGGING_INCLUDE_RAW_LABELS}",
+    "defaults": {
+      "enable_detailed": true,
+      "include_raw_labels": true
+    },
+    "validation": {
+      "enable_detailed": {
+        "type": "boolean",
+        "description": "Enable detailed logging across the system"
+      },
+      "include_raw_labels": {
+        "type": "boolean",
+        "description": "Include raw model prediction labels in logs"
+      }
+    }
+  },
+
+  "development_logging": {
+    "description": "Debug and development logging settings",
+    "trace_requests": "${BOT_LOGGING_TRACE_REQUESTS}",
+    "log_configuration_loading": "${BOT_LOGGING_CONFIG_LOADING}",
+    "log_manager_initialization": "${BOT_LOGGING_MANAGER_INIT}",
+    "log_environment_variables": "${BOT_LOGGING_ENV_VARS}",
+    "defaults": {
+      "trace_requests": false,
+      "log_configuration_loading": false,
+      "log_manager_initialization": true,
+      "log_environment_variables": false
+    },
+    "validation": {
+      "trace_requests": {
+        "type": "boolean",
+        "description": "Trace HTTP requests (development only)"
+      },
+      "log_configuration_loading": {
+        "type": "boolean",
+        "description": "Log configuration loading process"
+      },
+      "log_manager_initialization": {
+        "type": "boolean",
+        "description": "Log manager initialization events"
+      },
+      "log_environment_variables": {
+        "type": "boolean",
+        "description": "Log environment variable values (security sensitive)"
+      }
+    }
+  }
+}
