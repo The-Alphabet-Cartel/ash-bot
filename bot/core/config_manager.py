@@ -17,7 +17,7 @@ class ConfigValidationResult:
     errors: List[str]
     warnings: List[str]
 
-class ConfigManager:
+class BotConfigManager:
     """Enhanced configuration management with Docker secrets support"""
     
     def __init__(self, env_file: Optional[str] = None):
