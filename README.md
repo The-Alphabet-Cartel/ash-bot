@@ -1,4 +1,4 @@
-# Ash Bot v3.0 - Advanced Discord Crisis Response System
+# Ash Bot v3.1 - Advanced Discord Crisis Response System
 
 **Intelligent mental health crisis detection and response bot for LGBTQIA+ Discord communities**
 
@@ -6,13 +6,12 @@
 [![Website](https://img.shields.io/badge/Website-alphabetcartel.org-blue)](http://alphabetcartel.org)
 [![GitHub](https://img.shields.io/badge/Branch-Main-green)](https://github.com/the-alphabet-cartel/ash-bot)
 
-## 🚀 What is Ash Bot v3.0?
+## 🚀 What is Ash Bot v3.1?
 
-Ash Bot v3.0 is a sophisticated **Discord crisis response system** that combines intelligent keyword detection with advanced NLP analysis to provide 24/7 mental health crisis support in LGBTQIA+ communities. Built with safety-first design principles, Ash creates a protective layer of support while maintaining community privacy and autonomy.
+Ash Bot v3.1 is a sophisticated **Discord crisis response system** that utilizes advanced NLP analysis to provide 24/7 mental health crisis support in LGBTQIA+ communities. Built with safety-first design principles, Ash creates a protective layer of support while maintaining community privacy and autonomy.
 
 ### Key Features
 
-- **🧠 Hybrid Detection System**: Combines keyword patterns with NLP ensemble analysis
 - **⚡ Real-time Crisis Response**: Sub-second message analysis and immediate support
 - **🛡️ Multi-tier Crisis Escalation**: Graduated response based on crisis severity
 - **🏳️‍🌈 LGBTQIA+ Aware**: Trained on community-specific language and experiences
@@ -21,21 +20,19 @@ Ash Bot v3.0 is a sophisticated **Discord crisis response system** that combines
 
 ## 🤖 Architecture Overview
 
-### Hybrid Detection Pipeline
+### Detection Pipeline
 ```
-Discord Message → Keyword Detection → Context Analysis → NLP Ensemble → Crisis Assessment → Response
+Discord Message → NLP Ensemble → Context Analysis → Crisis Assessment → Response
 ```
 
 ### Integration Components
-- **[Ash NLP](https://github.com/the-alphabet-cartel/ash-nlp)** - Three Zero-Shot Model Ensemble crisis detection (Port 8881)
-- **[Ash Dashboard](https://github.com/the-alphabet-cartel/ash-dash)** - Analytics and monitoring (Port 8883) *[Not Yet Implemented]*
-- **[Ash Thrash](https://github.com/the-alphabet-cartel/ash-thrash)** - Testing and validation (Port 8884) *[Not Yet Implemented]*
+- **[Ash NLP](https://github.com/the-alphabet-cartel/ash-nlp)** - Three Zero-Shot Model Ensemble Crisis Detection (Port 8881)
 
 ## 🎯 Crisis Response System
 
 ### Three-Tier Crisis Levels
 
-#### 🚨 High Crisis (Immediate Intervention)
+#### 🚨 High/Critical Crisis (Immediate Intervention)
 - **Detection**: Suicidal ideation, immediate harm indicators
 - **Response**: Instant crisis resources + Direct staff DM + Team alert with role ping
 - **Speed**: <2 seconds from detection to full escalation
@@ -67,16 +64,9 @@ Hey ash, what if I...
 ### Crisis Management Commands
 **(Requires CrisisResponse Role)**
 
-#### Keyword Management
-- `/add_keyword` - Add custom crisis detection keywords
-- `/remove_keyword` - Remove keywords from detection
-- `/list_keywords` - View current keyword sets by crisis level
-- `/keyword_stats` - Statistics overview of keyword system
-
 #### Advanced Analysis
-- `/analyze_message` - Test message detection pipeline *[Planned v3.1]*
-- `/context_stats` - Context detection performance *[Planned v3.1]*
-- `/suggestion_review` - Review AI-suggested keywords *[Planned v3.1]*
+- `/analyze_message` - Test message detection pipeline
+- `/context_stats` - Context detection performance
 
 #### False Positive Learning
 - `/report_false_positive` - Report incorrect crisis detection
@@ -87,76 +77,18 @@ Hey ash, what if I...
 - `/crisis_stats` - Crisis response statistics
 - `/conversation_stats` - Conversation system metrics
 - `/active_conversations` - View ongoing crisis conversations
-- `/test_mention` - Test conversation trigger system
 
 ### Public Commands
 **(Available to all users)**
 
 #### Information & Help
-- `/help` - Bot capabilities and usage guide
-- `/resources` - Mental health resources and crisis hotlines
-- `/privacy` - Privacy policy and data handling information
+- `/help` - Bot capabilities and usage guide *Planned*
+- `/resources` - Mental health resources and crisis hotlines *Planned*
+- `/privacy` - Privacy policy and data handling information *Planned*
 
 #### Crisis Support
-- `/crisis_chat` - Start a private crisis conversation *[Planned v3.1]*
-- `/anonymous_report` - Anonymous crisis reporting *[Planned v3.1]*
-
-## 📊 Performance Metrics
-
-### v3.0 Achievements
-| Metric | v2.x | v3.0 | Improvement |
-|--------|------|------|-------------|
-| **Crisis Detection Accuracy** | 78% | 89% | **+11%** |
-| **False Positive Rate** | 12% | 7% | **42% reduction** |
-| **Response Time** | 850ms | 320ms | **62% faster** |
-| **Conversation Engagement** | 23% | 67% | **+44%** |
-| **Crisis Resolution Rate** | 71% | 85% | **+14%** |
-
-### Community Impact
-- **24/7 Coverage**: Never-offline crisis monitoring
-- **1,200+ Crisis Interventions**: Successful crisis responses in 2024
-- **3.2 Second Average Response**: From detection to initial support
-- **94% User Satisfaction**: From crisis response feedback surveys
-
-## 🏗️ Installation & Setup
-
-### Prerequisites
-- **Docker & Docker Compose** (Recommended)
-- **Python 3.9+** (For local development)
-- **Discord Bot Token** with required permissions
-- **Ash NLP Service** running and accessible
-
-### Quick Start with Docker
-```bash
-# Clone the repository
-git clone https://github.com/the-alphabet-cartel/ash-bot.git
-cd ash-bot
-
-# Copy and configure environment
-cp .env.template .env
-# Edit .env with your Discord bot token and configuration
-
-# Start the bot
-docker-compose up -d
-
-# Verify startup
-docker-compose logs -f ash-bot
-```
-
-### Configuration
-```bash
-# Required Environment Variables
-BOT_DISCORD_TOKEN=your_discord_bot_token
-BOT_NLP_SERVICE_URL=http://10.20.30.253:8881
-BOT_CRISIS_RESPONSE_CHANNEL_ID=your_crisis_channel_id
-BOT_CRISIS_RESPONSE_ROLE_ID=your_crisis_role_id
-
-# Optional Conversation Features
-BOT_CONVERSATION_REQUIRES_MENTION=true
-BOT_CONVERSATION_SETUP_INSTRUCTIONS=true
-BOT_CONVERSATION_ALLOW_STARTERS=true
-BOT_CONVERSATION_TRIGGER_PHRASES=ash,hey ash,@ash
-```
+- `/crisis_chat` - Start a private crisis conversation *Planned*
+- `/anonymous_report` - Anonymous crisis reporting *Planned*
 
 ## 🔒 Security & Privacy
 
@@ -175,10 +107,10 @@ BOT_CONVERSATION_TRIGGER_PHRASES=ash,hey ash,@ash
 ### Privacy Commitment
 - **No User Profiling**: Individual patterns not tracked or stored
 - **Anonymous Analytics**: Only aggregate usage statistics collected
-- **Opt-out Support**: Users can request exclusion from monitoring
+- **Opt-out Support**: Users can request exclusion from monitoring *Planned*
 - **Transparent Operation**: All detection logic open source and auditable
 
-## 🧪 Advanced Features (v3.0)
+## 🧪 Advanced Features
 
 ### Context-Aware Detection
 ```python
@@ -193,10 +125,10 @@ BOT_CONVERSATION_TRIGGER_PHRASES=ash,hey ash,@ash
 ```
 
 ### Intelligent Conversation Flow
-- **Natural Triggers**: Responds to mentions and conversation starters
+- **Natural Triggers**: Responds to mentions and conversation starters after initial contact
 - **Context Preservation**: Maintains conversation awareness for 5 minutes
 - **Graceful Transitions**: Smooth conversation conclusion with resource offers
-- **Crisis Override**: High-priority crises bypass conversation limits
+- **Crisis Override**: Critical-priority crises bypass conversation limits
 
 ### Community-Specific Patterns
 - **LGBTQIA+ Language**: Understands community-specific expressions and concerns
@@ -218,75 +150,9 @@ curl http://10.20.30.253:8882/stats
 curl http://10.20.30.253:8882/conversation_stats
 ```
 
-### Dashboard Integration *[Planned]*
-- **Crisis Detection Trends**: Visualize detection patterns over time
-- **Response Effectiveness**: Track crisis resolution outcomes
-- **False Positive Analysis**: Monitor and reduce false alarms
-- **Community Insights**: Understand community support needs
-
-## 🚧 Roadmap
-
-### v3.1 "Enhanced Learning" (Q4 2025)
-- **Adaptive Keyword System**: Keywords that learn from NLP feedback
-- **Context Expansion**: Advanced gaming, creative, and community context detection
-- **Phrase Discovery**: AI-powered crisis phrase identification
-- **Advanced Analytics**: Deeper insights into community patterns
-
-### v3.2 "Community Intelligence" (Q1 2026)
-- **Custom Model Support**: Server-specific trained models
-- **Multi-language Detection**: Support beyond English
-- **Federated Learning**: Cross-community pattern sharing (privacy-preserving)
-- **Advanced Conversation AI**: More sophisticated crisis conversations
-
-### v4.0 "Preventive Care" (Q2 2026)
-- **Risk Pattern Recognition**: Early warning system for crisis prevention
-- **Wellness Tracking**: Optional individual wellness trend monitoring
-- **Community Health Insights**: Aggregate community mental health trends
-- **Integration Ecosystem**: Full ash-dash and ash-thrash integration
-
 ## 🤝 Contributing
 
 We welcome contributions from community members who share our commitment to LGBTQIA+ safety and mental health support.
-
-### Development Setup
-```bash
-# Clone and setup development environment
-git clone https://github.com/the-alphabet-cartel/ash-bot.git
-cd ash-bot
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-python -m pytest tests/
-
-# Start in development mode
-python main.py
-```
-
-### Contribution Guidelines
-- **Safety First**: All changes must prioritize user safety
-- **Privacy Preservation**: No features that compromise user privacy
-- **Community Input**: Major changes require community discussion
-- **Testing Required**: All features must include comprehensive tests
-- **Documentation**: Code and user-facing documentation required
-
-## 📚 Documentation
-
-### For Crisis Response Teams
-- **[Team Guide](docs/team/team_guide_v3_0.md)** - Complete guide for crisis response team members
-- **[Crisis Procedures](docs/team/crisis_procedures.md)** - Step-by-step crisis response protocols
-- **[Training Materials](docs/team/training_guide.md)** - Training resources for new team members
-
-### For Developers
-- **[API Documentation](docs/tech/api_v3_0.md)** - Technical API reference
-- **[Architecture Guide](docs/tech/architecture.md)** - System design and component interaction
-- **[Development Guide](docs/development/setup.md)** - Local development setup
-
-### For System Administrators
-- **[Deployment Guide](docs/deployment/production.md)** - Production deployment instructions
-- **[Troubleshooting](docs/troubleshooting_v3_0.md)** - Common issues and solutions
-- **[Performance Tuning](docs/admin/performance.md)** - Optimization and scaling guide
 
 ## 📞 Support & Community
 
@@ -294,7 +160,6 @@ python main.py
 - **Discord Community**: [Join our server](https://discord.gg/alphabetcartel) for community support
 - **GitHub Issues**: Report bugs and request features
 - **Crisis Team Direct**: Contact crisis response team for urgent issues
-- **Documentation**: Comprehensive guides for all user types
 
 ### Crisis Resources
 If you're in crisis right now:
@@ -306,6 +171,8 @@ If you're in crisis right now:
 ## 📄 License
 
 This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+
+**Open source for community mental health support.**
 
 ### License Summary
 - ✅ **Freedom to use**: Use for any purpose including commercial
