@@ -1,0 +1,365 @@
+{
+  "needs_response": false,
+  "crisis_level": "low",
+  "confidence_score": 0.2722211540745688,
+  "detected_categories": [],
+  "method": "enhanced_three_step_analysis",
+  "processing_time_ms": 842.3845767974854,
+  "model_info": "Clean Architecture - CrisisAnalyzer Complete",
+  "reasoning": "Single analysis via CrisisAnalyzer with enhanced validation",
+  "analysis": {
+    "complete_analysis": {
+      "crisis_score": 0.17222115407456884,
+      "confidence_score": 0.2722211540745688,
+      "crisis_level": "low",
+      "needs_response": false,
+      "requires_staff_review": false,
+      "method": "enhanced_three_step_analysis",
+      "detected_categories": [],
+      "ai_model_details": {
+        "models_used": 3,
+        "individual_results": {
+          "depression": {
+            "score": 0.16316013611280003,
+            "confidence": 0.26316013611280004,
+            "model": "MoritzLaurer/deberta-v3-base-zeroshot-v2.0",
+            "model_type": "depression",
+            "method": "zero_shot_classification",
+            "labels_used": 14,
+            "labels": [
+              "person actively expressing suicidal thoughts, death wishes, or specific plans to end their life",
+              "person stating they want to die, kill themselves, or commit suicide with immediate intent",
+              "person describing specific suicide methods, plans, preparations, or final arrangements",
+              "person expressing complete hopelessness, that nothing will ever get better, or life has no meaning",
+              "person stating they are beyond help, cannot be saved, or are past the point of return",
+              "person describing feeling trapped with no way out or escape from their situation",
+              "person describing active self-harm, cutting, burning, or intentional self-injury behaviors",
+              "person expressing desire to hurt themselves or engage in reckless dangerous behaviors",
+              "person showing severe depression with major breakdown and inability to function daily",
+              "person experiencing moderate depression, significant sadness, but maintaining some daily functioning",
+              "person expressing emotional difficulty, low mood, or distress but still coping with life",
+              "person describing temporary depression, bad periods, or situational emotional struggles",
+              "person showing stable mental health with normal emotional ups and downs and healthy coping",
+              "person demonstrating positive mental health, emotional resilience, and psychological wellbeing"
+            ],
+            "hypothesis_template": "This text expresses {label}",
+            "actual_hypotheses": [
+              "This text expresses person actively expressing suicidal thoughts, death wishes, or specific plans to end their life",
+              "This text expresses person stating they want to die, kill themselves, or commit suicide with immediate intent",
+              "This text expresses person describing specific suicide methods, plans, preparations, or final arrangements",
+              "This text expresses person expressing complete hopelessness, that nothing will ever get better, or life has no meaning",
+              "This text expresses person stating they are beyond help, cannot be saved, or are past the point of return",
+              "This text expresses person describing feeling trapped with no way out or escape from their situation",
+              "This text expresses person describing active self-harm, cutting, burning, or intentional self-injury behaviors",
+              "This text expresses person expressing desire to hurt themselves or engage in reckless dangerous behaviors",
+              "This text expresses person showing severe depression with major breakdown and inability to function daily",
+              "This text expresses person experiencing moderate depression, significant sadness, but maintaining some daily functioning",
+              "This text expresses person expressing emotional difficulty, low mood, or distress but still coping with life",
+              "This text expresses person describing temporary depression, bad periods, or situational emotional struggles",
+              "This text expresses person showing stable mental health with normal emotional ups and downs and healthy coping",
+              "This text expresses person demonstrating positive mental health, emotional resilience, and psychological wellbeing"
+            ],
+            "transformers_used": true,
+            "device": "cuda",
+            "ensemble_manager": true
+          },
+          "sentiment": {
+            "score": 0.28589630126953125,
+            "confidence": 0.38589630126953123,
+            "model": "Lowerated/lm6-deberta-v3-topic-sentiment",
+            "model_type": "sentiment",
+            "method": "zero_shot_classification",
+            "labels_used": 11,
+            "labels": [
+              "person expressing devastating emotional pain, complete despair, or overwhelming hopelessness with crisis-level intensity",
+              "person showing intense destructive emotions, uncontrollable rage, or violent emotional breakdown",
+              "person displaying emotional devastation, crushing sadness, or complete psychological collapse",
+              "person expressing significant emotional pain, deep sadness, intense fear, anxiety, or distressing emotions",
+              "person showing frustration, anger, disappointment, worry, or moderate negative emotional states",
+              "person displaying emotional struggle, difficulty coping, or ongoing negative emotional experiences",
+              "person expressing neutral emotions, balanced feelings, or stable emotional state without extremes",
+              "person showing factual communication, casual conversation, or emotionally neutral expressions",
+              "person expressing contentment, satisfaction, mild happiness, gratitude, or positive emotions",
+              "person showing hope, optimism, appreciation, joy, or constructive positive emotional states",
+              "person expressing intense joy, excitement, euphoria, overwhelming happiness, or peak positive emotional highs"
+            ],
+            "hypothesis_template": "This text expresses {label}",
+            "actual_hypotheses": [
+              "This text expresses person expressing devastating emotional pain, complete despair, or overwhelming hopelessness with crisis-level intensity",
+              "This text expresses person showing intense destructive emotions, uncontrollable rage, or violent emotional breakdown",
+              "This text expresses person displaying emotional devastation, crushing sadness, or complete psychological collapse",
+              "This text expresses person expressing significant emotional pain, deep sadness, intense fear, anxiety, or distressing emotions",
+              "This text expresses person showing frustration, anger, disappointment, worry, or moderate negative emotional states",
+              "This text expresses person displaying emotional struggle, difficulty coping, or ongoing negative emotional experiences",
+              "This text expresses person expressing neutral emotions, balanced feelings, or stable emotional state without extremes",
+              "This text expresses person showing factual communication, casual conversation, or emotionally neutral expressions",
+              "This text expresses person expressing contentment, satisfaction, mild happiness, gratitude, or positive emotions",
+              "This text expresses person showing hope, optimism, appreciation, joy, or constructive positive emotional states",
+              "This text expresses person expressing intense joy, excitement, euphoria, overwhelming happiness, or peak positive emotional highs"
+            ],
+            "transformers_used": true,
+            "device": "cuda",
+            "ensemble_manager": true
+          },
+          "emotional_distress": {
+            "score": 0.11466984857212413,
+            "confidence": 0.21466984857212412,
+            "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+            "model_type": "emotional_distress",
+            "method": "zero_shot_classification",
+            "labels_used": 12,
+            "labels": [
+              "person in acute psychological crisis, mental health emergency, completely unable to cope or function",
+              "person experiencing emotional breakdown, psychological emergency, or complete loss of emotional control",
+              "person showing total inability to manage emotions, daily life, or basic functioning",
+              "person experiencing severe emotional overwhelm with major difficulty managing daily life and responsibilities",
+              "person showing serious emotional distress that significantly impairs work, relationships, or functioning",
+              "person displaying major emotional strain affecting multiple important life areas",
+              "person experiencing moderate emotional distress with some difficulty managing daily activities",
+              "person showing emotional challenges, stress, or strain but maintaining basic life functioning",
+              "person displaying concerning emotional difficulty that interferes with some normal activities",
+              "person handling typical life stress with adequate emotional regulation and healthy coping strategies",
+              "person experiencing normal daily stressors but managing them appropriately with good coping",
+              "person demonstrating excellent emotional resilience, optimal coping skills, and strong psychological wellbeing"
+            ],
+            "hypothesis_template": "This text expresses {label}",
+            "actual_hypotheses": [
+              "This text expresses person in acute psychological crisis, mental health emergency, completely unable to cope or function",
+              "This text expresses person experiencing emotional breakdown, psychological emergency, or complete loss of emotional control",
+              "This text expresses person showing total inability to manage emotions, daily life, or basic functioning",
+              "This text expresses person experiencing severe emotional overwhelm with major difficulty managing daily life and responsibilities",
+              "This text expresses person showing serious emotional distress that significantly impairs work, relationships, or functioning",
+              "This text expresses person displaying major emotional strain affecting multiple important life areas",
+              "This text expresses person experiencing moderate emotional distress with some difficulty managing daily activities",
+              "This text expresses person showing emotional challenges, stress, or strain but maintaining basic life functioning",
+              "This text expresses person displaying concerning emotional difficulty that interferes with some normal activities",
+              "This text expresses person handling typical life stress with adequate emotional regulation and healthy coping strategies",
+              "This text expresses person experiencing normal daily stressors but managing them appropriately with good coping",
+              "This text expresses person demonstrating excellent emotional resilience, optimal coping skills, and strong psychological wellbeing"
+            ],
+            "transformers_used": true,
+            "device": "cuda",
+            "ensemble_manager": true
+          }
+        },
+        "base_confidence": 0.2722211540745688,
+        "zero_shot_labels_info": {}
+      },
+      "pattern_analysis": {
+        "patterns_matched": [],
+        "enhancement_boost": 0,
+        "pattern_confidence": 0
+      },
+      "learning_adjustments": {
+        "applied": true,
+        "score_adjustment": 0,
+        "metadata": {
+          "original_score": 0.17222115407456884,
+          "adjustment_factor": 1,
+          "learning_enabled": true,
+          "user_id": "test_user",
+          "channel_id": "test_channel"
+        }
+      },
+      "analysis_execution_tracking": {
+        "tracking_enabled": true,
+        "message_metadata": {
+          "message_length": 57,
+          "user_id": "test_user",
+          "channel_id": "test_channel",
+          "timestamp": 1757093944.2923431
+        },
+        "step_1_zero_shot_ai": {
+          "executed": true,
+          "started": true,
+          "completed": true,
+          "processing_time_ms": 841.9191837310791,
+          "method": "ensemble_classification",
+          "models_used": 3,
+          "individual_scores": {
+            "depression": {
+              "score": 0.16316013611280003,
+              "confidence": 0.26316013611280004,
+              "model": "MoritzLaurer/deberta-v3-base-zeroshot-v2.0",
+              "model_type": "depression",
+              "method": "zero_shot_classification",
+              "labels_used": 14,
+              "labels": [
+                "person actively expressing suicidal thoughts, death wishes, or specific plans to end their life",
+                "person stating they want to die, kill themselves, or commit suicide with immediate intent",
+                "person describing specific suicide methods, plans, preparations, or final arrangements",
+                "person expressing complete hopelessness, that nothing will ever get better, or life has no meaning",
+                "person stating they are beyond help, cannot be saved, or are past the point of return",
+                "person describing feeling trapped with no way out or escape from their situation",
+                "person describing active self-harm, cutting, burning, or intentional self-injury behaviors",
+                "person expressing desire to hurt themselves or engage in reckless dangerous behaviors",
+                "person showing severe depression with major breakdown and inability to function daily",
+                "person experiencing moderate depression, significant sadness, but maintaining some daily functioning",
+                "person expressing emotional difficulty, low mood, or distress but still coping with life",
+                "person describing temporary depression, bad periods, or situational emotional struggles",
+                "person showing stable mental health with normal emotional ups and downs and healthy coping",
+                "person demonstrating positive mental health, emotional resilience, and psychological wellbeing"
+              ],
+              "hypothesis_template": "This text expresses {label}",
+              "actual_hypotheses": [
+                "This text expresses person actively expressing suicidal thoughts, death wishes, or specific plans to end their life",
+                "This text expresses person stating they want to die, kill themselves, or commit suicide with immediate intent",
+                "This text expresses person describing specific suicide methods, plans, preparations, or final arrangements",
+                "This text expresses person expressing complete hopelessness, that nothing will ever get better, or life has no meaning",
+                "This text expresses person stating they are beyond help, cannot be saved, or are past the point of return",
+                "This text expresses person describing feeling trapped with no way out or escape from their situation",
+                "This text expresses person describing active self-harm, cutting, burning, or intentional self-injury behaviors",
+                "This text expresses person expressing desire to hurt themselves or engage in reckless dangerous behaviors",
+                "This text expresses person showing severe depression with major breakdown and inability to function daily",
+                "This text expresses person experiencing moderate depression, significant sadness, but maintaining some daily functioning",
+                "This text expresses person expressing emotional difficulty, low mood, or distress but still coping with life",
+                "This text expresses person describing temporary depression, bad periods, or situational emotional struggles",
+                "This text expresses person showing stable mental health with normal emotional ups and downs and healthy coping",
+                "This text expresses person demonstrating positive mental health, emotional resilience, and psychological wellbeing"
+              ],
+              "transformers_used": true,
+              "device": "cuda",
+              "ensemble_manager": true
+            },
+            "sentiment": {
+              "score": 0.28589630126953125,
+              "confidence": 0.38589630126953123,
+              "model": "Lowerated/lm6-deberta-v3-topic-sentiment",
+              "model_type": "sentiment",
+              "method": "zero_shot_classification",
+              "labels_used": 11,
+              "labels": [
+                "person expressing devastating emotional pain, complete despair, or overwhelming hopelessness with crisis-level intensity",
+                "person showing intense destructive emotions, uncontrollable rage, or violent emotional breakdown",
+                "person displaying emotional devastation, crushing sadness, or complete psychological collapse",
+                "person expressing significant emotional pain, deep sadness, intense fear, anxiety, or distressing emotions",
+                "person showing frustration, anger, disappointment, worry, or moderate negative emotional states",
+                "person displaying emotional struggle, difficulty coping, or ongoing negative emotional experiences",
+                "person expressing neutral emotions, balanced feelings, or stable emotional state without extremes",
+                "person showing factual communication, casual conversation, or emotionally neutral expressions",
+                "person expressing contentment, satisfaction, mild happiness, gratitude, or positive emotions",
+                "person showing hope, optimism, appreciation, joy, or constructive positive emotional states",
+                "person expressing intense joy, excitement, euphoria, overwhelming happiness, or peak positive emotional highs"
+              ],
+              "hypothesis_template": "This text expresses {label}",
+              "actual_hypotheses": [
+                "This text expresses person expressing devastating emotional pain, complete despair, or overwhelming hopelessness with crisis-level intensity",
+                "This text expresses person showing intense destructive emotions, uncontrollable rage, or violent emotional breakdown",
+                "This text expresses person displaying emotional devastation, crushing sadness, or complete psychological collapse",
+                "This text expresses person expressing significant emotional pain, deep sadness, intense fear, anxiety, or distressing emotions",
+                "This text expresses person showing frustration, anger, disappointment, worry, or moderate negative emotional states",
+                "This text expresses person displaying emotional struggle, difficulty coping, or ongoing negative emotional experiences",
+                "This text expresses person expressing neutral emotions, balanced feelings, or stable emotional state without extremes",
+                "This text expresses person showing factual communication, casual conversation, or emotionally neutral expressions",
+                "This text expresses person expressing contentment, satisfaction, mild happiness, gratitude, or positive emotions",
+                "This text expresses person showing hope, optimism, appreciation, joy, or constructive positive emotional states",
+                "This text expresses person expressing intense joy, excitement, euphoria, overwhelming happiness, or peak positive emotional highs"
+              ],
+              "transformers_used": true,
+              "device": "cuda",
+              "ensemble_manager": true
+            },
+            "emotional_distress": {
+              "score": 0.11466984857212413,
+              "confidence": 0.21466984857212412,
+              "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+              "model_type": "emotional_distress",
+              "method": "zero_shot_classification",
+              "labels_used": 12,
+              "labels": [
+                "person in acute psychological crisis, mental health emergency, completely unable to cope or function",
+                "person experiencing emotional breakdown, psychological emergency, or complete loss of emotional control",
+                "person showing total inability to manage emotions, daily life, or basic functioning",
+                "person experiencing severe emotional overwhelm with major difficulty managing daily life and responsibilities",
+                "person showing serious emotional distress that significantly impairs work, relationships, or functioning",
+                "person displaying major emotional strain affecting multiple important life areas",
+                "person experiencing moderate emotional distress with some difficulty managing daily activities",
+                "person showing emotional challenges, stress, or strain but maintaining basic life functioning",
+                "person displaying concerning emotional difficulty that interferes with some normal activities",
+                "person handling typical life stress with adequate emotional regulation and healthy coping strategies",
+                "person experiencing normal daily stressors but managing them appropriately with good coping",
+                "person demonstrating excellent emotional resilience, optimal coping skills, and strong psychological wellbeing"
+              ],
+              "hypothesis_template": "This text expresses {label}",
+              "actual_hypotheses": [
+                "This text expresses person in acute psychological crisis, mental health emergency, completely unable to cope or function",
+                "This text expresses person experiencing emotional breakdown, psychological emergency, or complete loss of emotional control",
+                "This text expresses person showing total inability to manage emotions, daily life, or basic functioning",
+                "This text expresses person experiencing severe emotional overwhelm with major difficulty managing daily life and responsibilities",
+                "This text expresses person showing serious emotional distress that significantly impairs work, relationships, or functioning",
+                "This text expresses person displaying major emotional strain affecting multiple important life areas",
+                "This text expresses person experiencing moderate emotional distress with some difficulty managing daily activities",
+                "This text expresses person showing emotional challenges, stress, or strain but maintaining basic life functioning",
+                "This text expresses person displaying concerning emotional difficulty that interferes with some normal activities",
+                "This text expresses person handling typical life stress with adequate emotional regulation and healthy coping strategies",
+                "This text expresses person experiencing normal daily stressors but managing them appropriately with good coping",
+                "This text expresses person demonstrating excellent emotional resilience, optimal coping skills, and strong psychological wellbeing"
+              ],
+              "transformers_used": true,
+              "device": "cuda",
+              "ensemble_manager": true
+            }
+          },
+          "ensemble_confidence": 0.2722211540745688,
+          "ai_classification_successful": true,
+          "zero_shot_labels_info": {}
+        },
+        "step_2_pattern_enhancement": {
+          "executed": true,
+          "started": true,
+          "completed": true,
+          "processing_time_ms": 0.037670135498046875,
+          "patterns_matched": [],
+          "pattern_categories": [],
+          "enhancement_applied": false,
+          "confidence_boost": 0,
+          "pattern_analysis_successful": true
+        },
+        "step_3_learning_adjustments": {
+          "executed": true,
+          "started": true,
+          "completed": true,
+          "processing_time_ms": 0.019311904907226562,
+          "threshold_adjustments": {},
+          "confidence_modifications": 0,
+          "learning_metadata": {
+            "original_score": 0.17222115407456884,
+            "adjustment_factor": 1,
+            "learning_enabled": true,
+            "user_id": "test_user",
+            "channel_id": "test_channel"
+          },
+          "learning_applied": true
+        },
+        "fallback_scenarios": {
+          "ai_models_failed": false,
+          "pattern_only_used": false,
+          "emergency_fallback": false
+        },
+        "performance_metrics": {
+          "target_time_ms": 500,
+          "optimization_applied": true
+        }
+      },
+      "tracking_summary": {
+        "total_processing_time_ms": 842.2906398773193,
+        "steps_attempted": 3,
+        "steps_completed": 3,
+        "success_rate": 100,
+        "performance_target_met": false,
+        "analysis_method": "enhanced_three_step_analysis",
+        "crisis_detection_pipeline": {
+          "ai_models_used": true,
+          "pattern_enhancement_applied": true,
+          "learning_adjustments_applied": true
+        }
+      }
+    },
+    "architecture": "clean",
+    "redundant_processing": false,
+    "feature_flags_respected": true,
+    "api_processing_time_ms": 842.3845767974854,
+    "enhanced_validation": true,
+    "context_analysis_available": false
+  }
+}
