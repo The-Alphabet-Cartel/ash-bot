@@ -274,6 +274,12 @@ except Exception as e:
   }
 }
 ```
+**Note:** *all data types in the JSON validation fields need to be full words*
+- "integer", not "int"
+- "float", not "flt"
+- "string", not "str"
+- "boolean", not "bool"
+- "list" for dictionaries
 
 ---
 
