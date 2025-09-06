@@ -1,0 +1,188 @@
+{
+  "_metadata": {
+    "file_version": "v3.1-1a-3-1",
+    "last_modified": "2025-09-05",
+    "phase": "1a Step 3 - Crisis Analysis Manager Configuration",
+    "clean_architecture": "v3.1 Compliant"
+  },
+
+  "crisis_levels": {
+    "description": "Crisis level definitions and thresholds for analysis",
+    "definitions": {
+      "none": {
+        "priority": 0,
+        "description": "No crisis indicators detected",
+        "response_required": false,
+        "staff_notification": false
+      },
+      "low": {
+        "priority": 1,
+        "description": "Minor crisis indicators - supportive response",
+        "response_required": true,
+        "staff_notification": false
+      },
+      "medium": {
+        "priority": 2,
+        "description": "Moderate crisis indicators - enhanced support",
+        "response_required": true,
+        "staff_notification": true
+      },
+      "high": {
+        "priority": 3,
+        "description": "Severe crisis indicators - immediate intervention",
+        "response_required": true,
+        "staff_notification": true
+      }
+    },
+    "override_levels": "${BOT_CRISIS_OVERRIDE_LEVELS}",
+    "defaults": {
+      "override_levels": ["medium", "high"]
+    },
+    "validation": {
+      "override_levels": {
+        "type": "list",
+        "required": true
+      }
+    }
+  },
+
+  "thresholds": {
+    "description": "Confidence thresholds for crisis level determination",
+    "confidence_thresholds": {
+      "low_crisis_min": "${CRISIS_LOW_THRESHOLD}",
+      "medium_crisis_min": "${CRISIS_MEDIUM_THRESHOLD}",
+      "high_crisis_min": "${CRISIS_HIGH_THRESHOLD}",
+      "defaults": {
+        "low_crisis_min": 0.3,
+        "medium_crisis_min": 0.6,
+        "high_crisis_min": 0.8
+      },
+      "validation": {
+        "low_crisis_min": {
+          "type": "float",
+          "range": [0.001, 1.000]
+        },
+        "medium_crisis_min": {
+          "type": "float",
+          "range": [0.001, 1.000]
+        },
+        "high_crisis_min": {
+          "type": "float",
+          "range": [0.001, 1.000]
+        }
+      }
+    },
+    "gap_detection": {
+      "gap_threshold": "${NLP_GAP_DETECTION_THRESHOLD}",
+      "gap_notification_enabled": "${BOT_ENABLE_GAP_NOTIFICATIONS}",
+      "gap_notification_channel": "${BOT_GAP_NOTIFICATION_CHANNEL_ID}",
+      "defaults": {
+        "gap_threshold": 0.3,
+        "gap_notification_enabled": true,
+        "gap_notification_channel": null
+      },
+      "validation": {
+        "gap_threshold": {
+          "type": "float",
+          "range": [0.0, 1.0]
+        },
+        "gap_notification_enabled": {
+          "type": "boolean"
+        },
+        "gap_notification_channel": {
+          "type": "integer",
+          "required": true
+        }
+      }
+    }
+  },
+
+  "staff_notification": {
+    "description": "Staff notification configuration - MAPPED TO EXISTING ENV VARS per Rule #7",
+    "crisis_response": {
+      "channel_id": "${BOT_CRISIS_RESPONSE_CHANNEL_ID}",
+      "role_id": "${BOT_CRISIS_RESPONSE_ROLE_ID}",
+      "staff_user_id": "${BOT_STAFF_PING_USER}",
+      "defaults": {
+        "channel_id": null,
+        "role_id": null,
+        "staff_user_id": null
+      },
+      "validation": {
+        "channel_id": {
+          "type": "integer",
+          "required": true
+        },
+        "role_id": {
+          "type": "integer",
+          "required": true
+        },
+        "staff_user_id": {
+          "type": "integer",
+          "required": true
+        }
+      }
+    },
+    "resources": {
+      "channel_id": "${BOT_RESOURCES_CHANNEL_ID}",
+      "channel_name": "${BOT_RESOURCES_CHANNEL_NAME}",
+      "defaults": {
+        "channel_id": null,
+        "channel_name": "queer-resources"
+      },
+      "validation": {
+        "channel_id": {
+          "type": "integer",
+          "required": true
+        },
+        "channel_name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "gap_notification": {
+      "channel_id": "${BOT_GAP_NOTIFICATION_CHANNEL_ID}",
+      "enabled": "${BOT_ENABLE_GAP_NOTIFICATIONS}",
+      "defaults": {
+        "channel_id": null,
+        "enabled": true
+      },
+      "validation": {
+        "channel_id": {
+          "type": "integer",
+          "required": true
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+
+  "integration": {
+    "description": "Integration settings with NLP manager",
+    "nlp_integration": {
+      "timeout_seconds": "${GLOBAL_REQUEST_TIMEOUT}",
+      "fallback_on_error": "${CRISIS_FALLBACK_ON_NLP_ERROR}",
+      "log_all_decisions": "${CRISIS_LOG_ALL_DECISIONS}",
+      "defaults": {
+        "timeout_seconds": 30,
+        "fallback_on_error": true,
+        "log_all_decisions": true
+      },
+      "validation": {
+        "timeout_seconds": {
+          "type": "integer",
+          "range": [5, 120]
+        },
+        "fallback_on_error": {
+          "type": "boolean"
+        },
+        "log_all_decisions": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
