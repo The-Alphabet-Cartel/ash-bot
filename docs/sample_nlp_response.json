@@ -1,6 +1,7 @@
 {
   "needs_response": true,
   "crisis_level": "critical",
+  "crisis_score": 0.8177835783362388,
   "confidence_score": 0.8511169116695722,
   "detected_categories": [],
   "method": "enhanced_three_step_analysis",
