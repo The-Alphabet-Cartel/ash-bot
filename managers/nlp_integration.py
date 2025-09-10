@@ -36,6 +36,9 @@ class NLPIntegrationManager:
     - Connection health monitoring and retry logic
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(self, config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, **kwargs):
         """
         Initialize NLPIntegrationManager
@@ -96,7 +99,11 @@ class NLPIntegrationManager:
             logger.error(f"❌ NLP integration manager initialization failed: {e}")
             # Implement resilient fallback per Rule #5
             self._apply_fallback_configuration()
-    
+    # ========================================================================
+
+    # ========================================================================
+    # CONFIG SETTINGS
+    # ========================================================================
     def _validate_nlp_config(self):
         """Validate NLP configuration with resilient fallbacks"""
         errors = []
@@ -143,7 +150,11 @@ class NLPIntegrationManager:
             logger.error(f"❌ NLP fallback configuration failed: {e}")
             # System can still function with degraded NLP capability
             self.service_healthy = False
+    # ========================================================================
     
+    # ========================================================================
+    # SETUP
+    # ========================================================================
     async def test_connection(self) -> bool:
         """
         Test NLP server connection and update health status
@@ -188,7 +199,11 @@ class NLPIntegrationManager:
             logger.warning(f"🔌 NLP service health check failed: {e}")
             self.service_healthy = False
             return False
+    # ========================================================================
     
+    # ========================================================================
+    # ANALYSIS
+    # ========================================================================
     async def analyze_message(self, message_content: str, user_id: str = "unknown", channel_id: str = "unknown") -> Optional[Dict]:
         """
         Analyze message using NLP service with Three Zero-Shot Model Ensemble
@@ -413,7 +428,11 @@ class NLPIntegrationManager:
         except Exception as e:
             logger.error(f"❌ Error processing NLP response: {e}")
             return None
-    
+    # ========================================================================
+
+    # ========================================================================
+    # FEEDBACK
+    # ========================================================================
     async def send_staff_feedback(self, message_content: str, correction_type: str, detected_level: str, correct_level: str) -> bool:
         """
         Send staff feedback to NLP server for learning
@@ -502,7 +521,11 @@ class NLPIntegrationManager:
         except Exception as e:
             logger.error(f"🔌 Error sending staff feedback: {e}")
             return False
-    
+    # ========================================================================
+
+    # ========================================================================
+    # STATS
+    # ========================================================================
     async def get_ensemble_stats(self) -> Optional[Dict[str, Any]]:
         """
         Get comprehensive ensemble statistics from NLP server
@@ -558,7 +581,11 @@ class NLPIntegrationManager:
         except Exception as e:
             logger.error(f"🔌 Error getting ensemble stats: {e}")
             return None
-    
+    # ========================================================================
+
+    # ========================================================================
+    # STATUS
+    # ========================================================================
     def get_health_status(self) -> Dict[str, Any]:
         """
         Get NLP integration health status
@@ -575,7 +602,11 @@ class NLPIntegrationManager:
             'timeout_seconds': self.timeout,
             'retry_attempts': self.retry_attempts
         }
+    # ========================================================================
 
+# ========================================================================
+# FACTORY FUNCTION
+# ========================================================================
 def create_nlp_integration_manager(config_manager: UnifiedConfigManager, **kwargs) -> NLPIntegrationManager:
     """
     Factory function for NLPIntegrationManager (MANDATORY per Rule #1)
@@ -603,5 +634,9 @@ def create_nlp_integration_manager(config_manager: UnifiedConfigManager, **kwarg
         logger.error(f"❌ Failed to create NLPIntegrationManager: {e}")
         # Implement resilient fallback per Rule #5
         raise
+# ========================================================================
 
-__all__ = ['NLPIntegrationManager', 'create_nlp_integration_manager']
+__all__ = [
+    'NLPIntegrationManager',
+    'create_nlp_integration_manager'
+]
