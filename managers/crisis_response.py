@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # DATA STRUCTURES
 # ============================================================================
-
 class ResponseType(Enum):
     """Types of crisis responses"""
     NONE = "none"
@@ -88,11 +87,11 @@ class ResponseStats:
     def __post_init__(self):
         if self.responses_by_level is None:
             self.responses_by_level = {'none': 0, 'low': 0, 'medium': 0, 'high': 0}
+# ========================================================================
 
 # ============================================================================
 # CRISIS RESPONSE MANAGER
 # ============================================================================
-
 class CrisisResponseManager:
     """
     Phase 1b Step 2: Execute crisis responses based on analysis
@@ -106,6 +105,9 @@ class CrisisResponseManager:
     - Provide resilient error handling for notification failures
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(
         self,
         config_manager: UnifiedConfigManager,
@@ -257,7 +259,11 @@ class CrisisResponseManager:
             self.retry_delay_seconds = 5
             self.enable_confirmation_reactions = True
             self.auto_escalate_on_failure = True
-    
+    # ========================================================================
+
+    # ========================================================================
+    # RESPONSE
+    # ========================================================================
     async def execute_crisis_response(self, crisis_result: CrisisAnalysisResult, user_id: int, channel_id: int) -> bool:
         """
         Execute crisis response based on analysis result
@@ -296,7 +302,11 @@ class CrisisResponseManager:
             logger.error(f"❌ Error executing crisis response: {e}")
             self.stats.execution_errors += 1
             return False
+    # ========================================================================
     
+    # ========================================================================
+    # HELPERS
+    # ========================================================================
     def _create_response_plan(self, crisis_result: CrisisAnalysisResult, user_id: int, channel_id: int) -> CrisisResponse:
         """
         Create response plan based on crisis analysis
@@ -625,7 +635,11 @@ class CrisisResponseManager:
             
         except Exception as e:
             logger.error(f"❌ Error logging response execution: {e}")
+    # ========================================================================
     
+    # ========================================================================
+    # STATS AND STATUS
+    # ========================================================================
     def get_response_stats(self) -> Dict[str, Any]:
         """Get response execution statistics"""
         return {
@@ -671,11 +685,11 @@ class CrisisResponseManager:
             return self.stats.staff_notifications_sent / total_attempts
         except Exception:
             return 0.0
+    # ========================================================================
 
 # ============================================================================
 # FACTORY FUNCTION (Rule #1)
 # ============================================================================
-
 def create_crisis_response_manager(
     config_manager: UnifiedConfigManager,
     logging_manager: LoggingConfigManager,
@@ -713,3 +727,13 @@ def create_crisis_response_manager(
     except Exception as e:
         logger.error(f"❌ Failed to create CrisisResponseManager: {e}")
         raise
+
+__all__ = [
+    'ResponseType',
+    'NotificationChannel',
+    'ResponseAction',
+    'CrisisResponse',
+    'ResponseStats',
+    'CrisisResponseManager',
+    'create_crisis_response_manager'
+]
