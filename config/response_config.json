@@ -1,0 +1,221 @@
+{
+  "_metadata": {
+    "file_version": "v3.1-1b-2-1",
+    "last_modified": "2025-09-09",
+    "phase": "1b Step 2 - Crisis Response Manager",
+    "clean_architecture": "v3.1 Compliant"
+  },
+
+  "notification_settings": {
+    "description": "Discord channel and role configuration for crisis notifications",
+    "crisis_response_channel_id": "${BOT_CRISIS_RESPONSE_CHANNEL_ID}",
+    "crisis_response_role_id": "${BOT_CRISIS_RESPONSE_ROLE_ID}",
+    "resources_channel_id": "${BOT_RESOURCES_CHANNEL_ID}",
+    "staff_user_id": "${BOT_STAFF_PING_USER}",
+    "gap_notification_channel_id": "${BOT_GAP_NOTIFICATION_CHANNEL_ID}",
+    "enable_gap_notifications": "${BOT_ENABLE_GAP_NOTIFICATIONS}",
+    "notification_timeout": "${GLOBAL_REQUEST_TIMEOUT}",
+    "defaults": {
+      "crisis_response_channel_id": null,
+      "crisis_response_role_id": null,
+      "resources_channel_id": null,
+      "staff_user_id": null,
+      "gap_notification_channel_id": null,
+      "enable_gap_notifications": true,
+      "notification_timeout": 30
+    },
+    "validation": {
+      "crisis_response_channel_id": {
+        "type": "integer",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "crisis_response_role_id": {
+        "type": "integer",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "resources_channel_id": {
+        "type": "integer",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "staff_user_id": {
+        "type": "integer",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "gap_notification_channel_id": {
+        "type": "integer",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "enable_gap_notifications": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "notification_timeout": {
+        "type": "integer",
+        "range": [5, 120],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "response_templates": {
+    "description": "Message templates for different crisis levels and notifications",
+    "high_crisis": "${BOT_CRISIS_RESPONSE_TEMPLATE_HIGH}",
+    "medium_crisis": "${BOT_CRISIS_RESPONSE_TEMPLATE_MEDIUM}",
+    "low_crisis": "${BOT_CRISIS_RESPONSE_TEMPLATE_LOW}",
+    "gap_notification": "${BOT_GAP_NOTIFICATION_TEMPLATE}",
+    "resource_message": "${BOT_RESOURCE_SHARE_TEMPLATE}",
+    "escalation_message": "${BOT_ESCALATION_TEMPLATE}",
+    "defaults": {
+      "high_crisis": "🚨 HIGH PRIORITY: Crisis detected for {user}. Immediate staff attention required in {channel}.",
+      "medium_crisis": "⚠️ MEDIUM: Crisis situation detected for {user}. Staff review recommended in {channel}.",
+      "low_crisis": "ℹ️ LOW: Potential concern detected for {user}. Monitoring suggested in {channel}.",
+      "gap_notification": "🔍 GAP DETECTED: Model disagreement for {user} in {channel}. Manual review needed.",
+      "resource_message": "📚 Crisis support resources are available. Staff can provide immediate assistance.",
+      "escalation_message": "⚠️ ESCALATION: Failed to execute crisis response for {user}. Manual intervention required."
+    },
+    "validation": {
+      "high_crisis": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "medium_crisis": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "low_crisis": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "gap_notification": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "resource_message": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "escalation_message": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "execution_settings": {
+    "description": "Response execution behavior and retry configuration",
+    "max_retry_attempts": "${BOT_RESPONSE_MAX_RETRY_ATTEMPTS}",
+    "retry_delay_seconds": "${BOT_RESPONSE_RETRY_DELAY}",
+    "enable_confirmation_reactions": "${BOT_RESPONSE_ENABLE_CONFIRMATIONS}",
+    "auto_escalate_on_failure": "${BOT_RESPONSE_AUTO_ESCALATE}",
+    "priority_timeout_seconds": "${BOT_RESPONSE_PRIORITY_TIMEOUT}",
+    "batch_processing_enabled": "${BOT_RESPONSE_BATCH_PROCESSING}",
+    "defaults": {
+      "max_retry_attempts": 3,
+      "retry_delay_seconds": 5,
+      "enable_confirmation_reactions": true,
+      "auto_escalate_on_failure": true,
+      "priority_timeout_seconds": 60,
+      "batch_processing_enabled": false
+    },
+    "validation": {
+      "max_retry_attempts": {
+        "type": "integer",
+        "range": [1, 10],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "retry_delay_seconds": {
+        "type": "integer",
+        "range": [1, 60],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "enable_confirmation_reactions": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "auto_escalate_on_failure": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "priority_timeout_seconds": {
+        "type": "integer",
+        "range": [10, 300],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "batch_processing_enabled": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "response_mapping": {
+    "description": "Crisis level to response action mapping configuration",
+    "crisis_level_thresholds": "${BOT_CRISIS_OVERRIDE_LEVELS}",
+    "staff_notification_levels": "${BOT_STAFF_NOTIFICATION_LEVELS}",
+    "resource_share_levels": "${BOT_RESOURCE_SHARE_LEVELS}",
+    "immediate_intervention_levels": "${BOT_IMMEDIATE_INTERVENTION_LEVELS}",
+    "defaults": {
+      "crisis_level_thresholds": "medium,high",
+      "staff_notification_levels": "medium,high",
+      "resource_share_levels": "medium,high",
+      "immediate_intervention_levels": "high"
+    },
+    "validation": {
+      "crisis_level_thresholds": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "staff_notification_levels": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "resource_share_levels": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "immediate_intervention_levels": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "monitoring": {
+    "description": "Response monitoring and statistics configuration",
+    "enable_response_tracking": "${BOT_RESPONSE_ENABLE_TRACKING}",
+    "log_response_details": "${BOT_RESPONSE_LOG_DETAILS}",
+    "track_execution_times": "${BOT_RESPONSE_TRACK_TIMING}",
+    "export_stats_interval": "${BOT_RESPONSE_STATS_EXPORT_INTERVAL}",
+    "alert_on_failures": "${BOT_RESPONSE_ALERT_ON_FAILURES}",
+    "defaults": {
+      "enable_response_tracking": true,
+      "log_response_details": true,
+      "track_execution_times": true,
+      "export_stats_interval": 3600,
+      "alert_on_failures": true
+    },
+    "validation": {
+      "enable_response_tracking": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "log_response_details": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "track_execution_times": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "export_stats_interval": {
+        "type": "integer",
+        "range": [300, 86400],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "alert_on_failures": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  }
+}

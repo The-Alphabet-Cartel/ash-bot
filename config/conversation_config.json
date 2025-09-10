@@ -1,0 +1,187 @@
+{
+  "_metadata": {
+    "file_version": "v3.1-1b-1-1",
+    "last_modified": "2025-09-09",
+    "phase": "1b Step 1 - Conversation Handler Manager",
+    "clean_architecture": "v3.1 Compliant"
+  },
+
+  "conversation_settings": {
+    "description": "Core conversation management settings for Discord interactions",
+    "timeout": "${BOT_CONVERSATION_TIMEOUT}",
+    "requires_mention": "${BOT_CONVERSATION_REQUIRES_MENTION}",
+    "trigger_phrases": "${BOT_CONVERSATION_TRIGGER_PHRASES}",
+    "allow_starters": "${BOT_CONVERSATION_ALLOW_STARTERS}",
+    "max_daily_conversations": "${BOT_MAX_DAILY_CALLS}",
+    "rate_limit_per_user": "${BOT_RATE_LIMIT_PER_USER}",
+    "defaults": {
+      "timeout": 300,
+      "requires_mention": true,
+      "trigger_phrases": "ash,hey ash,ash help,@ash",
+      "allow_starters": false,
+      "max_daily_conversations": 1000,
+      "rate_limit_per_user": 10
+    },
+    "validation": {
+      "timeout": {
+        "type": "integer",
+        "range": [30, 3600],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "requires_mention": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "trigger_phrases": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "allow_starters": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "max_daily_conversations": {
+        "type": "integer",
+        "range": [1, 10000],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "rate_limit_per_user": {
+        "type": "integer",
+        "range": [1, 100],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "claude_settings": {
+    "description": "Claude API integration settings for conversation responses",
+    "api_key": "${GLOBAL_CLAUDE_API_KEY}",
+    "model": "${GLOBAL_CLAUDE_MODEL}",
+    "max_tokens": "${GLOBAL_CLAUDE_MAX_TOKENS}",
+    "temperature": "${GLOBAL_CLAUDE_TEMPERATURE}",
+    "timeout": "${GLOBAL_REQUEST_TIMEOUT}",
+    "defaults": {
+      "api_key": "/run/secrets/claude_api_key",
+      "model": "claude-sonnet-4-20250514",
+      "max_tokens": 1000,
+      "temperature": 0.7,
+      "timeout": 30
+    },
+    "validation": {
+      "model": {
+        "type": "string",
+        "choices": ["claude-sonnet-4-20250514", "claude-opus-4", "claude-haiku-4"],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "max_tokens": {
+        "type": "integer",
+        "range": [100, 4000],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "temperature": {
+        "type": "float",
+        "range": [0.0, 1.0],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "timeout": {
+        "type": "integer",
+        "range": [5, 120],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "response_settings": {
+    "description": "Response generation and personalization settings",
+    "include_crisis_context": "${BOT_CONVERSATION_INCLUDE_CRISIS_CONTEXT}",
+    "personalize_responses": "${BOT_CONVERSATION_PERSONALIZE_RESPONSES}",
+    "response_format": "${BOT_CONVERSATION_RESPONSE_FORMAT}",
+    "crisis_response_templates": "${BOT_CONVERSATION_CRISIS_TEMPLATES}",
+    "defaults": {
+      "include_crisis_context": true,
+      "personalize_responses": true,
+      "response_format": "supportive",
+      "crisis_response_templates": "default"
+    },
+    "validation": {
+      "include_crisis_context": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "personalize_responses": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "response_format": {
+        "type": "string",
+        "choices": ["supportive", "clinical", "casual", "formal"],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "crisis_response_templates": {
+        "type": "string",
+        "choices": ["default", "enhanced", "minimal"],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "conversation_isolation": {
+    "description": "Channel-level conversation isolation and conflict resolution",
+    "enable_isolation": "${BOT_CONVERSATION_ENABLE_ISOLATION}",
+    "allow_multiple_per_channel": "${BOT_CONVERSATION_ALLOW_MULTIPLE_PER_CHANNEL}",
+    "escalation_override": "${BOT_CRISIS_OVERRIDE_LEVELS}",
+    "handoff_system": "${BOT_CONVERSATION_HANDOFF_SYSTEM}",
+    "defaults": {
+      "enable_isolation": true,
+      "allow_multiple_per_channel": false,
+      "escalation_override": "medium,high",
+      "handoff_system": "reaction_based"
+    },
+    "validation": {
+      "enable_isolation": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "allow_multiple_per_channel": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "escalation_override": {
+        "type": "string",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "handoff_system": {
+        "type": "string",
+        "choices": ["reaction_based", "command_based", "automatic"],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "statistics": {
+    "description": "Conversation statistics and monitoring configuration",
+    "enable_detailed_tracking": "${BOT_CONVERSATION_ENABLE_DETAILED_TRACKING}",
+    "track_response_times": "${BOT_CONVERSATION_TRACK_RESPONSE_TIMES}",
+    "export_stats_interval": "${BOT_CONVERSATION_STATS_EXPORT_INTERVAL}",
+    "defaults": {
+      "enable_detailed_tracking": true,
+      "track_response_times": true,
+      "export_stats_interval": 3600
+    },
+    "validation": {
+      "enable_detailed_tracking": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "track_response_times": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "export_stats_interval": {
+        "type": "integer",
+        "range": [300, 86400],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  }
+}
