@@ -53,6 +53,9 @@ class UnifiedConfigManager:
     No methods should be extracted to other managers to avoid circular dependencies.
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(self, config_dir: str = "./config"):
         """
         Initialize Unified Configuration Manager
@@ -87,11 +90,11 @@ class UnifiedConfigManager:
         self.env_config = self._load_all_environment_variables()
         
         logger.info("UnifiedConfigManager v3.1e optimized initialized - Helper file architecture with enhanced performance")
+    # ========================================================================
     
     # ========================================================================
     # ENVIRONMENT VARIABLE VALIDATION AND LOADING
     # ========================================================================
-    
     def _load_all_environment_variables(self) -> Dict[str, Any]:
         """Load and validate all environment variables using schemas"""
         env_config = {}
@@ -170,11 +173,11 @@ class UnifiedConfigManager:
         except (ValueError, TypeError) as e:
             logger.error(f"Conversion error for {var_name}: {e}")
             return schema.default
+    # ========================================================================
     
     # ========================================================================
     # UNIFIED ENVIRONMENT VARIABLE ACCESS (CRITICAL METHODS)
     # ========================================================================
-    
     def get_env(self, var_name: str, default: Any = None) -> Any:
         """
         Get environment variable with schema validation and type conversion
@@ -240,11 +243,11 @@ class UnifiedConfigManager:
         if isinstance(result, str) and result:
             return [item.strip() for item in result.split(',')]
         return default
+    # ========================================================================
     
     # ========================================================================
     # JSON CONFIGURATION METHODS WITH HELPER DELEGATION
     # ========================================================================
-    
     def load_config_file(self, config_name: str) -> Dict[str, Any]:
         """
         Load and parse configuration file with enhanced placeholder resolution and intelligent caching
@@ -309,11 +312,11 @@ class UnifiedConfigManager:
         except Exception as e:
             logger.error(f"Error loading {config_file}: {e}")
             return {}
+    # ========================================================================
     
     # ========================================================================
     # ENHANCED CONFIGURATION SECTION ACCESS - CLEAN API
     # ========================================================================
-    
     def get_config_section(self, config_file: str, section_path: str = None, default: Any = None) -> Any:
         """
         Get a specific section from a configuration file with support for nested paths and intelligent caching
@@ -703,11 +706,11 @@ class UnifiedConfigManager:
         except Exception as e:
             logger.error(f"Error listing sections in '{config_file}': {e}")
             return []
+    # ========================================================================
 
     # ========================================================================
     # BACKWARD COMPATIBILITY METHODS
     # ========================================================================
-    
     def get_status(self) -> Dict[str, Any]:
         """Get status of UnifiedConfigManager with caching and optimization info"""
         status = {
@@ -762,11 +765,11 @@ class UnifiedConfigManager:
             status['caching'] = {'enabled': False, 'reason': 'disabled by NLP_PERFORMANCE_ENABLE_CONFIG_CACHING=false'}
         
         return status
+    # ========================================================================
 
     # ============================================================================
     # Cache management methods
     # ============================================================================
-
     def get_cache_statistics(self) -> Dict[str, Any]:
         """
         Get detailed cache performance statistics
@@ -808,11 +811,11 @@ class UnifiedConfigManager:
             return self.caching_helper.invalidate_config(config_name)
         else:
             return 0
+    # ========================================================================
 
 # ============================================================================
 # FACTORY FUNCTION - Clean v3.1 Architecture Compliance
 # ============================================================================
-
 def create_unified_config_manager(config_dir: str = "/app/config") -> UnifiedConfigManager:
     """
     Factory function to create UnifiedConfigManager instance
@@ -825,6 +828,9 @@ def create_unified_config_manager(config_dir: str = "/app/config") -> UnifiedCon
     """
     return UnifiedConfigManager(config_dir)
 
-__all__ = ['UnifiedConfigManager', 'create_unified_config_manager']
+__all__ = [
+    'UnifiedConfigManager',
+    'create_unified_config_manager'
+]
 
 logger.info("UnifiedConfigManager v3.1 with intelligent caching loaded")

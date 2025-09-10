@@ -78,6 +78,9 @@ class CrisisAnalysisManager:
     - Coordinates response actions based on crisis levels from NLP
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(self, config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, 
                  nlp_manager: Optional[NLPIntegrationManager] = None, **kwargs):
         """
@@ -132,7 +135,11 @@ class CrisisAnalysisManager:
         
         if not self.nlp_manager:
             logger.warning("⚠️ No NLP manager provided - crisis analysis will fail!")
+    # ========================================================================
     
+    # ========================================================================
+    # ANALYSIS
+    # ========================================================================
     async def analyze_message(self, message_content: str, user_id: int, channel_id: int) -> CrisisAnalysisResult:
         """
         Get crisis analysis from NLP server and map to bot actions
@@ -180,7 +187,11 @@ class CrisisAnalysisManager:
             logger.error(f"❌ Crisis analysis error: {e}")
             self.analysis_stats['nlp_errors'] += 1
             return self._create_error_result(f"Analysis error: {str(e)}", start_time)
+    # ========================================================================
     
+    # ========================================================================
+    # HELPERS
+    # ========================================================================
     def _validate_input(self, message_content: str, user_id: int, channel_id: int) -> bool:
         """Validate analysis input parameters"""
         if not message_content or not isinstance(message_content, str) or not message_content.strip():
@@ -328,7 +339,11 @@ class CrisisAnalysisManager:
             
         except Exception as e:
             logger.error(f"❌ Error logging decision: {e}")
+    # ========================================================================
     
+    # ========================================================================
+    # STATS AND STATUS
+    # ========================================================================
     def get_analysis_stats(self) -> Dict[str, Any]:
         """Get analysis statistics"""
         return {
@@ -355,7 +370,11 @@ class CrisisAnalysisManager:
             'total_analyses': self.analysis_stats['total_analyses'],
             'configuration_valid': len(self.override_levels) > 0
         }
+    # ========================================================================
 
+# ========================================================================
+# FACTORY FUNCTION
+# ========================================================================
 def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, **kwargs) -> CrisisAnalysisManager:
     """
     Factory function for CrisisAnalysisManager (MANDATORY per Rule #1)
@@ -388,4 +407,9 @@ def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, **kwarg
         # Implement resilient fallback per Rule #5
         raise
 
-__all__ = ['CrisisAnalysisManager', 'CrisisAnalysisResult', 'CrisisLevel', 'create_crisis_analysis_manager']
+__all__ = [
+    'CrisisAnalysisManager',
+    'CrisisAnalysisResult',
+    'CrisisLevel',
+    'create_crisis_analysis_manager'
+]

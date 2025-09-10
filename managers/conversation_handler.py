@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # DATA STRUCTURES
 # ============================================================================
-
 class ConversationStatus(Enum):
     """Conversation status tracking"""
     ACTIVE = "active"
@@ -69,11 +68,11 @@ class ConversationStats:
     crisis_overrides: int = 0
     trigger_phrase_matches: int = 0
     mention_triggers: int = 0
+# ========================================================================
 
 # ============================================================================
 # CONVERSATION HANDLER MANAGER
 # ============================================================================
-
 class ConversationHandlerManager:
     """
     Phase 1b Step 1: Discord conversation management and Claude integration
@@ -87,6 +86,9 @@ class ConversationHandlerManager:
     - Provide resilient error handling
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(
         self,
         config_manager: UnifiedConfigManager,
@@ -223,7 +225,11 @@ class ConversationHandlerManager:
             self.include_crisis_context = True
             self.personalize_responses = True
             self.response_format = 'supportive'
-    
+    # ========================================================================
+
+    # ========================================================================
+    # HANDLE MESSAGE
+    # ========================================================================
     async def handle_message(self, message: discord.Message) -> bool:
         """
         Handle incoming Discord message for conversation management
@@ -258,7 +264,11 @@ class ConversationHandlerManager:
             logger.error(f"❌ Error handling message: {e}")
             # Resilient error handling (Rule #5) - don't crash the system
             return False
-    
+    # ========================================================================
+
+    # ========================================================================
+    # HELPERS
+    # ========================================================================
     async def _should_start_conversation(self, message: discord.Message) -> bool:
         """
         Determine if message should start a new conversation
@@ -510,7 +520,11 @@ class ConversationHandlerManager:
             if session.channel_id == channel_id:
                 return (user_id, session)
         return None
-    
+    # ========================================================================
+
+    # ========================================================================
+    # CLEANUP
+    # ========================================================================
     async def cleanup_expired_conversations(self) -> int:
         """
         Clean up expired conversations
@@ -543,7 +557,11 @@ class ConversationHandlerManager:
         except Exception as e:
             logger.error(f"❌ Error cleaning up conversations: {e}")
             return 0
+    # ========================================================================
     
+    # ========================================================================
+    # STATS AND STATUS
+    # ========================================================================
     def get_conversation_stats(self) -> Dict[str, Any]:
         """Get conversation statistics"""
         return {
@@ -578,11 +596,11 @@ class ConversationHandlerManager:
                 'status': 'error',
                 'error': str(e)
             }
+    # ========================================================================
 
 # ============================================================================
-# FACTORY FUNCTION (Rule #1)
+# FACTORY FUNCTION
 # ============================================================================
-
 def create_conversation_handler_manager(
     config_manager: UnifiedConfigManager,
     logging_manager: LoggingConfigManager,
@@ -620,3 +638,11 @@ def create_conversation_handler_manager(
     except Exception as e:
         logger.error(f"❌ Failed to create ConversationHandlerManager: {e}")
         raise
+
+__all__ = [
+    'ConversationStatus',
+    'ConversationSession',
+    'ConversationStats',
+    'ConversationHandlerManager',
+    'create_conversation_handler_manager'
+]
