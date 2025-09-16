@@ -17,7 +17,7 @@
     "enable_file_output": "${GLOBAL_LOGGING_ENABLE_FILE}",
     "defaults": {
       "log_level": "INFO",
-      "log_file": "ash-thrash.log",
+      "log_file": "ash-bot.log",
       "log_directory": "./logs",
       "enable_console_output": true,
       "enable_file_output": true
