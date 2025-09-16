@@ -33,6 +33,9 @@ class DiscordClientManager(commands.Bot):
     - Discord intents and permissions management
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(self, config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, **kwargs):
         """
         Initialize DiscordClientManager
@@ -99,7 +102,11 @@ class DiscordClientManager(commands.Bot):
             logger.error(f"❌ Discord client manager initialization failed: {e}")
             # Implement resilient fallback per Rule #5
             self._apply_fallback_configuration()
+    # ========================================================================
     
+    # ========================================================================
+    # SETUP
+    # ========================================================================
     def _setup_intents(self) -> discord.Intents:
         """
         Setup Discord intents based on configuration
@@ -389,7 +396,11 @@ class DiscordClientManager(commands.Bot):
         except Exception as e:
             logger.error(f"❌ Command sync failed: {e}")
             # Continue operation - slash commands are not critical for core functionality
+    # ========================================================================
     
+    # ========================================================================
+    # HANDLERS
+    # ========================================================================
     def register_event_handler(self, event_name: str, handler: Callable):
         """
         Register custom event handler
@@ -434,7 +445,11 @@ class DiscordClientManager(commands.Bot):
             'guild_member_count': guild.member_count if guild else None,
             'uptime_seconds': (datetime.now(timezone.utc) - self.start_time).total_seconds()
         }
+    # ========================================================================
 
+# ========================================================================
+# FACTORY FUNCTIONS
+# ========================================================================
 def create_discord_client_manager(config_manager: UnifiedConfigManager, **kwargs) -> DiscordClientManager:
     """
     Factory function for DiscordClientManager (MANDATORY per Rule #1)
@@ -463,4 +478,7 @@ def create_discord_client_manager(config_manager: UnifiedConfigManager, **kwargs
         # Implement resilient fallback per Rule #5
         raise
 
-__all__ = ['DiscordClientManager', 'create_discord_client_manager']
+__all__ = [
+    'DiscordClientManager',
+    'create_discord_client_manager'
+]

@@ -21,6 +21,9 @@ class LoggingConfigManager:
     Centralized logging configuration management for Ash-Thrash service
     """
     
+    # ========================================================================
+    # INITIALIZE
+    # ========================================================================
     def __init__(self, unified_config_manager):
         """
         Initialize LoggingConfigManager with UnifiedConfigManager integration
@@ -40,11 +43,11 @@ class LoggingConfigManager:
         except Exception as e:
             logger.error(f"Error loading logging configuration: {e}")
             return
+    # ========================================================================
 
     # ========================================================================
     # GLOBAL LOGGING SETTINGS ACCESS METHODS (Phase 3e Enhanced)
     # ========================================================================
-    
     def get_global_logging_settings(self) -> Dict[str, Any]:
         """Get global logging settings with Phase 3e enhanced error handling"""
         try:
@@ -123,11 +126,11 @@ class LoggingConfigManager:
         except Exception as e:
             logger.error(f"Error checking file output setting: {e}")
             return True
+    # ========================================================================
     
     # ========================================================================
     # DETAILED LOGGING SETTINGS ACCESS METHODS
     # ========================================================================
-    
     def get_detailed_logging_settings(self) -> Dict[str, Any]:
         """Get detailed logging settings"""
         try:
@@ -163,11 +166,11 @@ class LoggingConfigManager:
         except Exception as e:
             logger.error(f"Error checking raw labels setting: {e}")
             return True
+    # ========================================================================
     
     # ========================================================================
     # DEVELOPMENT LOGGING SETTINGS ACCESS METHODS
     # ========================================================================
-    
     def get_development_logging_settings(self) -> Dict[str, Any]:
         """Get development logging settings"""
         try:
@@ -225,11 +228,11 @@ class LoggingConfigManager:
         except Exception as e:
             logger.error(f"Error checking environment variables setting: {e}")
             return False
+    # ========================================================================
     
     # ========================================================================
     # UTILITY METHODS (Phase 3e Enhanced)
     # ========================================================================
-    
     def _safe_bool_conversion(self, value: Any) -> bool:
         """Safely convert value to boolean"""
         try:
@@ -312,11 +315,11 @@ class LoggingConfigManager:
                 'error': str(e),
                 'initialization_status': 'error'
             }
+    # ========================================================================
 
 # ============================================================================
 # FACTORY FUNCTION - Clean v3.1 Architecture Compliance (Phase 3e Enhanced)
 # ============================================================================
-
 def create_logging_config_manager(unified_config_manager) -> LoggingConfigManager:
     """
     Factory function for LoggingConfigManager (Clean v3.1 Pattern) - Phase 3e Enhanced
@@ -338,6 +341,9 @@ def create_logging_config_manager(unified_config_manager) -> LoggingConfigManage
     return LoggingConfigManager(unified_config_manager)
 
 # Export public interface
-__all__ = ['LoggingConfigManager', 'create_logging_config_manager']
+__all__ = [
+    'LoggingConfigManager',
+    'create_logging_config_manager'
+]
 
 logger.info("LoggingConfigManager v3.1-1a-1 Loaded")

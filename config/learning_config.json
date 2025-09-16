@@ -1,0 +1,206 @@
+{
+  "_metadata": {
+    "file_version": "v3.1-1c-1-1",
+    "last_modified": "2025-09-09",
+    "phase": "1c Step 1 - Learning System Manager",
+    "clean_architecture": "v3.1 Compliant",
+    "description": "Learning system configuration for staff feedback collection and NLP learning integration",
+    "repository": "https://github.com/the-alphabet-cartel/ash-bot",
+    "community": "The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org"
+  },
+
+  "learning_settings": {
+    "description": "Core learning system configuration and behavior settings",
+    "enabled": "${GLOBAL_LEARNING_SYSTEM_ENABLED}",
+    "confidence_threshold": "${BOT_LEARNING_CONFIDENCE_THRESHOLD}",
+    "max_daily_adjustments": "${BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY}",
+    "request_timeout": "${GLOBAL_REQUEST_TIMEOUT}",
+    "defaults": {
+      "enabled": true,
+      "confidence_threshold": 0.6,
+      "max_daily_adjustments": 50,
+      "request_timeout": 30
+    },
+    "validation": {
+      "enabled": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "confidence_threshold": {
+        "type": "float",
+        "range": [0.0, 1.0],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      },
+      "max_daily_adjustments": {
+        "type": "integer",
+        "range": [1, 1000],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      },
+      "request_timeout": {
+        "type": "integer",
+        "range": [5, 120],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      }
+    }
+  },
+
+  "feedback_processing": {
+    "description": "Staff feedback collection and processing configuration",
+    "batch_size": 10,
+    "processing_interval": 300,
+    "retry_attempts": 3,
+    "require_staff_confirmation": true,
+    "auto_submit_high_confidence": false,
+    "defaults": {
+      "batch_size": 10,
+      "processing_interval": 300,
+      "retry_attempts": 3,
+      "require_staff_confirmation": true,
+      "auto_submit_high_confidence": false
+    },
+    "validation": {
+      "batch_size": {
+        "type": "integer",
+        "range": [1, 100],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "processing_interval": {
+        "type": "integer",
+        "range": [60, 3600],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "retry_attempts": {
+        "type": "integer",
+        "range": [1, 10],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "require_staff_confirmation": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "auto_submit_high_confidence": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "learning_coordination": {
+    "description": "Coordination settings for learning system integration",
+    "nlp_server_endpoints": {
+      "false_positive": "/analyze_false_positive",
+      "false_negative": "/analyze_false_negative",
+      "learning_stats": "/learning_statistics",
+      "health_check": "/health"
+    },
+    "feedback_categories": [
+      "crisis_level_correction",
+      "keyword_effectiveness",
+      "context_understanding",
+      "sentiment_accuracy"
+    ],
+    "learning_triggers": {
+      "minimum_confidence_gap": 0.3,
+      "staff_consensus_threshold": 2,
+      "auto_learn_threshold": 0.9
+    },
+    "defaults": {
+      "minimum_confidence_gap": 0.3,
+      "staff_consensus_threshold": 2,
+      "auto_learn_threshold": 0.9
+    },
+    "validation": {
+      "minimum_confidence_gap": {
+        "type": "float",
+        "range": [0.1, 0.9],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "staff_consensus_threshold": {
+        "type": "integer",
+        "range": [1, 10],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "auto_learn_threshold": {
+        "type": "float",
+        "range": [0.5, 1.0],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "statistics": {
+    "description": "Learning system statistics and monitoring configuration",
+    "track_effectiveness": true,
+    "history_retention_days": 30,
+    "generate_reports": true,
+    "report_frequency": "weekly",
+    "metrics_collection": {
+      "feedback_velocity": true,
+      "adjustment_success_rate": true,
+      "learning_accuracy": true,
+      "staff_participation": true
+    },
+    "defaults": {
+      "track_effectiveness": true,
+      "history_retention_days": 30,
+      "generate_reports": true,
+      "report_frequency": "weekly"
+    },
+    "validation": {
+      "track_effectiveness": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "history_retention_days": {
+        "type": "integer",
+        "range": [7, 365],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      },
+      "generate_reports": {
+        "type": "boolean",
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "report_frequency": {
+        "type": "string",
+        "choices": ["daily", "weekly", "monthly"],
+        "fallback_behavior": "use_default_with_logging"
+      }
+    }
+  },
+
+  "alert_thresholds": {
+    "description": "Alert thresholds for learning system monitoring",
+    "daily_limit_warning": 0.8,
+    "effectiveness_drop_threshold": 0.7,
+    "nlp_server_timeout_threshold": 10,
+    "failed_submission_threshold": 5,
+    "defaults": {
+      "daily_limit_warning": 0.8,
+      "effectiveness_drop_threshold": 0.7,
+      "nlp_server_timeout_threshold": 10,
+      "failed_submission_threshold": 5
+    },
+    "validation": {
+      "daily_limit_warning": {
+        "type": "float",
+        "range": [0.1, 1.0],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      },
+      "effectiveness_drop_threshold": {
+        "type": "float",
+        "range": [0.1, 1.0],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      },
+      "nlp_server_timeout_threshold": {
+        "type": "integer",
+        "range": [5, 60],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      },
+      "failed_submission_threshold": {
+        "type": "integer",
+        "range": [1, 50],
+        "fallback_behavior": "clamp_to_range_with_logging"
+      }
+    }
+  }
+}
