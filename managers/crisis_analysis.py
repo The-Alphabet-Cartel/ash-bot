@@ -81,8 +81,7 @@ class CrisisAnalysisManager:
     # ========================================================================
     # INITIALIZE
     # ========================================================================
-    def __init__(self, config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, 
-                 nlp_manager: Optional[NLPIntegrationManager] = None, **kwargs):
+    def __init__(self, config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, nlp_manager: Optional[NLPIntegrationManager] = None, **kwargs):
         """
         Initialize CrisisAnalysisManager
         
@@ -375,7 +374,7 @@ class CrisisAnalysisManager:
 # ========================================================================
 # FACTORY FUNCTION
 # ========================================================================
-def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, **kwargs) -> CrisisAnalysisManager:
+def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, nlp_manager: Optional[NLPIntegrationManager] = None, **kwargs) -> CrisisAnalysisManager:
     """
     Factory function for CrisisAnalysisManager (MANDATORY per Rule #1)
     
