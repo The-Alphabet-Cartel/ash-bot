@@ -99,10 +99,6 @@ class AshBotApplication:
             self.config_manager = create_unified_config_manager()
             self.logger.debug("✅ UnifiedConfig initialized")
             
-            # Initialize LoggingConfigManager (existing foundation)
-            self.logging_manager = create_logging_config_manager(self.config_manager)
-            self.logger.debug("✅ LoggingConfig initialized")
-            
             # Initialize Discord Client Manager
             self.discord_client_manager = create_discord_client_manager(
                 config_manager=self.config_manager,
