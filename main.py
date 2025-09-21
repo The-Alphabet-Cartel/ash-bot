@@ -169,7 +169,6 @@ class AshBotApplication:
             self.api_server_manager = create_api_server_manager(
                 config_manager=self.config_manager,
                 logging_manager=self.logging_manager,
-                discord_client_manager=self.discord_client_manager,
                 nlp_integration_manager=self.nlp_integration_manager,
                 crisis_analysis_manager=self.crisis_analysis_manager,
                 conversation_handler_manager=self.conversation_handler_manager,
