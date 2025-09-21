@@ -144,7 +144,8 @@ class AshBotApplication:
             # Initialize Crisis Response Manager
             self.crisis_response_manager = create_crisis_response_manager(
                 config_manager=self.config_manager,
-                logging_manager=self.logging_manager
+                logging_manager=self.logging_manager,
+                crisis_analysis_manager=self.crisis_analysis_manager
             )
             self.logger.debug("✅ CrisisResponse initialized")
             
