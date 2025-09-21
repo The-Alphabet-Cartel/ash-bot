@@ -75,7 +75,7 @@
     "log_environment_variables": "${BOT_LOGGING_ENV_VARS}",
     "defaults": {
       "trace_requests": false,
-      "log_configuration_loading": false,
+      "log_configuration_loading": true,
       "log_manager_initialization": true,
       "log_environment_variables": false
     },
