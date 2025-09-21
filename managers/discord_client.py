@@ -450,7 +450,7 @@ class DiscordClientManager(commands.Bot):
 # ========================================================================
 # FACTORY FUNCTIONS
 # ========================================================================
-def create_discord_client_manager(config_manager: UnifiedConfigManager, **kwargs) -> DiscordClientManager:
+def create_discord_client_manager(config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, **kwargs) -> DiscordClientManager:
     """
     Factory function for DiscordClientManager (MANDATORY per Rule #1)
     
