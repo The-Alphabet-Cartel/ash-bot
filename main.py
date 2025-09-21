@@ -99,6 +99,10 @@ class AshBotApplication:
             self.config_manager = create_unified_config_manager()
             self.logger.debug("✅ UnifiedConfig initialized")
             
+            # Initialize LoggingConfigManager (existing foundation)
+            self.logging_manager = create_logging_config_manager(self.config_manager)
+            self.logger.debug("✅ LoggingConfig initialized")
+            
             # Initialize Discord Client Manager
             self.discord_client_manager = create_discord_client_manager(
                 config_manager=self.config_manager,
@@ -422,19 +426,6 @@ def setup_logging(unified_config):
 def setup_environment():
     """Setup production environment and load configuration"""
     try:
-#        # Load environment variables from .env file
-#        env_file = Path(".env")
-#        if env_file.exists():
-#            load_dotenv(env_file)
-#            print(f"✅ Loaded environment from {env_file}")
-#        else:
-#            print("⚠️  No .env file found, using system environment")
-#        
-#        # Setup basic logging before managers are initialized
-#        logging.basicConfig(
-#            level=logging.INFO,
-#            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-#        )
         unified_config = create_unified_config_manager()
         setup_logging(unified_config)
         
