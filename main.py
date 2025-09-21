@@ -81,7 +81,7 @@ class AshBotApplication:
     # ============================================================================
     # INITIALIZE MANAGERS
     # ============================================================================
-    async def initialize_managers(self, unified_config) -> bool:
+    async def initialize_managers(self) -> bool:
         """
         Initialize foundation managers (UnifiedConfigManager, LoggingConfigManager)
         
@@ -95,7 +95,7 @@ class AshBotApplication:
             self.logger.info("🔧 Initializing foundation managers...")
             
             # Initialize UnifiedConfigManager (existing foundation)
-            self.config_manager = unified_config
+            self.config_manager = create_unified_config_manager()
             self.logger.debug("✅ UnifiedConfig initialized")
             
             # Initialize LoggingConfigManager (existing foundation)
@@ -311,7 +311,7 @@ class AshBotApplication:
             self.logger.info("❤️  Providing life-saving mental health crisis detection")
             
             # Initialize all managers in phases
-            if not await self.initialize_managers(unified_config):
+            if not await self.initialize_managers():
                 return 1
             
             self.logger.info("✅ All managers initialized successfully")
