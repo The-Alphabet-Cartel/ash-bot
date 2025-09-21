@@ -14,9 +14,9 @@
     "host": "${GLOBAL_BOT_API_HOST}",
     "port": "${GLOBAL_BOT_API_PORT}",
     "request_timeout": "${GLOBAL_REQUEST_TIMEOUT}",
-    "cors_enabled": true,
-    "max_request_size": 1048576,
-    "keepalive_timeout": 30,
+    "cors_enabled": "${GLOBAL_ENABLE_CORS}",
+    "max_request_size": "${GLOBAL_MAX_REQUEST}",
+    "keepalive_timeout": "${GLOBAL_KEEPALIVE_TIMEOUT}",
     "defaults": {
       "host": "172.20.0.10",
       "port": 8882,
@@ -60,13 +60,13 @@
 
   "endpoints": {
     "description": "API endpoint configuration and feature toggles",
-    "health_check": true,
-    "system_metrics": true,
-    "crisis_analytics": true,
-    "learning_analytics": true,
-    "manager_status": true,
-    "dashboard_endpoints": true,
-    "debug_endpoints": false,
+    "health_check": "${BOT_API_ENABLE_HEALTH_CHECK}",
+    "system_metrics": "${BOT_API_ENABLE_SYSTEM_METRICS}",
+    "crisis_analytics": "${BOT_API_ENABLE_CRISIS_ANALYTICS}",
+    "learning_analytics": "${BOT_API_ENABLE_LEARNING_ANALYTICS}",
+    "manager_status": "${BOT_API_ENABLE_MANAGER_STATUS}",
+    "dashboard_endpoints": "${BOT_API_ENABLE_DASHBOARD_ENDPOINTS}",
+    "debug_endpoints": "${BOT_API_ENABLE_DEBUG_ENDPOINTS}",
     "defaults": {
       "health_check": true,
       "system_metrics": true,
@@ -110,12 +110,12 @@
 
   "cors_settings": {
     "description": "Cross-Origin Resource Sharing configuration for web dashboard",
-    "allow_credentials": true,
-    "expose_headers": "*",
-    "allow_headers": "Content-Type,Authorization,X-Requested-With",
-    "allow_methods": "GET,POST,PUT,DELETE,OPTIONS",
-    "allow_origins": ["*"],
-    "max_age": 86400,
+    "allow_credentials": "${GLOBAL_CORS_ALLOW_CREDENTIALS}",
+    "expose_headers": "${GLOBAL_CORS_EXPOSE_HEADERS}",
+    "allow_headers": "${GLOBAL_CORS_ALLOWED_HEADERS}",
+    "allow_methods": "${GLOBAL_CORS_ALLOWED_METHODS}",
+    "allow_origins": "${GLOBAL_CORS_ALLOWED_ORIGINS}",
+    "max_age": "${GLOBAL_CORS_MAX_AGE}",
     "defaults": {
       "allow_credentials": true,
       "expose_headers": "*",
@@ -129,6 +129,18 @@
         "type": "boolean",
         "fallback_behavior": "use_default_with_logging"
       },
+      "expose_headers": {
+        "type": "string"
+      },
+      "allow_headers": {
+        "type": "list"
+      },
+      "allow_methods": {
+        "type": "list"
+      },
+      "allow_origins": {
+        "type": "array"
+      },
       "max_age": {
         "type": "integer",
         "range": [0, 86400],
@@ -139,12 +151,12 @@
 
   "response_formatting": {
     "description": "API response formatting and data structure settings",
-    "include_timestamp": true,
-    "include_version": true,
-    "include_request_id": false,
-    "error_details": true,
-    "pretty_print": false,
-    "data_compression": false,
+    "include_timestamp": "${BOT_API_INCLUDE_TIMESTAMP}",
+    "include_version": "${BOT_API_INCLUDE_VERSION}",
+    "include_request_id": "${BOT_API_INCLUDE_REQUEST_ID}",
+    "error_details": "${BOT_API_INCLUDE_ERROR_DETAILS}",
+    "pretty_print": "${BOT_API_PRETTY_PRINT}",
+    "data_compression": "${BOT_API_DATA_COMPRESSION}",
     "defaults": {
       "include_timestamp": true,
       "include_version": true,
@@ -183,12 +195,12 @@
 
   "caching": {
     "description": "Response caching configuration for performance optimization",
-    "enable_caching": true,
-    "cache_duration_seconds": 60,
-    "cache_health_checks": false,
-    "cache_statistics": true,
-    "cache_analytics": true,
-    "max_cache_size_mb": 100,
+    "enable_caching": "${BOT_API_CACHE_ENABLE}",
+    "cache_duration_seconds": "${BOT_API_CACHE_DURATION}",
+    "cache_health_checks": "${BOT_API_CACHE_HEALTHCHECKS}",
+    "cache_statistics": "${BOT_API_CACHE_STATISTICS}",
+    "cache_analytics": "${BOT_API_CACHE_ANALYTICS}",
+    "max_cache_size_mb": "${BOT_API_CACHE_MAX_SIZE}",
     "defaults": {
       "enable_caching": true,
       "cache_duration_seconds": 60,
@@ -229,12 +241,12 @@
 
   "rate_limiting": {
     "description": "API rate limiting configuration to prevent abuse",
-    "enable_rate_limiting": true,
-    "requests_per_minute": 60,
-    "requests_per_hour": 1000,
-    "burst_allowance": 10,
-    "rate_limit_by_ip": true,
-    "rate_limit_by_user": false,
+    "enable_rate_limiting": "${BOT_API_RATE_LIMIT_ENABLE}",
+    "requests_per_minute": "${BOT_API_RATE_LIMIT_REQUESTS_MINUTE}",
+    "requests_per_hour": "${BOT_API_RATE_LIMIT_REQUESTS_HOUR}",
+    "burst_allowance": "${BOT_API_RATE_LIMIT_BURST}",
+    "rate_limit_by_ip": "${BOT_API_RATE_LIMIT_BY_IP}",
+    "rate_limit_by_user": "${BOT_API_RATE_LIMIT_BY_USER}",
     "defaults": {
       "enable_rate_limiting": true,
       "requests_per_minute": 60,
@@ -276,12 +288,12 @@
 
   "monitoring": {
     "description": "API monitoring and metrics collection settings",
-    "collect_metrics": true,
-    "metrics_interval_seconds": 60,
-    "track_response_times": true,
-    "track_error_rates": true,
-    "track_endpoint_usage": true,
-    "store_request_logs": false,
+    "collect_metrics": "${BOT_API_METRICS_ENABLE}",
+    "metrics_interval_seconds": "${BOT_API_METRICS_SECONDS}",
+    "track_response_times": "${BOT_API_METRICS_TRACK_RESPONSE}",
+    "track_error_rates": "${BOT_API_METRICS_TRACK_ERRORS}",
+    "track_endpoint_usage": "${BOT_API_METRICS_TRACK_ENDPOINTS}",
+    "store_request_logs": "${BOT_API_METRICS_STORE_LOGS}",
     "defaults": {
       "collect_metrics": true,
       "metrics_interval_seconds": 60,
