@@ -607,7 +607,7 @@ class NLPIntegrationManager:
 # ========================================================================
 # FACTORY FUNCTION
 # ========================================================================
-def create_nlp_integration_manager(config_manager: UnifiedConfigManager, **kwargs) -> NLPIntegrationManager:
+def create_nlp_integration_manager(config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, **kwargs) -> NLPIntegrationManager:
     """
     Factory function for NLPIntegrationManager (MANDATORY per Rule #1)
     
