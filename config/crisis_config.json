@@ -9,21 +9,9 @@
   "crisis_levels": {
     "description": "Crisis level definitions and thresholds for analysis",
     "definitions": {
-      "none": {
-        "priority": 0,
-        "description": "No crisis indicators detected",
-        "response_required": false,
-        "staff_notification": false
-      },
-      "low": {
-        "priority": 1,
-        "description": "Minor crisis indicators - supportive response",
-        "response_required": true,
-        "staff_notification": false
-      },
-      "medium": {
-        "priority": 2,
-        "description": "Moderate crisis indicators - enhanced support",
+      "critical": {
+        "priority": 4,
+        "description": "Critical crisis indicators - immediate intervention",
         "response_required": true,
         "staff_notification": true
       },
@@ -32,6 +20,24 @@
         "description": "Severe crisis indicators - immediate intervention",
         "response_required": true,
         "staff_notification": true
+      },
+      "medium": {
+        "priority": 2,
+        "description": "Moderate crisis indicators - enhanced support",
+        "response_required": true,
+        "staff_notification": true
+      },
+      "low": {
+        "priority": 1,
+        "description": "Minor crisis indicators - supportive response",
+        "response_required": true,
+        "staff_notification": false
+      },
+      "none": {
+        "priority": 0,
+        "description": "No crisis indicators detected",
+        "response_required": false,
+        "staff_notification": false
       }
     },
     "override_levels": "${BOT_CRISIS_OVERRIDE_LEVELS}",
@@ -48,32 +54,124 @@
 
   "thresholds": {
     "description": "Confidence thresholds for crisis level determination",
+    "crisis_thresholds": {
+      "consensus": {
+        "critical_crisis_min": "${NLP_THRESHOLD_CONSENSUS_ENSEMBLE_CRITICAL}",
+        "high_crisis_min": "${NLP_THRESHOLD_CONSENSUS_ENSEMBLE_HIGH}",
+        "medium_crisis_min": "${NLP_THRESHOLD_CONSENSUS_ENSEMBLE_MEDIUM}",
+        "low_crisis_min": "${NLP_THRESHOLD_CONSENSUS_ENSEMBLE_LOW}",
+        "defaults": {
+          "critical_crisis_min": 0.800,
+          "high_crisis_min": 0.600,
+          "medium_crisis_min": 0.400,
+          "low_crisis_min": 0.200
+        },
+        "validation": {
+          "critical_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "high_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "medium_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "low_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          }
+        }
+      },
+      "majority": {
+        "critical_crisis_min": "${NLP_THRESHOLD_MAJORITY_ENSEMBLE_CRITICAL}",
+        "high_crisis_min": "${NLP_THRESHOLD_MAJORITY_ENSEMBLE_HIGH}",
+        "medium_crisis_min": "${NLP_THRESHOLD_MAJORITY_ENSEMBLE_MEDIUM}",
+        "low_crisis_min": "${NLP_THRESHOLD_MAJORITY_ENSEMBLE_LOW}",
+        "defaults": {
+          "critical_crisis_min": 0.800,
+          "high_crisis_min": 0.600,
+          "medium_crisis_min": 0.400,
+          "low_crisis_min": 0.200
+        },
+        "validation": {
+          "critical_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "high_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "medium_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "low_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          }
+        }
+      },
+      "weighted": {
+        "critical_crisis_min": "${NLP_THRESHOLD_WEIGHTED_ENSEMBLE_CRITICAL}",
+        "high_crisis_min": "${NLP_THRESHOLD_WEIGHTED_ENSEMBLE_HIGH}",
+        "medium_crisis_min": "${NLP_THRESHOLD_WEIGHTED_ENSEMBLE_MEDIUM}",
+        "low_crisis_min": "${NLP_THRESHOLD_WEIGHTED_ENSEMBLE_LOW}",
+        "defaults": {
+          "critical_crisis_min": 0.800,
+          "high_crisis_min": 0.600,
+          "medium_crisis_min": 0.400,
+          "low_crisis_min": 0.200
+        },
+        "validation": {
+          "critical_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "high_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "medium_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          },
+          "low_crisis_min": {
+            "type": "float",
+            "range": [0.001, 1.000]
+          }
+        }
+      }
+    },
     "confidence_thresholds": {
-      "low_crisis_min": "${CRISIS_LOW_THRESHOLD}",
-      "medium_crisis_min": "${CRISIS_MEDIUM_THRESHOLD}",
-      "high_crisis_min": "${CRISIS_HIGH_THRESHOLD}",
+      "high_confidence_min": "${BOT_CONFIDENCE_HIGH_THRESHOLD}",
+      "medium_confidence_min": "${BOT_CONFIDENCE_MEDIUM_THRESHOLD}",
+      "low_confidence_min": "${BOT_CONFIDENCE_LOW_THRESHOLD}",
       "defaults": {
-        "low_crisis_min": 0.3,
-        "medium_crisis_min": 0.6,
-        "high_crisis_min": 0.8
+        "high_confidence_min": 0.800,
+        "medium_confidence_min": 0.500,
+        "low_confidence_min": 0.200
       },
       "validation": {
-        "low_crisis_min": {
+        "high_confidence_min": {
           "type": "float",
           "range": [0.001, 1.000]
         },
-        "medium_crisis_min": {
+        "medium_confidence_min": {
           "type": "float",
           "range": [0.001, 1.000]
         },
-        "high_crisis_min": {
+        "low_confidence_min": {
           "type": "float",
           "range": [0.001, 1.000]
         }
       }
     },
     "gap_detection": {
-      "gap_threshold": "${NLP_GAP_DETECTION_THRESHOLD}",
+      "gap_threshold": "${BOT_GAP_DETECTION_THRESHOLD}",
       "gap_notification_enabled": "${BOT_ENABLE_GAP_NOTIFICATIONS}",
       "gap_notification_channel": "${BOT_GAP_NOTIFICATION_CHANNEL_ID}",
       "defaults": {
@@ -94,6 +192,14 @@
           "required": true
         }
       }
+    },
+    "ensemble_mode": "${NLP_ENSEMBLE_MODE}",
+    "defaults": {
+      "ensemble_mode": "consensus"
+    },
+    "validation": {
+      "type": "string",
+      "choices": ["consensus", "majority", "weighted"]
     }
   },
 
@@ -164,8 +270,8 @@
     "description": "Integration settings with NLP manager",
     "nlp_integration": {
       "timeout_seconds": "${GLOBAL_REQUEST_TIMEOUT}",
-      "fallback_on_error": "${CRISIS_FALLBACK_ON_NLP_ERROR}",
-      "log_all_decisions": "${CRISIS_LOG_ALL_DECISIONS}",
+      "fallback_on_error": "${BOT_CRISIS_FALLBACK_ON_NLP_ERROR}",
+      "log_all_decisions": "${BOT_CRISIS_LOG_ALL_DECISIONS}",
       "defaults": {
         "timeout_seconds": 30,
         "fallback_on_error": true,
