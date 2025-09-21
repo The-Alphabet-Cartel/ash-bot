@@ -57,8 +57,8 @@
     "description": "Claude API integration settings for conversation responses",
     "api_key": "${GLOBAL_CLAUDE_API_KEY}",
     "model": "${GLOBAL_CLAUDE_MODEL}",
-    "max_tokens": "${GLOBAL_CLAUDE_MAX_TOKENS}",
-    "temperature": "${GLOBAL_CLAUDE_TEMPERATURE}",
+    "max_tokens": "${BOT_CLAUDE_MAX_TOKENS}",
+    "temperature": "${BOT_CLAUDE_TEMPERATURE}",
     "timeout": "${GLOBAL_REQUEST_TIMEOUT}",
     "defaults": {
       "api_key": "/run/secrets/claude_api_key",
