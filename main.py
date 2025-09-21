@@ -14,6 +14,7 @@ Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alp
 
 import asyncio
 import logging
+import colorlog
 import os
 import sys
 import signal
