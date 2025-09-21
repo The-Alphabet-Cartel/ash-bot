@@ -27,6 +27,7 @@ pydantic>=2.4.0
 ## Logging and Monitoring
 coloredlogs>=15.0.1
 psutil>=5.9.0
+colorlog>=6.8.0
 
 ## Data Storage
 ujson>=5.8.0
