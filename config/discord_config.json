@@ -1,4 +1,81 @@
 {
+  "_metadata": {
+    "file_version": "v3.1-1a-1-2",
+    "last_modified": "2025-10-06",
+    "phase": "1a Step 1 - Discord Client Manager",
+    "clean_architecture": "v3.1 Compliant"
+  },
+
+  "discord_settings": {
+    "description": "Core Discord bot connection and behavior settings - SLASH COMMANDS ONLY",
+    "bot_token": "${BOT_DISCORD_TOKEN}",
+    "guild_id": "${BOT_GUILD_ID}",
+    "intents": {
+      "guilds": true,
+      "guild_messages": true,
+      "direct_messages": false,
+      "message_content": true,
+      "members": true,
+      "reactions": true
+    },
+    "defaults": {
+      "bot_token": "",
+      "guild_id": 895173212424519710,
+      "intents": {
+        "guilds": true,
+        "guild_messages": true,
+        "direct_messages": false,
+        "message_content": true,
+        "members": true,
+        "reactions": true
+      }
+    },
+    "validation": {
+      "bot_token": {
+        "type": "string",
+        "required": true
+      },
+      "guild_id": {
+        "type": "integer",
+        "required": false
+      }
+    }
+  },
+
+  "status": {
+    "description": "Discord bot presence and activity configuration",
+    "type": "${BOT_STATUS_TYPE}",
+    "activity": {
+      "name": "${BOT_STATUS_ACTIVITY_NAME}",
+      "type": "${BOT_STATUS_ACTIVITY_TYPE}"
+    },
+    "defaults": {
+      "type": "online",
+      "activity": {
+        "name": "for crisis patterns | v3.1 clean arch",
+        "type": "watching"
+      }
+    },
+    "validation": {
+      "type": {
+        "type": "string",
+        "allowed_values": ["online", "idle", "dnd", "invisible"],
+        "fallback_behavior": "use_default_with_logging"
+      },
+      "activity": {
+        "name": {
+          "type": "string",
+          "fallback_behavior": "use_default_with_logging"
+        },
+        "type": {
+          "type": "string",
+          "allowed_values": ["playing", "streaming", "listening", "watching", "competing"],
+          "fallback_behavior": "use_default_with_logging"
+        }
+      }
+    }
+  },
+
   "rate_limiting": {
     "description": "Discord API rate limiting configuration - MAPPED TO EXISTING ENV VARS per Rule #7",
     "max_messages_per_minute": "${BOT_MAX_MESSAGES_MINUTE}",
@@ -13,17 +90,17 @@
       "max_messages_per_minute": {
         "type": "integer",
         "range": [1, 60],
-        "fallback_behavior": "use_defaults_with_logging"
+        "fallback_behavior": "use_default_with_logging"
       },
       "max_reactions_per_minute": {
         "type": "integer",
         "range": [1, 30],
-        "fallback_behavior": "use_defaults_with_logging"
+        "fallback_behavior": "use_default_with_logging"
       },
       "cooldown_per_user": {
         "type": "integer",
         "range": [1, 60],
-        "fallback_behavior": "use_defaults_with_logging"
+        "fallback_behavior": "use_default_with_logging"
       }
     }
   }
