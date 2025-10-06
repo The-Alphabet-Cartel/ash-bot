@@ -49,7 +49,7 @@ class DiscordClientManager(commands.Bot):
         self.logging_manager = logging_manager
         
         # Load configuration
-        self.config = self.config_manager.load_config_file('discord_config')
+        self.config = self.config_manager.get_config_section('discord_config')
         
         # Store additional manager references
         self.nlp_manager = kwargs.get('nlp_manager')
