@@ -3,8 +3,8 @@ Ash-Bot: Crisis Detection Bot for The Alphabet Cartel Discord Community
 ********************************************************************************
 Discord Client Manager for Ash-Bot
 ---
-FILE VERSION: v3.1-1a-1-1
-LAST MODIFIED: 2025-09-05
+FILE VERSION: v3.1-1a-1-2
+LAST MODIFIED: 2025-10-06
 PHASE: 1a Step 1
 CLEAN ARCHITECTURE: v3.1
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -61,7 +61,11 @@ class DiscordClientManager(commands.Bot):
         
         # Bot configuration from JSON config
         self.guild_id = self.config.get('discord_settings', {}).get('guild_id')
-        self.command_prefix = self.config.get('discord_settings', {}).get('command_prefix', '!ash ')
+
+        # NOTE: command_prefix is required by discord.py but unused
+        # We use slash commands exclusively via app_commands
+        # Setting to dummy value to satisfy discord.py requirements
+        self.command_prefix = '/'  # Dummy prefix - not used with slash commands
         
         # Setup Discord intents
         intents = self._setup_intents()
@@ -157,10 +161,7 @@ class DiscordClientManager(commands.Bot):
             except (ValueError, TypeError):
                 errors.append(f"Invalid guild ID: {self.guild_id}")
         
-        # Validate command prefix
-        if not self.command_prefix:
-            self.command_prefix = '!ash '
-            logger.warning("⚠️ Using default command prefix: '!ash '")
+        # NOTE: command_prefix validation removed - we use slash commands exclusively
         
         if errors:
             logger.warning(f"⚠️ Discord configuration issues: {', '.join(errors)}")
@@ -171,7 +172,7 @@ class DiscordClientManager(commands.Bot):
         try:
             # Apply safe defaults from environment variables (Rule #7)
             self.guild_id = self.config_manager.get_env_int('BOT_GUILD_ID', 0)
-            self.command_prefix = '!ash '
+            # NOTE: command_prefix not needed - we use slash commands exclusively
             
             logger.info("🛡️ Fallback configuration applied successfully")
             
@@ -445,6 +446,153 @@ class DiscordClientManager(commands.Bot):
             'guild_member_count': guild.member_count if guild else None,
             'uptime_seconds': (datetime.now(timezone.utc) - self.start_time).total_seconds()
         }
+    # ========================================================================
+
+    # ========================================================================
+    # CONNECTION MANAGEMENT
+    # ========================================================================
+    async def connect_to_discord(self) -> bool:
+        """
+        Connect to Discord and start the bot
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            logger.info("🔌 Connecting to Discord...")
+            
+            # Get bot token from configuration using get_config_section
+            bot_token = self.config_manager.get_config_section(
+                'discord_config', 
+                'discord_settings.bot_token'
+            )
+            
+            if not bot_token:
+                logger.error("❌ Bot token not found in configuration")
+                # Check environment variable as fallback (Rule #7)
+                bot_token = self.config_manager.get_env('BOT_TOKEN')
+                
+                if not bot_token:
+                    logger.error("❌ Bot token not found in environment variables")
+                    return False
+                
+                logger.warning("⚠️ Using bot token from environment variable")
+            
+            # Validate token format
+            if not self._validate_bot_token(bot_token):
+                logger.error("❌ Invalid bot token format")
+                return False
+            
+            # Start the bot connection
+            # Note: self.start() is non-blocking and runs the bot in the background
+            logger.info("🚀 Starting Discord bot connection...")
+            asyncio.create_task(self.start(bot_token))
+            
+            # Wait for connection to be established
+            max_wait = 30  # Maximum 30 seconds to connect
+            wait_interval = 0.5
+            total_waited = 0
+            
+            while not self.is_ready_complete and total_waited < max_wait:
+                await asyncio.sleep(wait_interval)
+                total_waited += wait_interval
+            
+            if self.is_ready_complete and self.connection_healthy:
+                logger.info("✅ Successfully connected to Discord")
+                return True
+            else:
+                logger.error(f"❌ Discord connection failed after {max_wait} seconds")
+                return False
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to connect to Discord: {e}")
+            self.connection_healthy = False
+            return False
+    
+    async def disconnect_from_discord(self) -> None:
+        """
+        Gracefully disconnect from Discord and cleanup resources
+        """
+        try:
+            logger.info("🔌 Disconnecting from Discord...")
+            
+            # Mark connection as unhealthy
+            self.connection_healthy = False
+            
+            # Update bot status before disconnecting
+            try:
+                await self.change_presence(
+                    status=discord.Status.invisible,
+                    activity=None
+                )
+                logger.info("👻 Bot status set to invisible")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not update status before disconnect: {e}")
+            
+            # Close Discord connection
+            if not self.is_closed():
+                await self.close()
+                logger.info("✅ Discord connection closed gracefully")
+            else:
+                logger.info("ℹ️ Discord connection already closed")
+            
+            # Cleanup event handlers
+            self._cleanup_event_handlers()
+            
+            logger.info("✅ Successfully disconnected from Discord")
+            
+        except Exception as e:
+            logger.error(f"❌ Error during Discord disconnect: {e}")
+            # Continue with cleanup even if there were errors
+            try:
+                if not self.is_closed():
+                    await self.close()
+            except Exception as close_error:
+                logger.error(f"❌ Final disconnect attempt failed: {close_error}")
+    
+    def _validate_bot_token(self, token: str) -> bool:
+        """
+        Validate Discord bot token format
+        
+        Args:
+            token: Bot token to validate
+            
+        Returns:
+            bool: True if token appears valid, False otherwise
+        """
+        if not token:
+            return False
+        
+        # Discord bot tokens should be at least 50 characters
+        if len(token) < 50:
+            logger.warning("⚠️ Bot token appears too short")
+            return False
+        
+        # Bot tokens typically contain dots
+        if '.' not in token:
+            logger.warning("⚠️ Bot token format appears invalid")
+            return False
+        
+        return True
+    
+    def _cleanup_event_handlers(self) -> None:
+        """
+        Cleanup registered event handlers
+        """
+        try:
+            # Remove custom event handlers
+            for event_name, handlers in self.event_handlers.items():
+                for handler in handlers:
+                    try:
+                        self.remove_listener(handler, event_name)
+                    except Exception as e:
+                        logger.debug(f"Could not remove handler for {event_name}: {e}")
+            
+            self.event_handlers.clear()
+            logger.debug("🧹 Event handlers cleaned up")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Error during event handler cleanup: {e}")
     # ========================================================================
 
 # ========================================================================
