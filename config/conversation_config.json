@@ -25,30 +25,24 @@
     "validation": {
       "timeout": {
         "type": "integer",
-        "range": [30, 3600],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [30, 3600]
       },
       "requires_mention": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "trigger_phrases": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "allow_starters": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "max_daily_conversations": {
         "type": "integer",
-        "range": [1, 10000],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [1, 10000]
       },
       "rate_limit_per_user": {
         "type": "integer",
-        "range": [1, 100],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [1, 100]
       }
     }
   },
@@ -70,23 +64,19 @@
     "validation": {
       "model": {
         "type": "string",
-        "choices": ["claude-sonnet-4-20250514", "claude-opus-4", "claude-haiku-4"],
-        "fallback_behavior": "use_default_with_logging"
+        "choices": ["claude-sonnet-4-5-20250929", "claude-sonnet-4-20250514", "claude-opus-4", "claude-haiku-4"]
       },
       "max_tokens": {
         "type": "integer",
-        "range": [100, 4000],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [100, 4000]
       },
       "temperature": {
         "type": "float",
-        "range": [0.0, 1.0],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [0.0, 1.0]
       },
       "timeout": {
         "type": "integer",
-        "range": [5, 120],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [5, 120]
       }
     }
   },
@@ -105,22 +95,18 @@
     },
     "validation": {
       "include_crisis_context": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "personalize_responses": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "response_format": {
         "type": "string",
-        "choices": ["supportive", "clinical", "casual", "formal"],
-        "fallback_behavior": "use_default_with_logging"
+        "choices": ["supportive", "clinical", "casual", "formal"]
       },
       "crisis_response_templates": {
         "type": "string",
-        "choices": ["default", "enhanced", "minimal"],
-        "fallback_behavior": "use_default_with_logging"
+        "choices": ["default", "enhanced", "minimal"]
       }
     }
   },
@@ -139,21 +125,17 @@
     },
     "validation": {
       "enable_isolation": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "allow_multiple_per_channel": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "escalation_override": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "handoff_system": {
         "type": "string",
-        "choices": ["reaction_based", "command_based", "automatic"],
-        "fallback_behavior": "use_default_with_logging"
+        "choices": ["reaction_based", "command_based", "automatic"]
       }
     }
   },
@@ -170,17 +152,14 @@
     },
     "validation": {
       "enable_detailed_tracking": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "track_response_times": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "export_stats_interval": {
         "type": "integer",
-        "range": [300, 86400],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [300, 86400]
       }
     }
   }
