@@ -4,8 +4,8 @@ Ash-Thrash: Crisis Detection Testing for The Alphabet Cartel Discord Community
 ********************************************************************************
 Unified Configuration Manager for Ash NLP Service
 ---
-FILE VERSION: v3.1-1a-1
-LAST MODIFIED: 2025-08-29
+FILE VERSION: v3.1-1a-3
+LAST MODIFIED: 2025-10-09
 CLEAN ARCHITECTURE: v3.1
 Repository: https://github.com/the-alphabet-cartel/ash-thrash
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -180,8 +180,12 @@ class UnifiedConfigManager:
     # ========================================================================
     def get_env(self, var_name: str, default: Any = None) -> Any:
         """
-        Get environment variable with schema validation and type conversion
+        Get environment variable with schema validation, type conversion, and Docker secrets support
         CRITICAL METHOD - Used by all managers
+        
+        Supports Docker secrets by detecting file paths and reading file contents:
+        - If env value starts with / or ./ and file exists, reads file contents
+        - Common Docker secrets paths: /run/secrets/*, ./secrets/*
         """
         # Get raw environment value
         env_value = os.getenv(var_name)
@@ -196,12 +200,49 @@ class UnifiedConfigManager:
                 logger.debug(f"Using provided default for {var_name}: {default}")
                 return default
         
+        # DOCKER SECRETS SUPPORT: Check if env_value is a file path
+        if isinstance(env_value, str) and (env_value.startswith('/') or env_value.startswith('./')):
+            file_content = self._read_secret_file(env_value, var_name)
+            if file_content is not None:
+                env_value = file_content  # Replace path with file contents
+                logger.info(f"🔐 Read {var_name} from Docker secret file: {os.getenv(var_name)}")
+        
         # Validate and convert using schema
         if var_name in self.variable_schemas:
             return self._validate_and_convert(var_name, env_value)
         else:
-            logger.warning(f"No schema found for {var_name}, returning raw value: {env_value}")
+            logger.warning(f"No schema found for {var_name}, returning raw value")
             return env_value
+    
+    def _read_secret_file(self, file_path: str, var_name: str) -> Optional[str]:
+        """
+        Read Docker secrets file if it exists
+        
+        Args:
+            file_path: Path to secret file
+            var_name: Variable name (for logging)
+            
+        Returns:
+            File contents stripped of whitespace, or None if file doesn't exist
+        """
+        try:
+            if Path(file_path).exists():
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    secret = f.read().strip()
+                    
+                if secret:
+                    logger.debug(f"✅ Successfully read {var_name} from {file_path} ({len(secret)} chars)")
+                    return secret
+                else:
+                    logger.warning(f"⚠️ Secret file {file_path} for {var_name} is empty")
+                    return None
+            else:
+                logger.debug(f"🔍 Secret file not found: {file_path} for {var_name}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to read secret file {file_path} for {var_name}: {e}")
+            return None
     
     def get_env_str(self, var_name: str, default: str = '') -> str:
         """Get environment variable as string"""
