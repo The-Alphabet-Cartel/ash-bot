@@ -17,14 +17,12 @@
     "validation": {
       "host": {
         "type": "string",
-        "required": true,
-        "fallback_behavior": "use_defaults_with_logging"
+        "required": true
       },
       "port": {
         "type": "int",
         "range": [1, 65535],
-        "required": true,
-        "fallback_behavior": "use_defaults_with_logging"
+        "required": true
       }
     }
   },
@@ -41,19 +39,16 @@
     },
     "validation": {
       "timeout": {
-        "type": "int",
-        "range": [5, 120],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [5, 120]
       },
       "retry_attempts": {
-        "type": "int",
-        "range": [1, 10],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [1, 10]
       },
       "health_check_interval": {
-        "type": "int",
-        "range": [60, 1800],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [60, 1800]
       }
     }
   },
@@ -101,14 +96,12 @@
     },
     "validation": {
       "max_message_length": {
-        "type": "int",
-        "range": [100, 10000],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [100, 10000]
       },
       "min_message_length": {
-        "type": "int",
-        "range": [1, 50],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [1, 50]
       }
     }
   },
@@ -128,23 +121,19 @@
     "validation": {
       "confidence_threshold": {
         "type": "float",
-        "range": [0.0, 1.0],
-        "fallback_behavior": "use_defaults_with_logging"
+        "range": [0.0, 1.0]
       },
       "crisis_detection_enabled": {
-        "type": "bool",
-        "required": true,
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "boolean",
+        "required": true
       },
       "staff_review_threshold": {
         "type": "float",
-        "range": [0.0, 1.0],
-        "fallback_behavior": "use_defaults_with_logging"
+        "range": [0.0, 1.0]
       },
       "gap_detection_threshold": {
         "type": "float",
-        "range": [0.0, 1.0],
-        "fallback_behavior": "use_defaults_with_logging"
+        "range": [0.0, 1.0]
       }
     }
   },
@@ -161,18 +150,15 @@
     },
     "validation": {
       "feedback_enabled": {
-        "type": "bool",
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "boolean"
       },
       "max_feedback_per_day": {
-        "type": "int",
-        "range": [1, 1000],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [1, 1000]
       },
       "feedback_timeout": {
-        "type": "int",
-        "range": [5, 120],
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "integer",
+        "range": [5, 120]
       }
     }
   },
@@ -189,17 +175,14 @@
     },
     "validation": {
       "log_analysis_time": {
-        "type": "bool",
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "boolean"
       },
       "cache_results": {
-        "type": "bool",
-        "fallback_behavior": "use_defaults_with_logging"
+        "type": "boolean"
       },
       "max_concurrent_requests": {
         "type": "int",
-        "range": [1, 20],
-        "fallback_behavior": "use_defaults_with_logging"
+        "range": [1, 20]
       }
     }
   }
