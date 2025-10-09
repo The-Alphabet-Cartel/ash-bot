@@ -4,8 +4,8 @@ Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
 ********************************************************************************
 Ash-Bot Main Application Entry Point - Complete System Orchestration
 ---
-FILE VERSION: v3.1-final-1-1
-LAST MODIFIED: 2025-09-16
+FILE VERSION: v3.1-1a-2
+LAST MODIFIED: 2025-10-09
 PHASE: Final Integration
 CLEAN ARCHITECTURE: v3.1
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -121,7 +121,7 @@ class AshBotApplication:
             self.crisis_analysis_manager = create_crisis_analysis_manager(
                 config_manager=self.config_manager,
                 logging_manager=self.logging_manager,
-                nlp_integration_manager=self.nlp_integration_manager
+                nlp_manager=self.nlp_integration_manager
             )
             self.logger.debug("✅ CrisisAnalysis initialized")
             
