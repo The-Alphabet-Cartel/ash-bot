@@ -5,6 +5,7 @@
     "phase": "1a Step 2 - NLP Integration Manager Configuration",
     "clean_architecture": "v3.1 Compliant"
   },
+
   "server_settings": {
     "description": "NLP server connection configuration - MAPPED TO EXISTING ENV VARS per Rule #7",
     "host": "${GLOBAL_NLP_API_HOST}",
@@ -27,11 +28,12 @@
       }
     }
   },
+
   "connection_settings": {
     "description": "NLP server connection timeouts and retry configuration",
     "timeout": "${GLOBAL_REQUEST_TIMEOUT}",
-    "retry_attempts": "${NLP_RETRY_ATTEMPTS}",
-    "health_check_interval": "${NLP_HEALTH_CHECK_INTERVAL}",
+    "retry_attempts": "${BOT_NLP_RETRY_ATTEMPTS}",
+    "health_check_interval": "${BOT_NLP_HEALTH_CHECK_INTERVAL}",
     "defaults": {
       "timeout": 30,
       "retry_attempts": 3,
@@ -55,6 +57,7 @@
       }
     }
   },
+
   "endpoints": {
     "description": "NLP server API endpoints configuration",
     "analyze": "/analyze",
@@ -85,10 +88,11 @@
       }
     }
   },
+
   "validation": {
     "description": "Message validation settings for NLP analysis",
-    "max_message_length": "${NLP_MAX_MESSAGE_LENGTH}",
-    "min_message_length": "${NLP_MIN_MESSAGE_LENGTH}",
+    "max_message_length": "${BOT_NLP_MAX_MESSAGE_LENGTH}",
+    "min_message_length": "${BOT_NLP_MIN_MESSAGE_LENGTH}",
     "allowed_content_types": ["text", "markdown"],
     "defaults": {
       "max_message_length": 4000,
@@ -108,12 +112,13 @@
       }
     }
   },
+
   "analysis_settings": {
     "description": "NLP analysis configuration and thresholds",
-    "confidence_threshold": "${NLP_CONFIDENCE_THRESHOLD}",
-    "crisis_detection_enabled": "${NLP_CRISIS_DETECTION_ENABLED}",
-    "staff_review_threshold": "${NLP_STAFF_REVIEW_THRESHOLD}",
-    "gap_detection_threshold": "${NLP_GAP_DETECTION_THRESHOLD}",
+    "confidence_threshold": "${BOT_NLP_CONFIDENCE_THRESHOLD}",
+    "crisis_detection_enabled": "${BOT_NLP_CRISIS_DETECTION_ENABLED}",
+    "staff_review_threshold": "${BOT_NLP_STAFF_REVIEW_THRESHOLD}",
+    "gap_detection_threshold": "${BOT_NLP_GAP_DETECTION_THRESHOLD}",
     "defaults": {
       "confidence_threshold": 0.5,
       "crisis_detection_enabled": true,
@@ -143,11 +148,12 @@
       }
     }
   },
+
   "feedback_settings": {
     "description": "Staff feedback and learning system configuration",
     "feedback_enabled": "${GLOBAL_LEARNING_SYSTEM_ENABLED}",
     "max_feedback_per_day": "${BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY}",
-    "feedback_timeout": "${NLP_FEEDBACK_TIMEOUT}",
+    "feedback_timeout": "${BOT_NLP_FEEDBACK_TIMEOUT}",
     "defaults": {
       "feedback_enabled": true,
       "max_feedback_per_day": 50,
@@ -170,11 +176,12 @@
       }
     }
   },
+
   "performance": {
     "description": "Performance monitoring and optimization settings",
-    "log_analysis_time": "${NLP_LOG_ANALYSIS_TIME}",
-    "cache_results": "${NLP_CACHE_RESULTS}",
-    "max_concurrent_requests": "${NLP_MAX_CONCURRENT_REQUESTS}",
+    "log_analysis_time": "${BOT_NLP_LOG_ANALYSIS_TIME}",
+    "cache_results": "${BOT_NLP_CACHE_RESULTS}",
+    "max_concurrent_requests": "${BOT_NLP_MAX_CONCURRENT_REQUESTS}",
     "defaults": {
       "log_analysis_time": true,
       "cache_results": false,
