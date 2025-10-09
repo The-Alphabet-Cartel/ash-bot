@@ -155,11 +155,6 @@ class APIServerManager:
     def _get_api_host(self) -> str:
         """Get API server host with resilient fallback."""
         try:
-            # Try environment variable first (Rule #7)
-            env_host = self.config_manager.get_env('GLOBAL_BOT_API_HOST')
-            if env_host:
-                return env_host
-            
             # Try configuration file
             server_settings = self.config.get('server_settings', {})
             config_host = server_settings.get('host')
@@ -176,11 +171,6 @@ class APIServerManager:
     def _get_api_port(self) -> int:
         """Get API server port with resilient fallback."""
         try:
-            # Try environment variable first (Rule #7)
-            env_port = self.config_manager.get_env_int('GLOBAL_BOT_API_PORT', None)
-            if env_port is not None:
-                return max(1024, min(65535, env_port))  # Valid port range
-            
             # Try configuration file
             server_settings = self.config.get('server_settings', {})
             config_port = server_settings.get('port')
@@ -197,11 +187,6 @@ class APIServerManager:
     def _get_request_timeout(self) -> int:
         """Get request timeout with resilient fallback."""
         try:
-            # Try environment variable first (Rule #7)
-            env_timeout = self.config_manager.get_env_int('GLOBAL_REQUEST_TIMEOUT', None)
-            if env_timeout is not None:
-                return max(5, env_timeout)  # Minimum 5 seconds
-            
             # Try configuration file
             server_settings = self.config.get('server_settings', {})
             config_timeout = server_settings.get('request_timeout')
