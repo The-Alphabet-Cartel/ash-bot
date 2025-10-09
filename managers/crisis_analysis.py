@@ -4,8 +4,8 @@ Ash-Bot: Crisis Detection Bot for The Alphabet Cartel Discord Community
 ********************************************************************************
 Crisis Analysis Manager for Ash-Bot
 ---
-FILE VERSION: v3.1-1a-3-1
-LAST MODIFIED: 2025-09-05
+FILE VERSION: v3.1-1a-2
+LAST MODIFIED: 2025-10-09
 PHASE: 1a Step 3
 CLEAN ARCHITECTURE: v3.1
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -374,26 +374,33 @@ class CrisisAnalysisManager:
 # ========================================================================
 # FACTORY FUNCTION
 # ========================================================================
-def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, nlp_manager: Optional[NLPIntegrationManager] = None, **kwargs) -> CrisisAnalysisManager:
+def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, logging_manager: LoggingConfigManager, nlp_manager: NLPIntegrationManager, **kwargs) -> CrisisAnalysisManager:
     """
     Factory function for CrisisAnalysisManager (MANDATORY per Rule #1)
     
     Args:
         config_manager: UnifiedConfigManager instance
-        **kwargs: Additional dependencies (logging_manager, nlp_manager)
+        logging_manager: LoggingConfigManager instance
+        nlp_manager: NLPIntegrationManager instance
+        **kwargs: Additional dependencies
         
     Returns:
         Initialized CrisisAnalysisManager instance
     """
     try:
-        # Get or create logging manager
-        logging_manager = kwargs.get('logging_manager')
-        if not logging_manager:
+        # Use provided logging_manager, or get from kwargs, or create new
+        if logging_manager is None:
+            logging_manager = kwargs.get('logging_manager')
+        if logging_manager is None:
             from managers.logging_config import create_logging_config_manager
             logging_manager = create_logging_config_manager(config_manager)
         
-        # Get NLP manager (required for analysis)
-        nlp_manager = kwargs.get('nlp_manager')
+        # Use provided nlp_manager, or get from kwargs (don't overwrite if provided!)
+        if nlp_manager is None:
+            nlp_manager = kwargs.get('nlp_manager')
+        if nlp_manager is None:
+            from managers.nlp_integration import create_nlp_integration_manager
+            nlp_manager = create_nlp_integration_manager(config_manager)
         
         return CrisisAnalysisManager(
             config_manager=config_manager,
@@ -401,6 +408,7 @@ def create_crisis_analysis_manager(config_manager: UnifiedConfigManager, logging
             nlp_manager=nlp_manager,
             **kwargs
         )
+
     except Exception as e:
         logger.error(f"❌ Failed to create CrisisAnalysisManager: {e}")
         # Implement resilient fallback per Rule #5
