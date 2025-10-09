@@ -52,7 +52,7 @@
     "defaults": {
       "type": "online",
       "activity": {
-        "name": "for crisis patterns | v3.1 clean arch",
+        "name": "for crisis patterns",
         "type": "watching"
       }
     },
