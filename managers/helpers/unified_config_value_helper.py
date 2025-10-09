@@ -1,19 +1,21 @@
 # ash-thrash/managers/helpers/unified_config_value_helper.py
 """
-Ash-Thrash: Crisis Detection Testing for The Alphabet Cartel Discord Community
+Ash-Bot: Crisis Detection Bot for The Alphabet Cartel Discord Community
 ********************************************************************************
 Value Conversion Helper for UnifiedConfigManager
 ---
-FILE VERSION: v3.1-1a-1
-LAST MODIFIED: 2025-08-29
+FILE VERSION: v3.1-1a-1-2
+LAST MODIFIED: 2025-10-09
+PHASE: 1a - Docker Secrets Support Added
 CLEAN ARCHITECTURE: v3.1
-Repository: https://github.com/the-alphabet-cartel/ash-thrash
+Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 """
 
 import os
 import re
 import logging
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,9 @@ class UnifiedConfigValueHelper:
     
     This helper extracts the complex value conversion logic from the main UnifiedConfigManager
     to reduce file size while maintaining all functionality.
+    
+    DOCKER SECRETS SUPPORT: Automatically detects and reads Docker secrets files when
+    environment variables contain file paths.
     """
     
     def __init__(self, variable_schemas: Dict[str, Any]):
@@ -36,21 +41,63 @@ class UnifiedConfigValueHelper:
         self.variable_schemas = variable_schemas
         self.env_override_pattern = re.compile(r'\$\{([^}]+)\}')
     
+    def _read_secret_file(self, file_path: str, env_var: str) -> Optional[str]:
+        """
+        Read Docker secrets file if it exists
+        
+        Args:
+            file_path: Path to secret file
+            env_var: Variable name (for logging)
+            
+        Returns:
+            File contents stripped of whitespace, or None if file doesn't exist/error
+        """
+        try:
+            path = Path(file_path)
+            if path.exists() and path.is_file():
+                with open(path, 'r', encoding='utf-8') as f:
+                    secret = f.read().strip()
+                    
+                if secret:
+                    logger.info(f"🔐 Read {env_var} from Docker secret: {file_path} ({len(secret)} chars)")
+                    return secret
+                else:
+                    logger.warning(f"⚠️ Docker secret file {file_path} for {env_var} is empty")
+                    return None
+            else:
+                logger.debug(f"🔍 Not a file or doesn't exist: {file_path}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to read Docker secret {file_path} for {env_var}: {e}")
+            return None
+    
     def convert_value_type(self, env_var: str, value: str) -> str:
         """
         Convert string value to appropriate type for substitution
         
+        DOCKER SECRETS SUPPORT: Automatically detects file paths and reads file contents
+        before type conversion.
+        
         Args:
             env_var: Environment variable name (for logging)
-            value: String value to convert
+            value: String value to convert (may be a file path)
             
         Returns:
             String representation of converted value
         """
+        # DOCKER SECRETS DETECTION: Check if value is a file path
+        if isinstance(value, str) and (value.startswith('/') or value.startswith('./')):
+            secret_content = self._read_secret_file(value, env_var)
+            if secret_content is not None:
+                # Replace the file path with the file contents
+                value = secret_content
+                logger.debug(f"   {env_var} -> Using content from secret file")
+        
         # Boolean conversion
         if value.lower() in ('true', 'false'):
             result = str(value.lower() == 'true')
-            logger.debug(f"   {env_var} -> Boolean conversion: {value} -> {result}")
+            logger.debug(f"   {env_var} -> Boolean conversion: {value[:20]}... -> {result}")
             return result
         
         # Numeric conversion
@@ -58,18 +105,18 @@ class UnifiedConfigValueHelper:
             try:
                 if '.' in value:
                     result = str(float(value))
-                    logger.debug(f"   {env_var} -> Float conversion: {value} -> {result}")
+                    logger.debug(f"   {env_var} -> Float conversion: {value[:20]}... -> {result}")
                     return result
                 else:
                     result = str(int(value))
-                    logger.debug(f"   {env_var} -> Int conversion: {value} -> {result}")
+                    logger.debug(f"   {env_var} -> Int conversion: {value[:20]}... -> {result}")
                     return result
             except ValueError:
-                logger.debug(f"   {env_var} -> String (conversion failed): {value}")
+                logger.debug(f"   {env_var} -> String (conversion failed): {value[:20]}...")
                 return value
         
-        # String (no conversion)
-        logger.debug(f"   {env_var} -> String (no conversion): {value}")
+        # String (no conversion needed, but may have been read from file)
+        logger.debug(f"   {env_var} -> String (no conversion): {len(value)} chars")
         return value
     
     def apply_type_conversion(self, value: Any) -> Any:
