@@ -23,23 +23,19 @@
     },
     "validation": {
       "enabled": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "confidence_threshold": {
         "type": "float",
-        "range": [0.0, 1.0],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [0.0, 1.0]
       },
       "max_daily_adjustments": {
         "type": "integer",
-        "range": [1, 1000],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [1, 1000]
       },
       "request_timeout": {
         "type": "integer",
-        "range": [5, 120],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [5, 120]
       }
     }
   },
@@ -61,26 +57,21 @@
     "validation": {
       "batch_size": {
         "type": "integer",
-        "range": [1, 100],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [1, 100]
       },
       "processing_interval": {
         "type": "integer",
-        "range": [60, 3600],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [60, 3600]
       },
       "retry_attempts": {
         "type": "integer",
-        "range": [1, 10],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [1, 10]
       },
       "require_staff_confirmation": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "auto_submit_high_confidence": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   },
@@ -103,27 +94,24 @@
       "minimum_confidence_gap": 0.3,
       "staff_consensus_threshold": 2,
       "auto_learn_threshold": 0.9
-    },
-    "defaults": {
-      "minimum_confidence_gap": 0.3,
-      "staff_consensus_threshold": 2,
-      "auto_learn_threshold": 0.9
-    },
-    "validation": {
-      "minimum_confidence_gap": {
-        "type": "float",
-        "range": [0.1, 0.9],
-        "fallback_behavior": "use_default_with_logging"
+      "defaults": {
+        "minimum_confidence_gap": 0.3,
+        "staff_consensus_threshold": 2,
+        "auto_learn_threshold": 0.9
       },
-      "staff_consensus_threshold": {
-        "type": "integer",
-        "range": [1, 10],
-        "fallback_behavior": "use_default_with_logging"
-      },
-      "auto_learn_threshold": {
-        "type": "float",
-        "range": [0.5, 1.0],
-        "fallback_behavior": "use_default_with_logging"
+      "validation": {
+        "minimum_confidence_gap": {
+          "type": "float",
+          "range": [0.1, 0.9]
+        },
+        "staff_consensus_threshold": {
+          "type": "integer",
+          "range": [1, 10]
+        },
+        "auto_learn_threshold": {
+          "type": "float",
+          "range": [0.5, 1.0]
+        }
       }
     }
   },
@@ -148,22 +136,18 @@
     },
     "validation": {
       "track_effectiveness": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "history_retention_days": {
         "type": "integer",
-        "range": [7, 365],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [7, 365]
       },
       "generate_reports": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "report_frequency": {
         "type": "string",
-        "choices": ["daily", "weekly", "monthly"],
-        "fallback_behavior": "use_default_with_logging"
+        "choices": ["daily", "weekly", "monthly"]
       }
     }
   },
@@ -183,23 +167,19 @@
     "validation": {
       "daily_limit_warning": {
         "type": "float",
-        "range": [0.1, 1.0],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [0.1, 1.0]
       },
       "effectiveness_drop_threshold": {
         "type": "float",
-        "range": [0.1, 1.0],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [0.1, 1.0]
       },
       "nlp_server_timeout_threshold": {
         "type": "integer",
-        "range": [5, 60],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [5, 60]
       },
       "failed_submission_threshold": {
         "type": "integer",
-        "range": [1, 50],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [1, 50]
       }
     }
   }
