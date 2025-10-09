@@ -28,32 +28,26 @@
     "validation": {
       "host": {
         "type": "string",
-        "pattern": "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",
-        "fallback_behavior": "use_default_with_logging"
+        "pattern": "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$"
       },
       "port": {
         "type": "integer",
-        "range": [1024, 65535],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [1024, 65535]
       },
       "request_timeout": {
         "type": "integer",
-        "range": [5, 300],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [5, 300]
       },
       "cors_enabled": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "max_request_size": {
         "type": "integer",
-        "range": [1024, 10485760],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [1024, 10485760]
       },
       "keepalive_timeout": {
         "type": "integer",
-        "range": [10, 300],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [10, 300]
       }
     }
   },
@@ -78,32 +72,25 @@
     },
     "validation": {
       "health_check": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "system_metrics": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "crisis_analytics": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "learning_analytics": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "manager_status": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "dashboard_endpoints": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "debug_endpoints": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   },
@@ -126,8 +113,7 @@
     },
     "validation": {
       "allow_credentials": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "expose_headers": {
         "type": "string"
@@ -143,8 +129,7 @@
       },
       "max_age": {
         "type": "integer",
-        "range": [0, 86400],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [0, 86400]
       }
     }
   },
@@ -167,28 +152,22 @@
     },
     "validation": {
       "include_timestamp": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "include_version": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "include_request_id": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "error_details": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "pretty_print": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "data_compression": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   },
@@ -211,30 +190,24 @@
     },
     "validation": {
       "enable_caching": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "cache_duration_seconds": {
         "type": "integer",
-        "range": [10, 3600],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [10, 3600]
       },
       "cache_health_checks": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "cache_statistics": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "cache_analytics": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "max_cache_size_mb": {
         "type": "integer",
-        "range": [10, 1000],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [10, 1000]
       }
     }
   },
@@ -257,31 +230,25 @@
     },
     "validation": {
       "enable_rate_limiting": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "requests_per_minute": {
         "type": "integer",
-        "range": [1, 1000],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [1, 1000]
       },
       "requests_per_hour": {
         "type": "integer",
-        "range": [60, 10000],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [60, 10000]
       },
       "burst_allowance": {
         "type": "integer",
-        "range": [1, 100],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [1, 100]
       },
       "rate_limit_by_ip": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "rate_limit_by_user": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   },
@@ -304,29 +271,23 @@
     },
     "validation": {
       "collect_metrics": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "metrics_interval_seconds": {
         "type": "integer",
-        "range": [10, 3600],
-        "fallback_behavior": "clamp_to_range_with_logging"
+        "range": [10, 3600]
       },
       "track_response_times": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "track_error_rates": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "track_endpoint_usage": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "store_request_logs": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   }
