@@ -153,9 +153,9 @@ class LearningSystemManager:
         """Get learning system enabled status with resilient fallback."""
         try:
             # Try environment variable first (Rule #7)
-            env_enabled = self.config_manager.get_env_bool('GLOBAL_LEARNING_SYSTEM_ENABLED', None)
-            if env_enabled is not None:
-                return env_enabled
+#            env_enabled = self.config_manager.get_env_bool('GLOBAL_LEARNING_SYSTEM_ENABLED', None)
+#            if env_enabled is not None:
+#                return env_enabled
             
             # Try configuration file
             learning_settings = self.config.get('learning_settings', {})
@@ -173,11 +173,6 @@ class LearningSystemManager:
     def _get_confidence_threshold(self) -> float:
         """Get confidence threshold with resilient fallback."""
         try:
-            # Try environment variable first (Rule #7)
-            env_threshold = self.config_manager.get_env_float('BOT_LEARNING_CONFIDENCE_THRESHOLD', None)
-            if env_threshold is not None:
-                return max(0.0, min(1.0, env_threshold))  # Clamp to valid range
-            
             # Try configuration file
             learning_settings = self.config.get('learning_settings', {})
             config_threshold = learning_settings.get('confidence_threshold')
@@ -194,11 +189,6 @@ class LearningSystemManager:
     def _get_max_daily_adjustments(self) -> int:
         """Get max daily adjustments with resilient fallback."""
         try:
-            # Try environment variable first (Rule #7)
-            env_max = self.config_manager.get_env_int('BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY', None)
-            if env_max is not None:
-                return max(1, env_max)  # Ensure positive value
-            
             # Try configuration file
             learning_settings = self.config.get('learning_settings', {})
             config_max = learning_settings.get('max_daily_adjustments')
@@ -215,11 +205,6 @@ class LearningSystemManager:
     def _get_request_timeout(self) -> int:
         """Get request timeout for NLP server calls with resilient fallback."""
         try:
-            # Try environment variable first (Rule #7)
-            env_timeout = self.config_manager.get_env_int('GLOBAL_REQUEST_TIMEOUT', None)
-            if env_timeout is not None:
-                return max(5, env_timeout)  # Minimum 5 seconds
-            
             # Try configuration file
             learning_settings = self.config.get('learning_settings', {})
             config_timeout = learning_settings.get('request_timeout')
