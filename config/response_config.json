@@ -26,33 +26,26 @@
     },
     "validation": {
       "crisis_response_channel_id": {
-        "type": "integer",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "integer"
       },
       "crisis_response_role_id": {
-        "type": "integer",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "integer"
       },
       "resources_channel_id": {
-        "type": "integer",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "integer"
       },
       "staff_user_id": {
-        "type": "integer",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "integer"
       },
       "gap_notification_channel_id": {
-        "type": "integer",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "integer"
       },
       "enable_gap_notifications": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "notification_timeout": {
         "type": "integer",
-        "range": [5, 120],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [5, 120]
       }
     }
   },
@@ -75,28 +68,22 @@
     },
     "validation": {
       "high_crisis": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "medium_crisis": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "low_crisis": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "gap_notification": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "resource_message": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "escalation_message": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       }
     }
   },
@@ -120,30 +107,24 @@
     "validation": {
       "max_retry_attempts": {
         "type": "integer",
-        "range": [1, 10],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [1, 10]
       },
       "retry_delay_seconds": {
         "type": "integer",
-        "range": [1, 60],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [1, 60]
       },
       "enable_confirmation_reactions": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "auto_escalate_on_failure": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "priority_timeout_seconds": {
         "type": "integer",
-        "range": [10, 300],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [10, 300]
       },
       "batch_processing_enabled": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   },
@@ -162,20 +143,16 @@
     },
     "validation": {
       "crisis_level_thresholds": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "staff_notification_levels": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "resource_share_levels": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       },
       "immediate_intervention_levels": {
-        "type": "string",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "string"
       }
     }
   },
@@ -196,25 +173,20 @@
     },
     "validation": {
       "enable_response_tracking": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "log_response_details": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "track_execution_times": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       },
       "export_stats_interval": {
         "type": "integer",
-        "range": [300, 86400],
-        "fallback_behavior": "use_default_with_logging"
+        "range": [300, 86400]
       },
       "alert_on_failures": {
-        "type": "boolean",
-        "fallback_behavior": "use_default_with_logging"
+        "type": "boolean"
       }
     }
   }
