@@ -93,7 +93,7 @@
     "learning_triggers": {
       "minimum_confidence_gap": 0.3,
       "staff_consensus_threshold": 2,
-      "auto_learn_threshold": 0.9
+      "auto_learn_threshold": 0.9,
       "defaults": {
         "minimum_confidence_gap": 0.3,
         "staff_consensus_threshold": 2,
