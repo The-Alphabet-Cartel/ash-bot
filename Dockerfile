@@ -43,7 +43,7 @@ RUN groupadd -g 1001 ash && \
     useradd -g 1001 -u 1001 -d /app -M ash
 
 # Create necessary directories with proper ownership
-RUN mkdir -p logs tests && \
+RUN mkdir -p data logs && \
     chown -R ash:ash /app && \
     chmod 755 /app
 
