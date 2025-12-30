@@ -1,24 +1,27 @@
 <!-- ash-bot/docs/clean_architecture_charter.md -->
 <!--
 Clean Architecture Charter for Ash-Bot Service
-FILE VERSION: v3.1-1
-LAST MODIFIED: 2025-08-29
-CLEAN ARCHITECTURE: v3.1
+FILE VERSION: v5.0
+LAST MODIFIED: 2025-12-30
 -->
 # Clean Architecture Charter - Ash-Bot
 
 ## Sacred Principles - NEVER TO BE VIOLATED
 
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot  
-**Project**: Ash-Bot v3.1
+**Project**: Ash-Bot v5.0
 **Community**: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org  
-**FILE VERSION**: v3.1-1
-**LAST UPDATED**: 2025-08-29
-**CLEAN ARCHITECTURE**: v3.1
+**FILE VERSION**: v5.0
+**LAST UPDATED**: 2025-12-30
 
 ---
 
 # 🎯 CORE SYSTEM VISION (Never to be violated):
+
+## **Ash-Bot is a CRISIS DETECTION Natural Language Processor that**:
+1. **FIRST**: Uses Zero-Shot AI models for primary semantic classification
+2. **SECOND**: Enhances AI results with contextual pattern analysis
+3. **PURPOSE**: Detect crisis messages in Discord community communications
 
 ## 🏛️ **IMMUTABLE ARCHITECTURE RULES**
 
@@ -26,7 +29,7 @@ CLEAN ARCHITECTURE: v3.1
 - **ALL managers MUST use factory functions** - `create_[manager_name]()`
 - **NEVER call constructors directly**
 - **Factory functions enable**: dependency injection, testing, consistency
-- **Examples**: `create_model_coordination_manager()`, `create_pattern_detection_manager()`, `create_settings_manager()`
+- **Examples**: `create_model_manager()`, `create_patterns_detection_manager()`, `create_settings_config_manager()`
 
 ### **Rule #2: Dependency Injection - REQUIRED**
 - **All managers accept dependencies through constructor parameters**
@@ -34,16 +37,16 @@ CLEAN ARCHITECTURE: v3.1
 - **Additional managers passed as named parameters**
 - **Clean separation of concerns maintained**
 
-### **Rule #3: Phase-Additive Development - SACRED**
+### **Rule #3: Phase-Additive Development - STANDARD**
 - **New phases ADD functionality, never REMOVE**
 - **Maintain backward compatibility within phase**
 - **Each phase builds on previous phases' foundations**
 - **Phase 3a + Phase 3b + Phase 3c + Phase 3d = cumulative enhancement**
 
-### **Rule #4: JSON Configuration + Environment Overrides - STANDARD**
+### **Rule #4: JSON Configuration + Environment Overrides - SACRED**
 - **All configuration externalized to JSON files**
-- **JSON configuration files set default values**
-- **Environment variables override JSON defaults**
+- **JSON configuration files set DEFAULT values**
+- **Environment Variables override JSON defaults**
 - **No hardcoded configuration in source code**
 - **UnifiedConfigManager handles all configuration loading**
 
@@ -58,7 +61,7 @@ CLEAN ARCHITECTURE: v3.1
 - **ALL code files MUST include version headers** in the format:
   - `v[Major].[Minor]-[Phase]-[Step]-[Increment]`
 - **Version format**:
-  - `v3.1-3d-10.6-1` (Clean Architecture v3.1, Phase 3d, Step 10.6, Increment 1)
+  - `v5.0-1a-1.1-1` (Clean Architecture v5.0, Phase 1a, Step 1.1, Increment 1)
 - **Header placement**: At the top of each file in comments or docstrings
 - **Version increments**: Required for each meaningful change within a step
 - **Cross-conversation continuity**: Ensures accurate file tracking across sessions
@@ -68,14 +71,20 @@ CLEAN ARCHITECTURE: v3.1
 #### **Required Version Header Format:**
 ```python
 """
-Ash-Bot: Crisis Detection Bot for The Alphabet Cartel Discord Community
+Ash-Bot: Crisis Detection Backend for The Alphabet Cartel Discord Community
+CORE PRINCIPLE: Zero-Shot AI Models → Pattern Enhancement → Crisis Classification
+******************  CORE SYSTEM VISION (Never to be violated):  ****************
+Ash-Bot is a CRISIS DETECTION BACKEND that:
+1. FIRST: Uses Zero-Shot AI models for primary semantic classification
+2. SECOND: Enhances AI results with contextual pattern analysis  
+3. PURPOSE: Detect crisis messages in Discord community communications
 ********************************************************************************
-{fileDescription} for Ash-Bot
+{fileDescription} for Ash-Bot Service
 ---
-FILE VERSION: v3.1-3d-10.6-1
-LAST MODIFIED: 2025-08-13
-PHASE: 3d Step 10.6
-CLEAN ARCHITECTURE: v3.1
+FILE VERSION: v5.0-1a-1.1-1
+LAST MODIFIED: 2025-12-30
+PHASE: 1a Step 1.1-1 - {Phase / Step Description}
+CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 """
@@ -95,7 +104,7 @@ Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alp
 - **Document the mapping relationship when reusing variables**
 
 #### **Rule #7 Implementation Process**:
-1. **Audit Existing Variables**: Search `.env.template` for related functionality
+1. **Audit Existing Variables**: Search `./.env.template` for related functionality
 2. **Map Requirements**: Identify how new needs can use existing variables
 3. **Calculate Conversions**: Create appropriate scaling/conversion logic if needed
 4. **Document Reuse**: Clearly document which existing variables are being leveraged
@@ -104,14 +113,14 @@ Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alp
 #### **Success Example**:
 ```bash
 # ❌ WRONG: Creating new undefined variables
-${BOT_CRISIS_AMPLIFIER_BASE_WEIGHT}     # New variable
-${BOT_POSITIVE_REDUCER_BASE_WEIGHT}     # New variable
+${NLP_CRISIS_AMPLIFIER_BASE_WEIGHT}     # New variable
+${NLP_POSITIVE_REDUCER_BASE_WEIGHT}     # New variable
 
 # ✅ RIGHT: Reusing existing variables with conversion
-BOT_ANALYSIS_CONTEXT_BOOST_WEIGHT=1.5   # Existing variable
+NLP_ANALYSIS_CONTEXT_BOOST_WEIGHT=1.5   # Existing variable
 # Convert: crisis_base_weight = context_boost_weight * 0.1 = 0.15
 
-BOT_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable  
+NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable  
 # Use directly for scaling calculations
 ```
 
@@ -130,7 +139,9 @@ BOT_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 
 #### **Benefits of Rule #8**:
 - **Tests the actual implementation**: Not just the logic behind it
-- **Ensures readability for human counterparts**: Key for testing so that ### **Rule #9: Always ask for the current version of a specific file before making any modifications, changes, or edits to that file - STANDARD**
+- **Ensures readability for human counterparts**: Key for testing so that we may assist in the testing and troubleshooting sequences
+
+### **Rule #9: Always ask for the current version of a specific file before making any modifications, changes, or edits to that file - STANDARD**
 
 #### **Benefits of Rule #9**:
 - **Prevents wasted time on edits to old code**
@@ -139,7 +150,7 @@ BOT_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 - **Reduces frustration between team members**
 
 ### **Rule #10: All files need to stay within ~1,000 lines of code (give or take 2%) - STANDARD**
-- **Code going over ~1,000 lines need to be split into helper files**
+- **Code going over ~1,000 lines needs to be split into helper files**
 - **Helper files will be stored in the same directory as the file being worked on under a sub-directory named `helpers`**
   - **Helper files will be named `*_helper.py`**
 
@@ -163,14 +174,20 @@ BOT_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 ### **Required Manager Structure:**
 ```python
 """
-Ash-Bot: Crisis Detection Bot for The Alphabet Cartel Discord Community
+Ash-Bot: Crisis Detection Backend for The Alphabet Cartel Discord Community
+CORE PRINCIPLE: Zero-Shot AI Models → Pattern Enhancement → Crisis Classification
+******************  CORE SYSTEM VISION (Never to be violated):  ****************
+Ash-Bot is a CRISIS DETECTION BACKEND that:
+1. FIRST: Uses Zero-Shot AI models for primary semantic classification
+2. SECOND: Enhances AI results with contextual pattern analysis  
+3. PURPOSE: Detect crisis messages in Discord community communications
 ********************************************************************************
-{managerDescription} for Ash-Bot
+{managerDescription} for Ash-Bot Service
 ---
-FILE VERSION: v3.1-{phase}-{step}-{increment}
+FILE VERSION: v{major}.{minor}-{phase}-{step}-{increment}
 LAST MODIFIED: {date}
 PHASE: {phase}, {step}
-CLEAN ARCHITECTURE: v3.1 Compliant
+CLEAN ARCHITECTURE: Compliant
 """
 
 class [Manager]Manager:
@@ -225,10 +242,9 @@ except Exception as e:
 ```json
 {
   "_metadata": {
-    "file_version": "v3.1-3d-[step]-[increment]",
-    "last_modified": "2025-08-13",
-    "phase": "3d Step [X] - [Description]",
-    "clean_architecture": "v3.1 Compliant",
+    "file_version": "v{major}.{minor}-{phase}-{step}-{increment}",
+    "last_modified": "{year}-{month}-{day}",
+    "clean_architecture": "Compliant",
   },
 
   "*setting_category*": {
@@ -259,17 +275,16 @@ except Exception as e:
 ```json
 {
   "_metadata": {
-    "file_version": "v3.1-3d-10.6-1",
-    "last_modified": "2025-08-13",
-    "phase": "3d Step 10.6 - Scoring Functions Consolidated",
-    "clean_architecture": "v3.1 Compliant",
+    "file_version": "v5.0",
+    "last_modified": "2025-12-30",
+    "clean_architecture": "Compliant",
   },
 
   "crisis_thresholds": {
     "description": "Core crisis level mapping thresholds for analysis algorithms",
-    "high": "${BOT_ANALYSIS_CRISIS_THRESHOLD_HIGH}",
-    "medium": "${BOT_ANALYSIS_CRISIS_THRESHOLD_MEDIUM}",
-    "low": "${BOT_ANALYSIS_CRISIS_THRESHOLD_LOW}",
+    "high": "${NLP_ANALYSIS_CRISIS_THRESHOLD_HIGH}",
+    "medium": "${NLP_ANALYSIS_CRISIS_THRESHOLD_MEDIUM}",
+    "low": "${NLP_ANALYSIS_CRISIS_THRESHOLD_LOW}",
     "defaults": {
       "high": 0.55,
       "medium": 0.28,
@@ -299,6 +314,103 @@ except Exception as e:
   - "string", not "str"
   - "boolean", not "bool"
   - "list" for dictionaries
+
+---
+## 🏷️ **METHOD NAMING CONVENTIONS - Crisis Detection Architecture**
+
+### **CORE PRINCIPLE**: Method names must clearly indicate the AI-first, pattern-enhancement architecture
+
+---
+
+### **PRIMARY CLASSIFICATION METHODS** (Zero-Shot AI First)
+**Pattern**: `analyze_*`, `classify_*`, `detect_*`
+- ✅ `analyze_message_with_ai()` - Main analysis entry point using AI models
+- ✅ `classify_crisis_with_ensemble()` - AI ensemble classification 
+- ✅ `detect_crisis_semantically()` - Zero-shot semantic detection
+- ❌ `analyze_message()` - Too generic, doesn't indicate AI-first
+- ❌ `pattern_analyze()` - Suggests patterns are primary
+
+### **ENHANCEMENT METHODS** (Pattern Boosting/Adjustment)
+**Pattern**: `enhance_*`, `boost_*`, `adjust_*`, `refine_*`
+- ✅ `enhance_ai_scores_with_patterns()` - Pattern enhancement of AI results
+- ✅ `boost_confidence_with_context()` - Context-based score boosting
+- ✅ `adjust_scores_for_community_vocab()` - Community-specific adjustments
+- ✅ `refine_ai_classification()` - General AI result refinement
+- ❌ `pattern_analysis()` - Suggests patterns are standalone, not enhancement
+- ❌ `context_scoring()` - Doesn't indicate it's enhancing AI results
+
+### **FALLBACK METHODS** (When AI Fails)
+**Pattern**: `fallback_*`, `emergency_*`, `backup_*`
+- ✅ `fallback_to_pattern_only()` - Clear fallback when AI unavailable
+- ✅ `emergency_pattern_classification()` - Emergency classification mode
+- ✅ `backup_keyword_analysis()` - Backup analysis when models fail
+- ❌ `pattern_classification()` - Doesn't indicate it's a fallback
+- ❌ `alternative_analysis()` - Too vague about when to use
+
+### **MODEL MANAGEMENT METHODS**
+**Pattern**: `load_*`, `initialize_*`, `manage_*`, `cache_*`
+- ✅ `load_zero_shot_pipeline()` - Load AI model pipeline
+- ✅ `initialize_ensemble_models()` - Initialize AI model ensemble
+- ✅ `cache_model_results()` - Cache AI model outputs
+- ✅ `manage_model_lifecycle()` - Manage AI model loading/unloading
+
+### **VALIDATION AND TESTING METHODS**
+**Pattern**: `validate_*`, `test_*`, `verify_*`
+- ✅ `validate_ai_classification()` - Verify AI models are working
+- ✅ `test_zero_shot_availability()` - Test if AI models are available
+- ✅ `verify_ensemble_functionality()` - Verify AI ensemble is operational
+
+---
+
+### **NAMING HIERARCHY RULES**
+
+1. **Primary Flow**: Always start with AI-focused verbs
+   - `analyze_` → `enhance_` → `finalize_`
+   - `classify_` → `boost_` → `output_`
+
+2. **Secondary Qualifiers**: Add specific technology/approach
+   - `_with_ai`, `_with_ensemble`, `_with_zero_shot` (for primary)
+   - `_with_patterns`, `_with_context`, `_with_vocab` (for enhancement)
+   - `_pattern_only`, `_emergency`, `_fallback` (for backups)
+
+3. **Tertiary Descriptors**: Add specific domain/function
+   - `_crisis_`, `_mental_health_`, `_community_`
+   - `_detection`, `_classification`, `_analysis`
+
+### **EXAMPLES OF COMPLETE METHOD NAMES**
+```python
+# PRIMARY AI CLASSIFICATION
+def analyze_crisis_with_zero_shot_ensemble(message, labels):
+def classify_mental_health_with_ai_models(text, confidence_threshold):
+def detect_patterns_crisis_semantically(message, model_weights):
+
+# ENHANCEMENT OF AI RESULTS  
+def enhance_ai_scores_with_patterns_crisis(ai_results, pattern_matches):
+def boost_ensemble_confidence_with_context(scores, message_context):
+def adjust_ai_classification_for_community(results, vocab_patterns):
+
+# FALLBACK WHEN AI FAILS
+def fallback_to_pattern_detection_only(message, emergency_patterns):
+def emergency_keyword_classification(text, critical_word_list):
+def backup_pattern_analysis_no_ai(message, fallback_config):
+
+# MODEL MANAGEMENT
+def load_zero_shot_crisis_pipeline(model_name, device):
+def initialize_mental_health_ensemble(model_configs):
+def cache_ai_classification_results(message_hash, results):
+```
+
+### **VIOLATION DETECTION**
+
+#### **Red Flag Method Names** (*require immediate review*):
+- Any method starting with pattern_* that isn't clearly fallback
+- Methods with analyze_* that don't specify AI involvement
+- Methods suggesting patterns are primary: `pattern_classify()`, `keyword_detect()`
+- Generic names that hide the AI-first architecture: `process_message()`, `score_text()`
+
+#### ENFORCEMENT STRATEGY
+- **Documentation Updates**: When adding new methods, update this convention guide
+- **Refactoring Protocol**: When renaming methods, update all callers and tests simultaneously
 
 ---
 
@@ -412,13 +524,17 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 
 ---
 
-**Status**: Living Document
-**Authority**: Project Lead + AI Assistant Collaboration  
-**Enforcement**: Mandatory for ALL code changes  
-**Version**: v3.1-1
+**Status**: Living Document - Updated for Production Resilience
+**Authority**: Project Lead + AI Assistant Collaboration
+**Enforcement**: Mandatory for ALL code changes
+**Version**: v5.0
 
 ---
 
 ## 🏆 **ARCHITECTURE PLEDGE**
 
 *"I commit to maintaining Clean v3.1 architecture principles with production-ready resilience and consistent file versioning in every code change, recognizing that system availability, operational continuity, and precise change tracking directly impact the ability to provide life-saving mental health crisis detection for The Alphabet Cartel community."*
+
+---
+
+**Built with care for chosen family** 🏳️‍🌈
