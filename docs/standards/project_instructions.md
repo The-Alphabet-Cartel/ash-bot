@@ -1,18 +1,8 @@
-<!-- ash-bot/docs/project_instructions.md -->
-<!--
-Project Instructions for Ash-Bot Service
-FILE VERSION: v3.1-3a-1
-LAST MODIFIED: 2025-08-31
-CLEAN ARCHITECTURE: v3.1
--->
 # Ash-Bot Project Instructions
 
-**Repository**: https://github.com/the-alphabet-cartel/ash-bot  
-**Project**: Ash-Bot v3.1  
-**Community**: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org  
-**FILE VERSION**: v3.1-3a-1  
-**LAST UPDATED**: 2025-08-31  
-**CLEAN ARCHITECTURE**: v3.1  
+**Version**: v5.0  
+**Repository**: https://github.com/the-alphabet-cartel/ash-nlp  
+**Community**: [The Alphabet Cartel](https://discord.gg/alphabetcartel) | [alphabetcartel.org](https://alphabetcartel.org)
 
 ---
 
@@ -24,11 +14,11 @@ https://alphabetcartel.org
 http://discord.gg/alphabetcartel
 https://github.com/the-alphabet-cartel
 
-# Ash-Bot
+# Ash-Bot Project Instructions
 
-## 🎯 CORE SYSTEM VISION (Never to be violated):
+## CORE SYSTEM VISION (Never to be violated):
 
-## Crisis Detection NLP Testing
+## Crisis Detection Discord Bot
 - `Ash-Bot`
   - https://github.com/the-alphabet-cartel/ash-bot
   - GitHub submodule for the project `Ash`
@@ -50,7 +40,7 @@ https://github.com/the-alphabet-cartel
   - Backend NLP Server
 
 ## General Instructions
-- Read and follow the Clean Architecture Charter (`ash-bot/docs/clean_architecture_charter.md`) to the letter.
+- Read and follow the Clean Architecture Charter (`\10.20.30.253\ash-bot\docs\standards\clean_architecture_charter.md`) to the letter.
   - This is our bible for all code within the Ash ecosystem.
 - Always ask for the current version of a specific file before making any modifications, changes, or edits to that file.
   - This is to ensure that we're both on the "same page" before making adjustments to the code.
@@ -74,3 +64,7 @@ https://github.com/the-alphabet-cartel
   - All sensitive information (passwords, access tokens, API tokens, etc.) need to utilize Docker Secrets functionality
 
 Adhering to these rules will ensure that the main code base stays clean and easy to read through for troubleshooting purposes, as well as to be easily able to add more functionality in the future.
+
+---
+
+**Built with care for chosen family** 🏳️‍🌈

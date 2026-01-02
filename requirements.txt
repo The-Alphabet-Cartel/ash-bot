@@ -1,45 +1,45 @@
-# Ash Bot Requirements - Updated for API Server
+# ============================================================================
+# Ash-Bot v5.0 Requirements
+# ============================================================================
+# FILE VERSION: v5.0
+# LAST MODIFIED: 2026-01-02
+# Repository: https://github.com/the-alphabet-cartel/ash-nlp
+# Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
+# ============================================================================
 
-## Discord Bot Framework
-discord.py>=2.3.0
-discord-ext-menus>=1.1.0
+# =============================================================================
+# Core Framework
+# =============================================================================
 
-## Claude 4 API Client
-anthropic>=0.25.0
+# =============================================================================
+# Utilities
+# =============================================================================
 
-## Async HTTP Client for NLP Server
-aiohttp>=3.9.0
-aiofiles>=23.2.0
+# Python-dotenv - Environment variable loading
+python-dotenv>=1.0.0,<2.0.0
 
-## API Server Dependencies
-aiohttp-cors>=0.7.0
-aiohttp-session>=2.12.0
-cryptography>=41.0.0
+# Structlog - Structured logging (optional, for JSON logs)
+# structlog>=24.1.0,<25.0.0
 
-## Data Processing
-pandas>=2.1.0
-numpy>=1.24.0
+# =============================================================================
+# HTTP and Networking
+# =============================================================================
 
-## Environment and Configuration
-python-dotenv>=1.0.0
-pydantic>=2.4.0
+# HTTPX - Async HTTP client (for webhooks)
+httpx>=0.26.0,<1.0.0
 
-## Logging and Monitoring
-psutil>=5.9.0
-colorlog>=6.8.0
+# AIOHTTP - Async HTTP client (for Discord alerting)
+aiohttp>=3.9.0,<4.0.0
 
-## Data Storage
-ujson>=5.8.0
+# =============================================================================
+# Testing (Development Only)
+# =============================================================================
 
-## Testing (Development)
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-mock>=3.11.0
+# Pytest - Testing framework
+pytest>=7.4.0,<8.0.0
 
-## Security
-cryptography>=41.0.0
-bcrypt>=4.0.0
+# Pytest-asyncio - Async test support
+pytest-asyncio>=0.23.0,<1.0.0
 
-## Utilities
-python-dateutil>=2.8.0
-pytz>=2023.3
+# HTTPX - For TestClient
+# (already included above)

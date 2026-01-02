@@ -1,27 +1,20 @@
-<!-- ash-bot/docs/clean_architecture_charter.md -->
-<!--
-Clean Architecture Charter for Ash-Bot Service
-FILE VERSION: v5.0
-LAST MODIFIED: 2025-12-30
--->
 # Clean Architecture Charter - Ash-Bot
 
 ## Sacred Principles - NEVER TO BE VIOLATED
 
+**Version**: v5.0  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot  
-**Project**: Ash-Bot v5.0
-**Community**: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org  
-**FILE VERSION**: v5.0
-**LAST UPDATED**: 2025-12-30
+**Community**: [The Alphabet Cartel](https://discord.gg/alphabetcartel) | [alphabetcartel.org](https://alphabetcartel.org)
 
 ---
 
 # 🎯 CORE SYSTEM VISION (Never to be violated):
 
-## **Ash-Bot is a CRISIS DETECTION Natural Language Processor that**:
-1. **FIRST**: Uses Zero-Shot AI models for primary semantic classification
-2. **SECOND**: Enhances AI results with contextual pattern analysis
-3. **PURPOSE**: Detect crisis messages in Discord community communications
+## **Ash-Bot is a CRISIS DETECTION Discord Bot that**:
+1. **FIRST**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
+2. **SECOND**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
+3. **THIRD**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
+5. **PURPOSE**: To detect crisis messages in Discord community communications.
 
 ## 🏛️ **IMMUTABLE ARCHITECTURE RULES**
 
@@ -71,13 +64,14 @@ LAST MODIFIED: 2025-12-30
 #### **Required Version Header Format:**
 ```python
 """
-Ash-Bot: Crisis Detection Backend for The Alphabet Cartel Discord Community
-CORE PRINCIPLE: Zero-Shot AI Models → Pattern Enhancement → Crisis Classification
+Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
+CORE PRINCIPLE: 
 ******************  CORE SYSTEM VISION (Never to be violated):  ****************
-Ash-Bot is a CRISIS DETECTION BACKEND that:
-1. FIRST: Uses Zero-Shot AI models for primary semantic classification
-2. SECOND: Enhances AI results with contextual pattern analysis  
-3. PURPOSE: Detect crisis messages in Discord community communications
+Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
+1. PRIMARY: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
+2. CONTEXTUAL: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
+3. HISTORICAL: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
+5. **PURPOSE**: To detect crisis messages in Discord community communications.
 ********************************************************************************
 {fileDescription} for Ash-Bot Service
 ---
@@ -113,14 +107,14 @@ Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alp
 #### **Success Example**:
 ```bash
 # ❌ WRONG: Creating new undefined variables
-${NLP_CRISIS_AMPLIFIER_BASE_WEIGHT}     # New variable
-${NLP_POSITIVE_REDUCER_BASE_WEIGHT}     # New variable
+${BOT_CRISIS_AMPLIFIER_BASE_WEIGHT}     # New variable
+${BOT_POSITIVE_REDUCER_BASE_WEIGHT}     # New variable
 
 # ✅ RIGHT: Reusing existing variables with conversion
-NLP_ANALYSIS_CONTEXT_BOOST_WEIGHT=1.5   # Existing variable
+BOT_ANALYSIS_CONTEXT_BOOST_WEIGHT=1.5   # Existing variable
 # Convert: crisis_base_weight = context_boost_weight * 0.1 = 0.15
 
-NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable  
+BOT_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable  
 # Use directly for scaling calculations
 ```
 
@@ -131,15 +125,19 @@ NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 - **Reduces Complexity**: Fewer variables to manage, test, and document
 - **Sustainable Development**: Encourages thoughtful design over quick additions
 
-### **Rule #8: Always use real-world tests and logger for testing - MANDATORY**
+### **Rule #8: Real-World Testing Standards - MANDATORY**
+
+#### **General Testing Principles**
 - **Never use mock methods for testing**
 - **Always use the actual methods we've designed**
-- **Always use our LoggingConfigManager and logger methods as designed for testing.**
-  - `managers/logging_config_manager.py`
+- **Always use our LoggingConfigManager and logger methods as designed for testing**
 
 #### **Benefits of Rule #8**:
-- **Tests the actual implementation**: Not just the logic behind it
-- **Ensures readability for human counterparts**: Key for testing so that we may assist in the testing and troubleshooting sequences
+- **Tests actual implementation** not just logic
+- **Ensures human readability** for collaborative testing
+- **Validates production performance** under real conditions
+- **Reveals true model capabilities** and limitations
+- **Informs deployment decisions** with real metrics
 
 ### **Rule #9: Always ask for the current version of a specific file before making any modifications, changes, or edits to that file - STANDARD**
 
@@ -167,6 +165,132 @@ NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 - **Human readable, colorized logs based on priority**
 - **Uses the built in python logger system, no need for other methods**
 
+### **Rule #12: Environment Version Specificity - MANDATORY**
+
+All version-dependent commands MUST use explicit version references.
+
+#### **Python Package Installation**
+```python
+# ✅ CORRECT - Explicit Python version
+python3.11 -m pip install package_name
+python3.11 -m pip install -r requirements.txt
+
+# ❌ INCORRECT - May use wrong Python version
+pip install package_name  # Could install to 3.10 when running 3.11
+pip install -r requirements.txt
+```
+
+#### **Version Verification**
+Before installing packages, verify Python version:
+```bash
+# Check which Python pip uses
+pip --version  # Output: pip X.X from /path/to/pythonX.X/
+
+# Check which Python you're running
+python --version  # Must match pip's Python version
+
+# Explicitly use correct version
+python3.11 -m pip install package
+```
+
+#### **Common Version Mismatch Scenarios**
+1. **System has multiple Python versions** (3.10, 3.11, 3.12)
+2. **pip symlink points to different version** than python symlink
+3. **Virtual environments** not activated correctly
+4. **Docker containers** with multiple Python installations
+
+#### **Real-World Impact**
+Phase 1 encountered:
+```bash
+# Installed packages successfully
+pip install transformers torch
+# Output: Successfully installed transformers-4.57.3 torch-2.9.1
+
+# Runtime failed
+python -c "import transformers"
+# Error: ModuleNotFoundError: No module named 'transformers'
+
+# Diagnosis:
+pip --version  # pip from Python 3.10
+python --version  # Python 3.11
+
+# Packages installed to 3.10, code ran on 3.11!
+```
+
+#### **Fix Applied**
+```dockerfile
+# Dockerfile fix - explicit version
+RUN python3.11 -m pip install --upgrade pip
+RUN python3.11 -m pip install -r requirements.txt
+```
+
+#### **Requirements for All Scripts**
+- Use `python3.11 -m pip` not `pip`
+- Use `python3.11 script.py` not `python script.py` (if version matters)
+- Document expected Python version in README
+- Verify version match in CI/CD pipelines
+
+#### **Benefits of Rule #12**:
+- **Prevents "module not found" errors** despite successful installation
+- **Explicit version control** across environments
+- **Reproducible builds** across team members
+- **Clear debugging** when version issues occur
+
+### **Rule #13: AI Assistant File System Tool Usage - MANDATORY**
+
+When Claude or other AI assistants are editing project files, they MUST use the correct tools for the file location.
+
+#### **User's Computer (Network Shares, Local Files)**
+For files on the user's computer (Windows network shares like `\\10.20.30.253\...` or local paths):
+
+```
+# ✅ CORRECT - Use Filesystem tools
+Filesystem:read_file       - Read file contents
+Filesystem:edit_file       - Make targeted edits (preferred for changes)
+Filesystem:write_file      - Write entire file (use sparingly)
+Filesystem:list_directory  - Browse directories
+Filesystem:search_files    - Search for files
+
+# ❌ INCORRECT - These only work on Claude's container
+str_replace    - Only works on Claude's Linux container
+view           - Only works on Claude's Linux container  
+create_file    - Only works on Claude's Linux container
+bash_tool      - Only works on Claude's Linux container
+```
+
+#### **Claude's Computer (Container Filesystem)**
+For files in Claude's container (`/home/claude/`, `/mnt/user-data/uploads/`):
+
+```
+# ✅ CORRECT - Use computer use tools
+str_replace    - Edit files in Claude's container
+view           - Read files in Claude's container
+create_file    - Create files in Claude's container
+bash_tool      - Execute commands in Claude's container
+```
+
+#### **How to Identify File Location**
+| Path Pattern | Location | Tools to Use |
+|--------------|----------|-------------|
+| `\\10.20.30.253\...` | User's network share | `Filesystem:*` |
+| `C:\Users\...` | User's Windows PC | `Filesystem:*` |
+| `/home/claude/...` | Claude's container | `str_replace`, `view`, etc. |
+| `/mnt/user-data/...` | Claude's container | `str_replace`, `view`, etc. |
+
+#### **Best Practices for File Editing**
+1. **Prefer `Filesystem:edit_file`** over `Filesystem:write_file` for changes
+   - `edit_file` shows a diff preview and is safer
+   - `write_file` replaces entire file content
+2. **Use `dryRun: true`** first to preview changes before applying
+3. **Always verify file path** before editing to ensure correct tool selection
+
+#### **Benefits of Rule #13**:
+- **Prevents failed edits** due to wrong tool selection
+- **Maintains cross-conversation consistency** by documenting tool usage
+- **Reduces frustration** from "file not found" errors
+- **Enables targeted edits** instead of full file rewrites
+- **Preserves file history** with smaller, traceable changes
+
 ---
 
 ## 🔧 **MANAGER IMPLEMENTATION STANDARDS**
@@ -174,13 +298,14 @@ NLP_CONFIG_CRISIS_CONTEXT_BOOST_MULTIPLIER=1.0  # Existing variable
 ### **Required Manager Structure:**
 ```python
 """
-Ash-Bot: Crisis Detection Backend for The Alphabet Cartel Discord Community
-CORE PRINCIPLE: Zero-Shot AI Models → Pattern Enhancement → Crisis Classification
+Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
+CORE PRINCIPLE: 
 ******************  CORE SYSTEM VISION (Never to be violated):  ****************
-Ash-Bot is a CRISIS DETECTION BACKEND that:
-1. FIRST: Uses Zero-Shot AI models for primary semantic classification
-2. SECOND: Enhances AI results with contextual pattern analysis  
-3. PURPOSE: Detect crisis messages in Discord community communications
+Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
+1. PRIMARY: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
+2. CONTEXTUAL: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
+3. HISTORICAL: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
+5. **PURPOSE**: To detect crisis messages in Discord community communications.
 ********************************************************************************
 {managerDescription} for Ash-Bot Service
 ---
@@ -282,9 +407,9 @@ except Exception as e:
 
   "crisis_thresholds": {
     "description": "Core crisis level mapping thresholds for analysis algorithms",
-    "high": "${NLP_ANALYSIS_CRISIS_THRESHOLD_HIGH}",
-    "medium": "${NLP_ANALYSIS_CRISIS_THRESHOLD_MEDIUM}",
-    "low": "${NLP_ANALYSIS_CRISIS_THRESHOLD_LOW}",
+    "high": "${BOT_ANALYSIS_CRISIS_THRESHOLD_HIGH}",
+    "medium": "${BOT_ANALYSIS_CRISIS_THRESHOLD_MEDIUM}",
+    "low": "${BOT_ANALYSIS_CRISIS_THRESHOLD_LOW}",
     "defaults": {
       "high": 0.55,
       "medium": 0.28,
@@ -322,95 +447,11 @@ except Exception as e:
 
 ---
 
-### **PRIMARY CLASSIFICATION METHODS** (Zero-Shot AI First)
-**Pattern**: `analyze_*`, `classify_*`, `detect_*`
-- ✅ `analyze_message_with_ai()` - Main analysis entry point using AI models
-- ✅ `classify_crisis_with_ensemble()` - AI ensemble classification 
-- ✅ `detect_crisis_semantically()` - Zero-shot semantic detection
-- ❌ `analyze_message()` - Too generic, doesn't indicate AI-first
-- ❌ `pattern_analyze()` - Suggests patterns are primary
-
-### **ENHANCEMENT METHODS** (Pattern Boosting/Adjustment)
-**Pattern**: `enhance_*`, `boost_*`, `adjust_*`, `refine_*`
-- ✅ `enhance_ai_scores_with_patterns()` - Pattern enhancement of AI results
-- ✅ `boost_confidence_with_context()` - Context-based score boosting
-- ✅ `adjust_scores_for_community_vocab()` - Community-specific adjustments
-- ✅ `refine_ai_classification()` - General AI result refinement
-- ❌ `pattern_analysis()` - Suggests patterns are standalone, not enhancement
-- ❌ `context_scoring()` - Doesn't indicate it's enhancing AI results
-
-### **FALLBACK METHODS** (When AI Fails)
-**Pattern**: `fallback_*`, `emergency_*`, `backup_*`
-- ✅ `fallback_to_pattern_only()` - Clear fallback when AI unavailable
-- ✅ `emergency_pattern_classification()` - Emergency classification mode
-- ✅ `backup_keyword_analysis()` - Backup analysis when models fail
-- ❌ `pattern_classification()` - Doesn't indicate it's a fallback
-- ❌ `alternative_analysis()` - Too vague about when to use
-
-### **MODEL MANAGEMENT METHODS**
-**Pattern**: `load_*`, `initialize_*`, `manage_*`, `cache_*`
-- ✅ `load_zero_shot_pipeline()` - Load AI model pipeline
-- ✅ `initialize_ensemble_models()` - Initialize AI model ensemble
-- ✅ `cache_model_results()` - Cache AI model outputs
-- ✅ `manage_model_lifecycle()` - Manage AI model loading/unloading
-
 ### **VALIDATION AND TESTING METHODS**
 **Pattern**: `validate_*`, `test_*`, `verify_*`
 - ✅ `validate_ai_classification()` - Verify AI models are working
 - ✅ `test_zero_shot_availability()` - Test if AI models are available
 - ✅ `verify_ensemble_functionality()` - Verify AI ensemble is operational
-
----
-
-### **NAMING HIERARCHY RULES**
-
-1. **Primary Flow**: Always start with AI-focused verbs
-   - `analyze_` → `enhance_` → `finalize_`
-   - `classify_` → `boost_` → `output_`
-
-2. **Secondary Qualifiers**: Add specific technology/approach
-   - `_with_ai`, `_with_ensemble`, `_with_zero_shot` (for primary)
-   - `_with_patterns`, `_with_context`, `_with_vocab` (for enhancement)
-   - `_pattern_only`, `_emergency`, `_fallback` (for backups)
-
-3. **Tertiary Descriptors**: Add specific domain/function
-   - `_crisis_`, `_mental_health_`, `_community_`
-   - `_detection`, `_classification`, `_analysis`
-
-### **EXAMPLES OF COMPLETE METHOD NAMES**
-```python
-# PRIMARY AI CLASSIFICATION
-def analyze_crisis_with_zero_shot_ensemble(message, labels):
-def classify_mental_health_with_ai_models(text, confidence_threshold):
-def detect_patterns_crisis_semantically(message, model_weights):
-
-# ENHANCEMENT OF AI RESULTS  
-def enhance_ai_scores_with_patterns_crisis(ai_results, pattern_matches):
-def boost_ensemble_confidence_with_context(scores, message_context):
-def adjust_ai_classification_for_community(results, vocab_patterns):
-
-# FALLBACK WHEN AI FAILS
-def fallback_to_pattern_detection_only(message, emergency_patterns):
-def emergency_keyword_classification(text, critical_word_list):
-def backup_pattern_analysis_no_ai(message, fallback_config):
-
-# MODEL MANAGEMENT
-def load_zero_shot_crisis_pipeline(model_name, device):
-def initialize_mental_health_ensemble(model_configs):
-def cache_ai_classification_results(message_hash, results):
-```
-
-### **VIOLATION DETECTION**
-
-#### **Red Flag Method Names** (*require immediate review*):
-- Any method starting with pattern_* that isn't clearly fallback
-- Methods with analyze_* that don't specify AI involvement
-- Methods suggesting patterns are primary: `pattern_classify()`, `keyword_detect()`
-- Generic names that hide the AI-first architecture: `process_message()`, `score_text()`
-
-#### ENFORCEMENT STRATEGY
-- **Documentation Updates**: When adding new methods, update this convention guide
-- **Refactoring Protocol**: When renaming methods, update all callers and tests simultaneously
 
 ---
 
@@ -461,6 +502,8 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 7. **Does this include proper file versioning?** ✅ Required
 8. **Does this check existing environment variables first?** ✅ Required
 9. **Have I verified we are working on the same file version?** ✅ Required
+10. **Does this use version-specific commands (python3.11 -m pip)?** ✅ Required
+11. **Am I using the correct file system tools for the file location?** ✅ Required
 
 ---
 
@@ -479,6 +522,8 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 - ❌ Ignoring existing infrastructure in favor of "clean slate" approaches
 - ❌ Adding variables without considering conversion/mapping possibilities
 - ❌ Not asking for current file version before making changes, edits, or modifications
+- ❌ Using generic `pip install` instead of version-specific commands
+- ❌ Assuming Python version without verification
 
 ---
 
@@ -492,6 +537,7 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 - ✅ Production-ready resilient error handling
 - ✅ Consistent file versioning across all code files
 - ✅ Consistent environment variables across all code files
+- ✅ Version-specific commands used throughout (python3.11 -m pip)
 
 ### **Integration Health:**
 - ✅ Tests use same patterns as production code
@@ -501,6 +547,7 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 - ✅ System maintains availability under adverse conditions
 - ✅ File versions track accurately across conversations
 - ✅ Environment variable bloat is avoided
+- ✅ Python package versions match runtime versions
 
 ### **Production Readiness:**
 - ✅ **Operational continuity preserved** under configuration issues
@@ -508,6 +555,7 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 - ✅ **Safe fallback mechanisms** for all critical functionality
 - ✅ **Crisis detection capability** maintained regardless of configuration state
 - ✅ **Version tracking** enables precise change management
+- ✅ **Environment version consistency** prevents runtime errors
 
 ---
 
@@ -519,6 +567,8 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 - **Clear separation of concerns** with intelligent error recovery
 - **Professional-grade system design** optimized for life-saving service delivery
 - **Precise version tracking** for maintainable cross-conversation development
+- **Industry-standard ML evaluation** that measures real-world effectiveness
+- **Environment version consistency** that ensures reliable operation
 
 **Every architectural decision supports the mission of providing continuous, reliable mental health support to LGBTQIA+ community members.**
 
@@ -533,7 +583,7 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 
 ## 🏆 **ARCHITECTURE PLEDGE**
 
-*"I commit to maintaining Clean v3.1 architecture principles with production-ready resilience and consistent file versioning in every code change, recognizing that system availability, operational continuity, and precise change tracking directly impact the ability to provide life-saving mental health crisis detection for The Alphabet Cartel community."*
+*"I commit to maintaining Clean Architecture principles with production-ready resilience, realistic ML evaluation standards, environment version specificity, and consistent file versioning in every code change, recognizing that system availability, operational continuity, and precise change tracking directly impact the ability to provide life-saving mental health crisis detection for The Alphabet Cartel community."*
 
 ---
 

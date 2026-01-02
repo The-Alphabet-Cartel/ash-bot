@@ -1,128 +1,119 @@
-# Ash-BOT Docker Compose for Ash Ecosystem
+# ============================================================================
+# Ash-Bot v5.0 Docker Compose Configuration
+# ============================================================================
+# FILE VERSION: v5.0
+# LAST MODIFIED: 2026-01-02
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
-# Discord: https://discord.gg/alphabetcartel
-# Website: http://alphabetcartel.org
+# Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
+# ============================================================================
+#
+# USAGE:
+#   # Start services
+#   docker-compose up -d
+#
+#   # View logs
+#   docker-compose logs -f ash-bot
+#
+#   # Stop services
+#   docker-compose down
+#
+#   # Rebuild and start
+#   docker-compose up -d --build
+#
+# SECRETS:
+#   Secrets are stored in ./secrets/ directory:
+#   - ./secrets/claude_api_key - Claude API key
+#   - ./secrets/discord_bot_token - Discord bot token
+#   - ./secrets/discord_alert_webhook - Discord webhook for alerts (optional)
+#   - ./secrets/redis - Redis password
+#
+# REQUIREMENTS:
+#   - Docker Engine 24.0+
+#   - Docker Compose v2.20+
+#
+# ============================================================================
+
 services:
-  # ========================================================================
-  # Discord Bot (ash-bot)
-  # ========================================================================
+  # ===========================================================================
+  # Ash-Bot Service
+  # ===========================================================================
   ash-bot:
-#    build:
-#      context: .
-    image: ghcr.io/the-alphabet-cartel/ash-bot:latest
     container_name: ash-bot
-    restart: unless-stopped
-    networks:
-      ash-network:
-        ipv4_address: 172.20.0.10
-    ports:
-      - 8882:8882
-    environment:
-      # Local Timezone
-      - TZ=America/Los_Angeles
-      
-      # Secrets
-      - BOT_DISCORD_TOKEN=${BOT_DISCORD_TOKEN}
-      - GLOBAL_SESSION_TOKEN=${GLOBAL_SESSION_TOKEN}
-      - GLOBAL_CLAUDE_API_KEY=${GLOBAL_CLAUDE_API_KEY}
-      - GLOBAL_CLAUDE_MODEL=${GLOBAL_CLAUDE_MODEL}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        APP_USER: bot
+        APP_UID: 1001
+        APP_GID: 1001
+    image: ghcr.io/the-alphabet-cartel/ash-bot:latest
 
-      # Discord and Channel Configuration
-      - BOT_GUILD_ID=${BOT_GUILD_ID}
-      - BOT_RESOURCES_CHANNEL_ID=${BOT_RESOURCES_CHANNEL_ID}
-      - BOT_CRISIS_RESPONSE_CHANNEL_ID=${BOT_CRISIS_RESPONSE_CHANNEL_ID}
-      - BOT_ALLOWED_CHANNELS=${BOT_ALLOWED_CHANNELS}
+    # Docker Secrets
+    secrets:
+      - claude_api_key
+      - discord_bot_token
+      - discord_alert_webhook
+      - redis
 
-      # Team Configuration
-      - BOT_STAFF_PING_USER=${BOT_STAFF_PING_USER}
-      - BOT_CRISIS_RESPONSE_ROLE_ID=${BOT_CRISIS_RESPONSE_ROLE_ID}
-      - BOT_RESOURCES_CHANNEL_NAME=${BOT_RESOURCES_CHANNEL_NAME}
-      - BOT_CRISIS_RESPONSE_ROLE_NAME=${BOT_CRISIS_RESPONSE_ROLE_NAME}
-      - BOT_STAFF_PING_NAME=${BOT_STAFF_PING_NAME}
+    # Environment variables
+    env_file:
+      - .env
 
-      # API Server Configuration
-      - GLOBAL_BOT_API_PORT=${GLOBAL_BOT_API_PORT:-8882}
-
-      # Learning System Configuration
-      - GLOBAL_LEARNING_SYSTEM_ENABLED=${GLOBAL_LEARNING_SYSTEM_ENABLED}
-      - BOT_LEARNING_CONFIDENCE_THRESHOLD=${BOT_LEARNING_CONFIDENCE_THRESHOLD}
-      - BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY=${BOT_MAX_LEARNING_ADJUSTMENTS_PER_DAY}
-
-      # NLP Server Configuration
-      - GLOBAL_NLP_API_HOST=${GLOBAL_NLP_API_HOST}
-      - GLOBAL_NLP_API_PORT=${GLOBAL_NLP_API_PORT:-8881}
-
-      # Bot Behavior Configuration
-      - GLOBAL_LOG_LEVEL=${GLOBAL_LOG_LEVEL:-INFO}
-      - BOT_MAX_DAILY_CALLS=${BOT_MAX_DAILY_CALLS:-1000}
-      - BOT_RATE_LIMIT_PER_USER=${BOT_RATE_LIMIT_PER_USER:-10}
-
-      # Conversation Configuration
-      - BOT_CONVERSATION_REQUIRES_MENTION=${BOT_CONVERSATION_REQUIRES_MENTION:-true}
-      - BOT_CONVERSATION_TRIGGER_PHRASES=${BOT_CONVERSATION_TRIGGER_PHRASES:-ash,hey ash,ash help,@ash}
-      - BOT_CONVERSATION_ALLOW_STARTERS=${BOT_CONVERSATION_ALLOW_STARTERS:-false}
-      - BOT_CONVERSATION_SETUP_INSTRUCTIONS=${BOT_CONVERSATION_SETUP_INSTRUCTIONS:-true}
-      - BOT_CONVERSATION_LOG_ATTEMPTS=${BOT_CONVERSATION_LOG_ATTEMPTS:-true}
-      - BOT_CONVERSATION_TIMEOUT=${BOT_CONVERSATION_TIMEOUT:-300}
-      - BOT_CRISIS_OVERRIDE_LEVELS=${BOT_CRISIS_OVERRIDE_LEVELS:-medium,high}
-      
-      # Three Zero-Shot Model Ensemble Configuration
-      - BOT_ENABLE_GAP_NOTIFICATIONS=${BOT_ENABLE_GAP_NOTIFICATIONS:-true}
-      - BOT_GAP_NOTIFICATION_CHANNEL_ID=${BOT_GAP_NOTIFICATION_CHANNEL_ID}
-
+    # Volume mounts
     volumes:
-      - ./ash-bot/logs:/app/logs
-      - ./ash-bot/data:/app/data
-      - ./secrets:/run/secrets:ro
-    depends_on:
-      ash-redis:
-        condition: service_started
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
+      # Logs (optional)
+      - ./logs:/app/logs
+
+    # Health check
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8882/health"]
+      test:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 120s
 
-  # ========================================================================
-  # Redis Cache
-  # ========================================================================
-  ash-redis:
-    image: redis:7-alpine
-    container_name: ash-redis
+    # Restart policy
     restart: unless-stopped
-    networks:
-      ash-network:
-        ipv4_address: 172.20.0.20
-    ports:
-      - 6379:6379
-    command: redis-server --appendonly yes --requirepass ${GLOBAL_REDIS_PASSWORD}
-    volumes:
-      - redis_data:/data
-      - ./secrets:/run/secrets:ro
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.25'
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    # Network
+    networks:
+      - ash-network
+
+    # Labels for organization
+    labels:
+      - "com.alphabetcartel.service=ash-bot"
+      - "com.alphabetcartel.version=5.0.0"
+      - "com.alphabetcartel.description=Crisis Detection Discord Bot"
+
+# =============================================================================
+# Volumes
+# =============================================================================
+
+# =============================================================================
+# Secrets
+# =============================================================================
+secrets:
+  claude_api_key:
+    file: ./secrets/claude_api_key
+  discord_bot_token:
+    file: ./secrets/discord_bot_token
+  discord_alert_webhook:
+    file: ./secrets/discord_alert_webhook
+  redis:
+    file: ./secrets/redis
+
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
   ash-network:
+    name: ash-network
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-volumes:
-  redis_data:
-    driver: local
