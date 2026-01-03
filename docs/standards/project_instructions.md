@@ -1,7 +1,7 @@
 # Ash-Bot Project Instructions
 
 **Version**: v5.0  
-**Repository**: https://github.com/the-alphabet-cartel/ash-nlp  
+**Repository**: https://github.com/the-alphabet-cartel/ash-bot  
 **Community**: [The Alphabet Cartel](https://discord.gg/alphabetcartel) | [alphabetcartel.org](https://alphabetcartel.org)
 
 ---
