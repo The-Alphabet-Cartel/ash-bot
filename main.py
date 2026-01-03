@@ -1,36 +1,41 @@
 #!/usr/bin/env python3
 """
-Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
-CORE PRINCIPLE:
-******************  CORE SYSTEM VISION (Never to be violated):  ****************
-Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
-1. **PRIMARY**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-4. **PURPOSE**: To detect crisis messages in Discord community communications.
-********************************************************************************
+============================================================================
+Ash-Bot: Crisis Detection Discord Bot
+The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
 Main Entry Point for Ash-Bot Service
----
-FILE VERSION: v5.0
-LAST MODIFIED: 2026-1-22026-01-02
-PHASE: Phase 1
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-0-1.0-1
+LAST MODIFIED: 2026-01-03
+PHASE: Phase 0 - Foundation
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
-Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
+============================================================================
 
 USAGE:
-    # Run with default settings
-    python main.py
+    # Run with default settings (inside Docker container)
+    docker exec ash-bot python main.py
 
-ENVIRONMENT VARIABLES:
+    # Run with debug logging
+    docker exec ash-bot python main.py --log-level DEBUG
 """
 
+import argparse
 import logging
 import os
 import sys
 
 # Module version
-__version__ = "v5.0"
+__version__ = "v5.0-0-1.0-1"
 
 
 def setup_logging(log_level: str = "INFO") -> None:
@@ -52,17 +57,43 @@ def setup_logging(log_level: str = "INFO") -> None:
     )
 
     # Reduce noise from third-party libraries
-    # logging.getLogger("uvicorn").setLevel(logging.WARNING)
-    # logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("discord").setLevel(logging.WARNING)
+    logging.getLogger("discord.http").setLevel(logging.WARNING)
 
     logger = logging.getLogger(__name__)
     logger.info(f"Logging configured at {log_level} level")
+
+
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command-line arguments.
+
+    Returns:
+        Parsed arguments namespace
+    """
+    parser = argparse.ArgumentParser(
+        description="Ash-Bot Crisis Detection Discord Bot",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default=os.environ.get("BOT_LOG_LEVEL", "INFO"),
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Logging level (default: INFO or BOT_LOG_LEVEL env var)",
+    )
+
+    return parser.parse_args()
 
 
 def main() -> None:
     """
     Main entry point for running the service.
     """
+    # Parse command-line arguments
+    args = parse_args()
+
     # Setup logging
     setup_logging(args.log_level)
 
@@ -72,7 +103,13 @@ def main() -> None:
     logger.info("=" * 60)
     logger.info("  Ash-Bot Crisis Detection Service")
     logger.info(f"  Version: {__version__}")
+    logger.info("  Community: The Alphabet Cartel")
+    logger.info("  https://discord.gg/alphabetcartel")
     logger.info("=" * 60)
+
+    # TODO: Phase 1 - Initialize managers and start bot
+    logger.info("🚧 Bot initialization not yet implemented (Phase 1)")
+    logger.info("✅ Main entry point working correctly")
 
 
 if __name__ == "__main__":

@@ -1,31 +1,40 @@
 # ============================================================================
 # Ash-Bot v5.0 Docker Compose Configuration
 # ============================================================================
-# FILE VERSION: v5.0
-# LAST MODIFIED: 2026-01-02
+# FILE VERSION: v5.0.1
+# LAST MODIFIED: 2026-01-03
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
 #
 # USAGE:
-#   # Start services
+#   # Start services (production)
 #   docker-compose up -d
+#
+#   # Start services (development - uses override file automatically)
+#   docker-compose up -d
+#
+#   # Build and start
+#   docker-compose up -d --build
 #
 #   # View logs
 #   docker-compose logs -f ash-bot
 #
+#   # Run tests inside container
+#   docker exec ash-bot python -m pytest tests/ -v
+#
+#   # Run Python script
+#   docker exec ash-bot python main.py
+#
 #   # Stop services
 #   docker-compose down
 #
-#   # Rebuild and start
-#   docker-compose up -d --build
-#
 # SECRETS:
 #   Secrets are stored in ./secrets/ directory:
-#   - ./secrets/claude_api_key - Claude API key
-#   - ./secrets/discord_bot_token - Discord bot token
-#   - ./secrets/discord_alert_webhook - Discord webhook for alerts (optional)
-#   - ./secrets/redis - Redis password
+#   - ./secrets/claude_api_token    - Claude API key
+#   - ./secrets/discord_bot_token   - Discord bot token
+#   - ./secrets/discord_alert_token - Discord webhook for alerts (optional)
+#   - ./secrets/redis_token         - Redis password
 #
 # REQUIREMENTS:
 #   - Docker Engine 24.0+
@@ -60,9 +69,12 @@ services:
     env_file:
       - .env
 
+    environment:
+      - BOT_ENVIRONMENT=production
+      - TZ=America/Los_Angeles
+
     # Volume mounts
     volumes:
-      # Logs (optional)
       - ./logs:/app/logs
 
     # Docker Secrets
@@ -73,11 +85,18 @@ services:
 
     # Health check
     healthcheck:
-      test:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s
+      start_period: 60s
+
+    # Resource limits (production)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
     # Logging configuration
     logging:
@@ -92,19 +111,17 @@ services:
       - "com.alphabetcartel.version=5.0.0"
       - "com.alphabetcartel.description=Crisis Detection Discord Bot"
 
-  # ========================================================================
+    # Dependencies
+    depends_on:
+      ash-redis:
+        condition: service_healthy
+
+  # ===========================================================================
   # Ash-Redis Cache
-  # ========================================================================
+  # ===========================================================================
   ash-redis:
     image: redis:7-alpine
     container_name: ash-redis
-
-    # Resource Limits
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: "0.25"
 
     # Restart policy
     restart: unless-stopped
@@ -113,46 +130,57 @@ services:
     networks:
       - ash-network
 
-    # Environment variables
-    env_file:
-      - .env
-
-    # Port mapping
-    ports:
-      - 6379:6379
+    # Port mapping (internal only in production, exposed in dev override)
+    expose:
+      - "6379"
 
     # Volume mounts
     volumes:
       - redis_data:/data
 
-    # Docker Secrets
-    secrets:
-      - redis_token
-
+    # Redis configuration
     command:
-      [
-        "CMD",
-        "redis-server",
-        "--appendonly",
-        "yes",
-        "--requirepass",
-        "${GLOBAL_REDIS_PASSWORD}",
-      ]
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
 
-    # Healthcheck
+    # Health check
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.25"
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+    # Labels
+    labels:
+      - "com.alphabetcartel.service=ash-redis"
+      - "com.alphabetcartel.description=Redis cache for Ash-Bot"
 
 # =============================================================================
 # Volumes
 # =============================================================================
 volumes:
-  # Redis Data Persistence
   redis_data:
-    name: redis_data
+    name: ash-redis-data
     driver: local
 
 # =============================================================================
@@ -177,3 +205,4 @@ networks:
   ash-network:
     name: ash-network
     driver: bridge
+    external: true

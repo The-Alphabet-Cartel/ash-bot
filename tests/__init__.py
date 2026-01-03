@@ -1,36 +1,39 @@
 """
-Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
-CORE PRINCIPLE:
-******************  CORE SYSTEM VISION (Never to be violated):  ****************
-Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
-1. **PRIMARY**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-4. **PURPOSE**: To detect crisis messages in Discord community communications.
-********************************************************************************
+============================================================================
+Ash-Bot: Crisis Detection Discord Bot
+The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
 Ash-Bot Test Suite
----
-FILE VERSION: v5.0
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-0-1.0-1
+LAST MODIFIED: 2026-01-03
+PHASE: Phase 0 - Foundation
+CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
-Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
+============================================================================
 
 Test suite for Ash-Bot v5.0 Crisis Detection Discord Bot.
 
 USAGE:
-    # Run all tests
-    pytest tests/
+    # Run all tests (inside Docker container)
+    docker exec ash-bot python -m pytest tests/ -v
 
     # Run with coverage
-    pytest tests/ --cov=src --cov-report=html
+    docker exec ash-bot python -m pytest tests/ --cov=src --cov-report=html
 
     # Run specific test file
-    pytest tests/test_api.py
+    docker exec ash-bot python -m pytest tests/test_managers/test_config.py -v
 
     # Run specific test
-    pytest tests/test_api.py::test_health_endpoint
-
-    # Verbose output
-    pytest tests/ -v
+    docker exec ash-bot python -m pytest tests/test_managers/test_config.py::test_specific -v
 """
 
-__version__ = "v5.0"
+__version__ = "v5.0-0-1.0-1"

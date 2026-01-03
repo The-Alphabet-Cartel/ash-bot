@@ -1,7 +1,7 @@
 {
 	"_metadata": {
-		"file_version": "v5.0",
-		"last_modified": "2025-01-03",
+		"file_version": "v5.0.0",
+		"last_modified": "2026-01-03",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Testing Configuration Overrides",
 		"note": "Optimized for debugging and reproducible test runs",
@@ -14,32 +14,49 @@
 		"level": "DEBUG",
 		"format": "text",
 		"file": "/app/logs/ash-bot-tests.log",
-		"console": true
+		"console": true,
 		"defaults": {
 			"level": "DEBUG",
 			"format": "text",
 			"file": "/app/logs/ash-bot-tests.log",
 			"console": true
-		},
-		"validation": {
-			"level": {
-				"type": "string",
-				"allowed_values": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-				"required": true
-			},
-			"format": {
-				"type": "string",
-				"allowed_values": ["json", "text"],
-				"required": true
-			},
-			"file": {
-				"type": "string",
-				"required": true
-			},
-			"console": {
-				"type": "boolean",
-				"required": false
-			}
+		}
+	},
+
+	"nlp": {
+		"description": "Testing NLP settings - faster timeouts",
+		"timeout_seconds": 2,
+		"retry_attempts": 1,
+		"defaults": {
+			"base_url": "http://ash-nlp:30880",
+			"timeout_seconds": 2,
+			"retry_attempts": 1,
+			"retry_delay_seconds": 0
+		}
+	},
+
+	"history": {
+		"description": "Testing history settings - shorter retention",
+		"ttl_days": 1,
+		"max_messages": 10,
+		"defaults": {
+			"ttl_days": 1,
+			"max_messages": 10,
+			"min_severity_to_store": "low"
+		}
+	},
+
+	"ash": {
+		"description": "Testing Ash settings - faster timeouts",
+		"session_timeout_seconds": 60,
+		"max_session_duration_seconds": 120,
+		"defaults": {
+			"enabled": true,
+			"min_severity_to_respond": "high",
+			"session_timeout_seconds": 60,
+			"max_session_duration_seconds": 120,
+			"model": "claude-sonnet-4-20250514",
+			"max_tokens": 200
 		}
 	}
 }

@@ -1,45 +1,71 @@
 # ============================================================================
 # Ash-Bot v5.0 Requirements
 # ============================================================================
-# FILE VERSION: v5.0
-# LAST MODIFIED: 2026-01-02
+# FILE VERSION: v5.0.1
+# LAST MODIFIED: 2026-01-03
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
+#
+# Install: pip install -r requirements.txt
+# Or in Docker: docker-compose build
+#
+# ============================================================================
 
 # =============================================================================
-# Core Framework
+# Discord Bot Framework
 # =============================================================================
 
+# Discord.py - Discord API wrapper with slash commands support
+discord.py>=2.3.0,<3.0.0
+
 # =============================================================================
-# Utilities
+# HTTP Clients
+# =============================================================================
+
+# HTTPX - Async HTTP client (for Ash-NLP API calls)
+httpx>=0.26.0,<1.0.0
+
+# AIOHTTP - Async HTTP (discord.py dependency, also useful for webhooks)
+aiohttp>=3.9.0,<4.0.0
+
+# =============================================================================
+# Data Storage
+# =============================================================================
+
+# Redis - Async Redis client for user history and state
+redis>=5.0.0,<6.0.0
+
+# =============================================================================
+# AI Integration
+# =============================================================================
+
+# Anthropic - Claude API client for Ash personality
+anthropic>=0.18.0,<1.0.0
+
+# =============================================================================
+# Configuration & Utilities
 # =============================================================================
 
 # Python-dotenv - Environment variable loading
 python-dotenv>=1.0.0,<2.0.0
 
-# Structlog - Structured logging (optional, for JSON logs)
-# structlog>=24.1.0,<25.0.0
-
 # =============================================================================
-# HTTP and Networking
-# =============================================================================
-
-# HTTPX - Async HTTP client (for webhooks)
-httpx>=0.26.0,<1.0.0
-
-# AIOHTTP - Async HTTP client (for Discord alerting)
-aiohttp>=3.9.0,<4.0.0
-
-# =============================================================================
-# Testing (Development Only)
+# Testing
 # =============================================================================
 
 # Pytest - Testing framework
-pytest>=7.4.0,<8.0.0
+pytest>=7.4.0,<9.0.0
 
 # Pytest-asyncio - Async test support
 pytest-asyncio>=0.23.0,<1.0.0
 
-# HTTPX - For TestClient
-# (already included above)
+# Pytest-cov - Coverage reporting (optional)
+pytest-cov>=4.1.0,<6.0.0
+
+# =============================================================================
+# Development Tools (optional, but useful in container)
+# =============================================================================
+
+# IPython - Better interactive shell (optional)
+# ipython>=8.0.0,<9.0.0
