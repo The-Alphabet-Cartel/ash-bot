@@ -38,6 +38,7 @@ services:
   # Ash-Bot Service
   # ===========================================================================
   ash-bot:
+    image: ghcr.io/the-alphabet-cartel/ash-bot:latest
     container_name: ash-bot
     build:
       context: .
@@ -47,14 +48,13 @@ services:
         APP_USER: bot
         APP_UID: 1001
         APP_GID: 1001
-    image: ghcr.io/the-alphabet-cartel/ash-bot:latest
 
-    # Docker Secrets
-    secrets:
-      - claude_api_key
-      - discord_bot_token
-      - discord_alert_webhook
-      - redis
+    # Restart policy
+    restart: unless-stopped
+
+    # Network
+    networks:
+      - ash-network
 
     # Environment variables
     env_file:
@@ -65,6 +65,13 @@ services:
       # Logs (optional)
       - ./logs:/app/logs
 
+    # Docker Secrets
+    secrets:
+      - claude_api_key
+      - discord_bot_token
+      - discord_alert_webhook
+      - redis
+
     # Health check
     healthcheck:
       test:
@@ -73,19 +80,12 @@ services:
       retries: 3
       start_period: 120s
 
-    # Restart policy
-    restart: unless-stopped
-
     # Logging configuration
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "5"
-
-    # Network
-    networks:
-      - ash-network
 
     # Labels for organization
     labels:
