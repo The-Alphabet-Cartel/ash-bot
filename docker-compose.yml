@@ -67,9 +67,9 @@ services:
 
     # Docker Secrets
     secrets:
-      - claude_api_key
+      - claude_api_token
+      - discord_alert_token
       - discord_bot_token
-      - discord_alert_webhook
 
     # Health check
     healthcheck:
@@ -127,7 +127,7 @@ services:
 
     # Docker Secrets
     secrets:
-      - redis
+      - redis_token
 
     command:
       [
@@ -159,14 +159,16 @@ volumes:
 # Secrets
 # =============================================================================
 secrets:
-  claude_api_key:
-    file: ./secrets/claude_api_key
+  claude_api_token:
+    file: ./secrets/claude_api_token
+  discord_alert_token:
+    file: ./secrets/discord_alert_token
   discord_bot_token:
     file: ./secrets/discord_bot_token
-  discord_alert_webhook:
-    file: ./secrets/discord_alert_webhook
-  redis:
-    file: ./secrets/redis
+  redis_token:
+    file: ./secrets/redis_token
+  webhook_token:
+    file: ./secrets/webhook_token
 
 # =============================================================================
 # Networks
