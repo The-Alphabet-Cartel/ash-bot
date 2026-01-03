@@ -1,0 +1,646 @@
+# Ash-Bot v5.0 Development Roadmap
+
+============================================================================
+**Ash-Bot**: Crisis Detection Discord Bot for The Alphabet Cartel  
+**The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+**Document Version**: v5.0.2  
+**Last Updated**: 2026-01-03  
+**Status**: 🟡 In Progress - Phase 0  
+**Repository**: https://github.com/the-alphabet-cartel/ash-bot
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Quick Reference](#quick-reference)
+3. [Phase 0: Foundation Cleanup](#phase-0-foundation-cleanup)
+4. [Phase 1: Discord Connectivity](#phase-1-discord-connectivity)
+5. [Phase 2: Redis Integration](#phase-2-redis-integration)
+6. [Phase 3: Alert System](#phase-3-alert-system)
+7. [Phase 4: Ash Personality](#phase-4-ash-personality)
+8. [Phase 5: Production Polish](#phase-5-production-polish)
+9. [Post-Launch](#post-launch)
+10. [Change Log](#change-log)
+
+---
+
+## Overview
+
+### Mission
+
+Build a crisis detection Discord bot that:
+- **Monitors** → Sends messages to Ash-NLP for crisis classification
+- **Alerts** → Notifies Crisis Response Team via embeds when crisis detected
+- **Tracks** → Maintains user history for escalation pattern detection
+- **Protects** → Safeguards our LGBTQIA+ community through early intervention
+
+### Architecture Reference
+
+- **System Architecture**: [docs/architecture/system_architecture.md](../architecture/system_architecture.md)
+- **Clean Architecture Charter**: [docs/standards/clean_architecture_charter.md](../standards/clean_architecture_charter.md)
+- **Ash-NLP API Reference**: [docs/api/reference.md](../api/reference.md)
+
+### Target Performance
+
+| Metric | Target |
+|--------|--------|
+| Message-to-response latency | < 750ms |
+| Ash-NLP API timeout | 5s (with retry) |
+| Redis operations | < 50ms |
+| Concurrent Ash sessions | 10+ |
+
+---
+
+## Quick Reference
+
+### Severity Behavior Matrix
+
+| Severity | Store | Alert | Ash Behavior |
+|----------|-------|-------|--------------|
+| SAFE/NONE | ❌ | ❌ | None |
+| LOW | ✅ | ❌ | None |
+| MEDIUM | ✅ | ✅ #monitor-queue | Monitor silently |
+| HIGH | ✅ | ✅ #crisis-response | Opener + session |
+| CRITICAL | ✅ | ✅ #critical-response + DMs | Immediate opener + session |
+
+### Key Endpoints
+
+| Service | URL |
+|---------|-----|
+| Ash-NLP API | `http://ash-nlp:30880` |
+| Redis | `ash-redis:6379` |
+| Discord Gateway | via discord.py |
+
+### File Structure Preview
+
+```
+src/managers/
+├── config_manager.py       ✅ Exists (needs header update)
+├── secrets_manager.py      ✅ Exists (needs header update)
+├── discord/
+│   ├── discord_manager.py        🔲 Phase 1
+│   ├── channel_config_manager.py 🔲 Phase 1
+│   ├── embed_builder.py          🔲 Phase 3
+│   ├── alert_dispatcher.py       🔲 Phase 3
+│   ├── button_handler.py         🔲 Phase 3
+│   ├── slash_commands.py         🔲 Phase 3
+│   └── crt_notifier.py           🔲 Phase 3
+├── redis/
+│   ├── redis_manager.py              🔲 Phase 2
+│   ├── user_history_manager.py       🔲 Phase 2
+│   ├── alert_state_manager.py        🔲 Phase 2
+│   └── conversation_session_manager.py 🔲 Phase 4
+├── nlp/
+│   └── nlp_client_manager.py     🔲 Phase 1
+└── ash/
+    ├── ash_personality_manager.py 🔲 Phase 4
+    ├── prompt_builder.py          🔲 Phase 4
+    ├── claude_client.py           🔲 Phase 4
+    └── handoff_detector.py        🔲 Phase 4
+```
+
+---
+
+## Phase 0: Foundation Cleanup
+
+**Status**: 🔲 Not Started  
+**Goal**: Establish working Docker dev environment and update existing files  
+**Estimated Time**: 2-3 hours
+
+### Tasks
+
+#### Docker Development Environment (PRIORITY)
+- [ ] `Dockerfile` - Complete multi-stage build for Python 3.11
+- [ ] `docker-compose.yml` - Add development overrides and volume mounts
+- [ ] `docker-compose.override.yml` - Create local dev configuration
+- [ ] Verify container builds successfully: `docker-compose build`
+- [ ] Verify Python runs in container: `docker exec ash-bot python --version`
+- [ ] Verify pytest runs in container: `docker exec ash-bot python -m pytest --version`
+- [ ] Document local development workflow in README.md
+
+#### Header Updates
+- [ ] `src/__init__.py` - Update to Ash ecosystem header format
+- [ ] `src/managers/__init__.py` - Update to Ash ecosystem header format
+- [ ] `src/managers/config_manager.py` - Update to Ash ecosystem header format
+- [ ] `src/managers/secrets_manager.py` - Update to Ash ecosystem header format
+- [ ] `main.py` - Update to Ash ecosystem header format
+- [ ] `tests/__init__.py` - Update to Ash ecosystem header format
+- [ ] `tests/conftest.py` - Update to Ash ecosystem header format
+
+#### Configuration Updates
+- [ ] `src/config/default.json` - Add Discord, NLP, Redis, Ash sections
+- [ ] `src/config/production.json` - Add production overrides
+- [ ] `src/config/testing.json` - Fix JSON syntax error, add test overrides
+- [ ] `.env.template` - Add all new environment variables
+
+#### Documentation Updates
+- [ ] `README.md` - Update with v5.0 features overview and dev workflow
+- [ ] `requirements.txt` - Add discord.py, redis, anthropic dependencies
+
+### Dependencies
+- None (foundation work)
+
+### Development Workflow
+
+Once Phase 0 is complete, the development workflow will be:
+
+```bash
+# Build the container locally
+docker-compose build
+
+# Start the container (detached)
+docker-compose up -d ash-bot
+
+# Run tests inside container
+docker exec ash-bot python -m pytest tests/ -v
+
+# Run a specific Python script
+docker exec ash-bot python main.py
+
+# View logs
+docker-compose logs -f ash-bot
+
+# Stop container
+docker-compose down
+```
+
+### Notes
+```
+Phase 0 notes will be added here as we progress...
+```
+
+---
+
+## Phase 1: Discord Connectivity
+
+**Status**: 🔲 Not Started  
+**Goal**: Basic bot connectivity, channel monitoring, NLP integration  
+**Estimated Time**: 1 week  
+**Depends On**: Phase 0
+
+### Tasks
+
+#### Discord Manager (`src/managers/discord/discord_manager.py`)
+- [ ] Create `DiscordManager` class with gateway connection
+- [ ] Implement `connect()` / `disconnect()` methods
+- [ ] Implement `on_ready` event handler
+- [ ] Implement `on_message` event handler
+- [ ] Add intents configuration (messages, guilds, members)
+- [ ] Add graceful shutdown handling
+- [ ] Create factory function `create_discord_manager()`
+
+#### Channel Config Manager (`src/managers/discord/channel_config_manager.py`)
+- [ ] Create `ChannelConfigManager` class
+- [ ] Implement whitelist loading from config
+- [ ] Implement `is_monitored_channel()` check
+- [ ] Implement `get_alert_channel()` routing
+- [ ] Add in-memory caching for fast lookups
+- [ ] Create factory function `create_channel_config_manager()`
+
+#### NLP Client Manager (`src/managers/nlp/nlp_client_manager.py`)
+- [ ] Create `NLPClientManager` class
+- [ ] Implement async HTTP client (httpx or aiohttp)
+- [ ] Implement `analyze_message()` method
+- [ ] Implement request timeout and retry logic
+- [ ] Implement response parsing
+- [ ] Add connection pooling
+- [ ] Create factory function `create_nlp_client_manager()`
+
+#### Package Init Files
+- [ ] Create `src/managers/discord/__init__.py`
+- [ ] Create `src/managers/nlp/__init__.py`
+- [ ] Update `src/managers/__init__.py` with new exports
+
+#### Main Entry Point
+- [ ] Update `main.py` with bot initialization
+- [ ] Add command-line argument parsing
+- [ ] Implement async event loop
+- [ ] Add startup logging
+
+#### Testing
+- [ ] Create `tests/test_discord/` directory
+- [ ] Create `tests/test_discord/test_discord_manager.py`
+- [ ] Create `tests/test_discord/test_channel_config.py`
+- [ ] Create `tests/test_nlp/` directory
+- [ ] Create `tests/test_nlp/test_nlp_client.py`
+- [ ] Integration test: Bot connects to Discord
+- [ ] Integration test: Bot receives and logs messages
+- [ ] Integration test: Bot calls Ash-NLP API
+
+### Deliverables
+- [ ] Bot connects to Discord successfully
+- [ ] Bot logs messages from whitelisted channels only
+- [ ] Bot calls Ash-NLP and logs classification results
+- [ ] All unit tests passing
+
+### Dependencies
+- `discord.py>=2.3.0`
+- `httpx>=0.26.0` or `aiohttp>=3.9.0`
+
+### Notes
+```
+Phase 1 notes will be added here as we progress...
+```
+
+---
+
+## Phase 2: Redis Integration
+
+**Status**: 🔲 Not Started  
+**Goal**: Persistent storage, user history tracking, TTL management  
+**Estimated Time**: 1 week  
+**Depends On**: Phase 1
+
+### Tasks
+
+#### Redis Manager (`src/managers/redis/redis_manager.py`)
+- [ ] Create `RedisManager` class
+- [ ] Implement async Redis connection pool
+- [ ] Implement connection health checking
+- [ ] Implement graceful reconnection
+- [ ] Add password authentication from secrets
+- [ ] Create factory function `create_redis_manager()`
+
+#### User History Manager (`src/managers/redis/user_history_manager.py`)
+- [ ] Create `UserHistoryManager` class
+- [ ] Implement `store_analysis()` - store NLP result (LOW+ only)
+- [ ] Implement `get_history()` - retrieve recent history
+- [ ] Implement `update_metadata()` - update user meta (all severities)
+- [ ] Implement TTL management (14-30 day configurable)
+- [ ] Implement history pruning
+- [ ] Create factory function `create_user_history_manager()`
+
+#### Alert State Manager (`src/managers/redis/alert_state_manager.py`)
+- [ ] Create `AlertStateManager` class
+- [ ] Implement `get_last_alert()` - check previous alert state
+- [ ] Implement `set_alert()` - store new alert
+- [ ] Implement `should_alert()` - escalation-only logic
+- [ ] Implement `update_status()` - responding/resolved
+- [ ] Implement 24-hour TTL cleanup
+- [ ] Create factory function `create_alert_state_manager()`
+
+#### Package Init Files
+- [ ] Create `src/managers/redis/__init__.py`
+- [ ] Update `src/managers/__init__.py` with Redis exports
+
+#### Integration Updates
+- [ ] Update `main.py` to initialize Redis manager
+- [ ] Update message handler to store results
+- [ ] Update NLP client to include history context
+
+#### Testing
+- [ ] Create `tests/test_redis/` directory
+- [ ] Create `tests/test_redis/test_redis_manager.py`
+- [ ] Create `tests/test_redis/test_user_history.py`
+- [ ] Create `tests/test_redis/test_alert_state.py`
+- [ ] Integration test: Store and retrieve user history
+- [ ] Integration test: TTL expiration works
+- [ ] Integration test: Escalation-only alerting logic
+
+### Deliverables
+- [ ] User history stored in Redis (LOW+ severity)
+- [ ] Metadata updated for all messages
+- [ ] NLP requests include user history context
+- [ ] TTL-based cleanup working
+- [ ] Alert rate limiting functional
+- [ ] All unit tests passing
+
+### Dependencies
+- `redis>=5.0.0` (async support)
+
+### Notes
+```
+Phase 2 notes will be added here as we progress...
+```
+
+---
+
+## Phase 3: Alert System
+
+**Status**: 🔲 Not Started  
+**Goal**: Full alerting pipeline with embeds, buttons, slash commands  
+**Estimated Time**: 1 week  
+**Depends On**: Phase 2
+
+### Tasks
+
+#### Embed Builder (`src/managers/discord/embed_builder.py`)
+- [ ] Create `EmbedBuilder` class
+- [ ] Implement severity color coding (RED/ORANGE/YELLOW)
+- [ ] Implement crisis alert embed template
+- [ ] Implement history embed template
+- [ ] Implement signal formatting
+- [ ] Implement escalation pattern display
+- [ ] Create factory function `create_embed_builder()`
+
+#### Alert Dispatcher (`src/managers/discord/alert_dispatcher.py`)
+- [ ] Create `AlertDispatcher` class
+- [ ] Implement severity-based channel routing
+- [ ] Implement `dispatch_alert()` method
+- [ ] Implement role pinging logic
+- [ ] Integrate with AlertStateManager for rate limiting
+- [ ] Create factory function `create_alert_dispatcher()`
+
+#### Button Handler (`src/managers/discord/button_handler.py`)
+- [ ] Create `ButtonInteractionHandler` class
+- [ ] Implement "Responding" button handler
+- [ ] Implement "Resolved" button handler
+- [ ] Implement "Escalate" button handler
+- [ ] Implement "History" button handler (ephemeral response)
+- [ ] Update alert state on button clicks
+- [ ] Create factory function `create_button_handler()`
+
+#### CRT Notifier (`src/managers/discord/crt_notifier.py`)
+- [ ] Create `CRTNotificationManager` class
+- [ ] Implement DM dispatch for CRITICAL alerts
+- [ ] Load CRT member list from config
+- [ ] Implement failure handling (blocked DMs)
+- [ ] Create factory function `create_crt_notifier()`
+
+#### Slash Commands (`src/managers/discord/slash_commands.py`)
+- [ ] Create `SlashCommandHandler` class
+- [ ] Implement `/userhistory` command
+- [ ] Implement role-based permission checking
+- [ ] Implement channel restriction checking
+- [ ] Implement ephemeral response formatting
+- [ ] Create factory function `create_slash_command_handler()`
+
+#### Integration Updates
+- [ ] Update `discord_manager.py` with button view registration
+- [ ] Update `discord_manager.py` with slash command sync
+- [ ] Update message handler with alert dispatch logic
+- [ ] Update `src/managers/discord/__init__.py`
+
+#### Testing
+- [ ] Create `tests/test_discord/test_embed_builder.py`
+- [ ] Create `tests/test_discord/test_alert_dispatcher.py`
+- [ ] Create `tests/test_discord/test_button_handler.py`
+- [ ] Create `tests/test_discord/test_slash_commands.py`
+- [ ] Integration test: Alert routes to correct channel
+- [ ] Integration test: Buttons update state correctly
+- [ ] Integration test: /userhistory returns history
+- [ ] Integration test: CRT DMs sent on CRITICAL
+
+### Deliverables
+- [ ] MEDIUM alerts → #monitor-queue
+- [ ] HIGH alerts → #crisis-response with role ping
+- [ ] CRITICAL alerts → #critical-response with DMs
+- [ ] All buttons functional on embeds
+- [ ] /userhistory command working
+- [ ] Escalation-only rate limiting working
+- [ ] All unit tests passing
+
+### Dependencies
+- Phase 2 complete (Redis for state)
+
+### Notes
+```
+Phase 3 notes will be added here as we progress...
+```
+
+---
+
+## Phase 4: Ash Personality
+
+**Status**: 🔲 Not Started  
+**Goal**: AI-powered conversational support via Claude API  
+**Estimated Time**: 1 week  
+**Depends On**: Phase 3
+
+### Tasks
+
+#### Ash Character Prompt (`src/prompts/ash_character.py`)
+- [ ] Create `ASH_CHARACTER_PROMPT` constant
+- [ ] Create `ASH_TRAITS` constant
+- [ ] Create `CRISIS_RESPONSE_ADDITIONS` for severity-specific guidance
+- [ ] Create opener message templates
+- [ ] Create closing message template
+- [ ] Create team arriving message
+
+#### Claude Client (`src/managers/ash/claude_client.py`)
+- [ ] Create `ClaudeClientManager` class
+- [ ] Implement async Claude API calls
+- [ ] Implement retry logic with backoff
+- [ ] Implement token counting/limiting
+- [ ] Load API key from secrets
+- [ ] Create factory function `create_claude_client()`
+
+#### Prompt Builder (`src/managers/ash/prompt_builder.py`)
+- [ ] Create `PromptBuilder` class
+- [ ] Implement `build_ash_prompt()` method
+- [ ] Implement history context formatting
+- [ ] Implement conversation context formatting
+- [ ] Implement severity calibration in prompt
+- [ ] Create factory function `create_prompt_builder()`
+
+#### Conversation Session Manager (`src/managers/redis/conversation_session_manager.py`)
+- [ ] Create `ConversationSessionManager` class
+- [ ] Implement `create_session()` method
+- [ ] Implement `get_session()` method
+- [ ] Implement `add_message()` method
+- [ ] Implement `set_handoff()` method
+- [ ] Implement TTL management (5 min default, 10 min max)
+- [ ] Implement session expiration detection
+- [ ] Create factory function `create_conversation_session_manager()`
+
+#### Handoff Detector (`src/managers/ash/handoff_detector.py`)
+- [ ] Create `HandoffDetector` class
+- [ ] Implement regex pattern matching
+- [ ] Implement `detect_handoff()` method
+- [ ] Implement user resolution from @mentions
+- [ ] Support flexible phrase variations
+- [ ] Create factory function `create_handoff_detector()`
+
+#### Ash Personality Manager (`src/managers/ash/ash_personality_manager.py`)
+- [ ] Create `AshPersonalityManager` class
+- [ ] Implement `should_respond()` logic (HIGH/CRITICAL)
+- [ ] Implement `should_monitor()` logic (MEDIUM)
+- [ ] Implement `generate_opener()` method
+- [ ] Implement `generate_response()` method
+- [ ] Implement `generate_closing()` method
+- [ ] Implement `handle_team_arriving()` method
+- [ ] Implement multi-session username prefixing
+- [ ] Create factory function `create_ash_personality_manager()`
+
+#### Package Init Files
+- [ ] Create `src/managers/ash/__init__.py`
+- [ ] Create `src/prompts/__init__.py`
+- [ ] Update `src/managers/__init__.py`
+- [ ] Update `src/managers/redis/__init__.py`
+
+#### Integration Updates
+- [ ] Update message handler with Ash response logic
+- [ ] Update message handler with session management
+- [ ] Update message handler with handoff detection
+- [ ] Update "Responding" button to trigger team arriving message
+- [ ] Update "Resolved" button to end session
+
+#### Testing
+- [ ] Create `tests/test_ash/` directory
+- [ ] Create `tests/test_ash/test_prompt_builder.py`
+- [ ] Create `tests/test_ash/test_handoff_detector.py`
+- [ ] Create `tests/test_ash/test_ash_personality.py`
+- [ ] Create `tests/test_redis/test_conversation_session.py`
+- [ ] Integration test: Ash responds to HIGH severity
+- [ ] Integration test: Ash monitors MEDIUM silently
+- [ ] Integration test: Staff handoff works
+- [ ] Integration test: Session expires with closing message
+- [ ] Integration test: Multi-session username prefixing
+
+### Deliverables
+- [ ] Ash sends opener on HIGH/CRITICAL
+- [ ] Ash maintains conversation session
+- [ ] Ash monitors MEDIUM for escalation
+- [ ] Staff can hand off with flexible phrases
+- [ ] Sessions expire with closing message
+- [ ] Multi-session support working
+- [ ] "Responding" triggers team arriving message
+- [ ] All unit tests passing
+
+### Dependencies
+- `anthropic>=0.18.0` (Claude API client)
+- Phase 3 complete (button integration)
+
+### Notes
+```
+Phase 4 notes will be added here as we progress...
+```
+
+---
+
+## Phase 5: Production Polish
+
+**Status**: 🔲 Not Started  
+**Goal**: Production readiness, performance, monitoring, documentation  
+**Estimated Time**: 1 week  
+**Depends On**: Phase 4
+
+### Tasks
+
+#### Performance Optimization
+- [ ] Benchmark end-to-end latency
+- [ ] Optimize Redis pipeline operations
+- [ ] Verify fire-and-forget patterns
+- [ ] Implement connection pool tuning
+- [ ] Add request/response compression if needed
+- [ ] Profile memory usage
+
+#### Error Handling
+- [ ] Implement graceful degradation for NLP failures
+- [ ] Implement graceful degradation for Redis failures
+- [ ] Implement graceful degradation for Claude failures
+- [ ] Add circuit breaker patterns where appropriate
+- [ ] Ensure no crashes on configuration issues (Rule #5)
+
+#### Logging & Monitoring
+- [ ] Implement structured JSON logging
+- [ ] Add request ID tracing
+- [ ] Add latency metrics logging
+- [ ] Add error rate logging
+- [ ] Add Ash session metrics
+- [ ] Create health check endpoint summary
+
+#### Docker Production Setup
+- [ ] Complete `Dockerfile` with multi-stage build
+- [ ] Update `docker-compose.yml` with production settings
+- [ ] Add resource limits (memory, CPU)
+- [ ] Configure log rotation
+- [ ] Add restart policies
+- [ ] Test container orchestration
+
+#### Documentation
+- [ ] Update `README.md` with setup instructions
+- [ ] Create `DEPLOYMENT.md` guide
+- [ ] Update `system_architecture.md` with final details
+- [ ] Create `CONTRIBUTING.md`
+- [ ] Document all environment variables
+- [ ] Document all slash commands
+
+#### Security Review
+- [ ] Audit secret handling
+- [ ] Review Discord permission requirements
+- [ ] Validate input sanitization
+- [ ] Check for injection vulnerabilities
+- [ ] Review rate limiting adequacy
+
+#### Load Testing
+- [ ] Create load test scenarios
+- [ ] Test with simulated message volume
+- [ ] Test concurrent Ash sessions
+- [ ] Identify bottlenecks
+- [ ] Document capacity limits
+
+### Deliverables
+- [ ] Sub-750ms latency confirmed under load
+- [ ] Graceful degradation tested
+- [ ] Comprehensive logging in place
+- [ ] Production Docker setup complete
+- [ ] All documentation updated
+- [ ] Security review passed
+- [ ] Load test results documented
+
+### Dependencies
+- Phase 4 complete
+
+### Notes
+```
+Phase 5 notes will be added here as we progress...
+```
+
+---
+
+## Post-Launch
+
+### Future Enhancements (Backlog)
+
+- [ ] Web dashboard for CRT analytics
+- [ ] Historical trend visualization
+- [ ] Custom alert thresholds per channel
+- [ ] Multi-guild support
+- [ ] Webhook integration for external systems
+- [ ] ML model fine-tuning based on feedback
+- [ ] Mobile push notifications for CRT
+- [ ] Scheduled wellness check-ins
+
+### Maintenance Tasks
+
+- [ ] Monthly dependency updates
+- [ ] Quarterly security audits
+- [ ] Model performance monitoring
+- [ ] User feedback collection
+- [ ] Documentation refresh
+
+---
+
+## Change Log
+
+| Date | Version | Changes | Author |
+|------|---------|---------|--------|
+| 2026-01-03 | v5.0.2 | Added Docker dev environment to Phase 0 | Claude + PapaBearDoes |
+| 2026-01-03 | v5.0.1 | Initial roadmap created | Claude + PapaBearDoes |
+
+---
+
+## Progress Summary
+
+| Phase | Status | Completion |
+|-------|--------|------------|
+| Phase 0: Foundation Cleanup | 🔲 Not Started | 0% |
+| Phase 1: Discord Connectivity | 🔲 Not Started | 0% |
+| Phase 2: Redis Integration | 🔲 Not Started | 0% |
+| Phase 3: Alert System | 🔲 Not Started | 0% |
+| Phase 4: Ash Personality | 🔲 Not Started | 0% |
+| Phase 5: Production Polish | 🔲 Not Started | 0% |
+
+**Legend**:
+- 🔲 Not Started
+- 🟡 In Progress
+- 🟢 Complete
+- 🔴 Blocked
+
+---
+
+**Built with care for chosen family** 🏳️‍🌈

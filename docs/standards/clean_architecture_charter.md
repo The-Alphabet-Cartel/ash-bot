@@ -2,7 +2,8 @@
 
 ## Sacred Principles - NEVER TO BE VIOLATED
 
-**Version**: v5.0  
+**Version**: v5.1  
+**Last Modified**: 2026-01-03  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot  
 **Community**: [The Alphabet Cartel](https://discord.gg/alphabetcartel) | [alphabetcartel.org](https://alphabetcartel.org)
 
@@ -61,26 +62,84 @@
 - **Version Headers should include at the top of the header a file description of what the file code does**
   - `[fileDescription] for Ash-Bot Service`
 
-#### **Required Version Header Format:**
+#### **Required Version Header Format - Ash Ecosystem Standard:**
+
 ```python
 """
-Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
-CORE PRINCIPLE: 
-******************  CORE SYSTEM VISION (Never to be violated):  ****************
-Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
-1. **PRIMARY**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-4. **PURPOSE**: To detect crisis messages in Discord community communications.
-********************************************************************************
-{fileDescription} for Ash-Bot Service
----
-FILE VERSION: v5.0-1a-1.1-1
-LAST MODIFIED: 2025-12-30
-PHASE: 1a Step 1.1-1 - {Phase / Step Description}
+============================================================================
+{Project Name}: {Project Tagline}
+The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    {Mission Line 1}
+    {Mission Line 2}
+    {Mission Line 3}
+    {Mission Line 4}
+
+============================================================================
+{File Description}
+----------------------------------------------------------------------------
+FILE VERSION: {version}
+LAST MODIFIED: {date}
+PHASE: {phase}
+CLEAN ARCHITECTURE: Compliant
+Repository: {repository_url}
+============================================================================
+"""
+```
+
+#### **Ash-Bot Specific Header:**
+
+```python
+"""
+============================================================================
+Ash-Bot: Crisis Detection Discord Bot
+The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
+{File Description}
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-1-1.0-1
+LAST MODIFIED: 2026-01-03
+PHASE: Phase 1 - {Phase Description}
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
-Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
+============================================================================
+"""
+```
+
+#### **Ash-NLP Specific Header:**
+
+```python
+"""
+============================================================================
+Ash-NLP: Crisis Detection NLP Server
+The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Analyze  → Process messages through multi-model ensemble classification
+    Detect   → Identify crisis signals with weighted consensus algorithms
+    Explain  → Provide human-readable explanations for all decisions
+    Protect  → Safeguard our LGBTQIA+ community through accurate detection
+
+============================================================================
+{File Description}
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-1-1.0-1
+LAST MODIFIED: 2026-01-03
+PHASE: Phase 1 - {Phase Description}
+CLEAN ARCHITECTURE: Compliant
+Repository: https://github.com/the-alphabet-cartel/ash-nlp
+============================================================================
 """
 ```
 
@@ -298,21 +357,26 @@ bash_tool      - Execute commands in Claude's container
 ### **Required Manager Structure:**
 ```python
 """
-Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
-CORE PRINCIPLE: 
-******************  CORE SYSTEM VISION (Never to be violated):  ****************
-Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
-1. **PRIMARY**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-4. **PURPOSE**: To detect crisis messages in Discord community communications.
-********************************************************************************
-{managerDescription} for Ash-Bot Service
----
+============================================================================
+Ash-Bot: Crisis Detection Discord Bot
+The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
+============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
+{Manager Description}
+----------------------------------------------------------------------------
 FILE VERSION: v{major}.{minor}-{phase}-{step}-{increment}
 LAST MODIFIED: {date}
-PHASE: {phase}, {step}
+PHASE: {phase} - {step description}
 CLEAN ARCHITECTURE: Compliant
+Repository: https://github.com/the-alphabet-cartel/ash-bot
+============================================================================
 """
 
 class [Manager]Manager:
@@ -574,10 +638,10 @@ This system serves **The Alphabet Cartel LGBTQIA+ community** by providing **lif
 
 ---
 
-**Status**: Living Document - Updated for Production Resilience
+**Status**: Living Document - Updated for Ash Ecosystem Header Standard
 **Authority**: Project Lead + AI Assistant Collaboration
 **Enforcement**: Mandatory for ALL code changes
-**Version**: v5.0
+**Version**: v5.1
 
 ---
 
