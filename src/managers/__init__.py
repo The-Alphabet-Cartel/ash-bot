@@ -8,31 +8,66 @@ Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
 3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
 4. **PURPOSE**: To detect crisis messages in Discord community communications.
 ********************************************************************************
-Ash-Bot Test Fixtures
+Managers Package for Ash-Bot Service
 ---
 FILE VERSION: v5.0
+LAST MODIFIED: 2026-01-03
+PHASE: Phase 1
+CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 
-Shared pytest fixtures for the Ash-Bot test suite.
+This package contains resource managers for Ash-Bot:
+
+MANAGERS:
+- ConfigManager: Configuration loading and validation
+
+USAGE:
+    from src.managers import create_config_manager, create_secrets_manager
+
+    config = create_config_manager(environment="production")
+    secrets = create_secrets_manager(environment="production")
 """
 
-import os
-import sys
-from pathlib import Path
-from typing import Generator
-from unittest.mock import MagicMock, patch
-
-import pytest
-
-# Ensure src is importable
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
-# Set test environment
-os.environ["BOT_ENVIRONMENT"] = "testing"
-
+# Module version
+__version__ = "v5.0-6-3.0-1"
 
 # =============================================================================
-# Configuration Fixtures
+# Configuration Manager
 # =============================================================================
+
+from .config_manager import (
+    ConfigManager,
+    create_config_manager,
+)
+
+# =============================================================================
+# Secrets Manager
+# =============================================================================
+
+from .secrets_manager import (
+    SecretsManager,
+    create_secrets_manager,
+    get_secrets_manager,
+    get_secret,
+    SecretNotFoundError,
+    KNOWN_SECRETS,
+)
+
+# =============================================================================
+# Public API
+# =============================================================================
+
+__all__ = [
+    "__version__",
+    # Config
+    "ConfigManager",
+    "create_config_manager",
+    # Secrets
+    "SecretsManager",
+    "create_secrets_manager",
+    "get_secrets_manager",
+    "get_secret",
+    "SecretNotFoundError",
+    "KNOWN_SECRETS",
+]

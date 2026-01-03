@@ -12,9 +12,9 @@
 
 ## **Ash-Bot is a CRISIS DETECTION Discord Bot that**:
 1. **FIRST**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. **SECOND**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. **THIRD**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-5. **PURPOSE**: To detect crisis messages in Discord community communications.
+2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
+3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
+4. **PURPOSE**: To detect crisis messages in Discord community communications.
 
 ## 🏛️ **IMMUTABLE ARCHITECTURE RULES**
 
@@ -68,10 +68,10 @@ Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
 CORE PRINCIPLE: 
 ******************  CORE SYSTEM VISION (Never to be violated):  ****************
 Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
-1. PRIMARY: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. CONTEXTUAL: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. HISTORICAL: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-5. **PURPOSE**: To detect crisis messages in Discord community communications.
+1. **PRIMARY**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
+2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
+3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
+4. **PURPOSE**: To detect crisis messages in Discord community communications.
 ********************************************************************************
 {fileDescription} for Ash-Bot Service
 ---
@@ -302,10 +302,10 @@ Ash-Bot: Crisis Detection Discord Bot for The Alphabet Cartel Discord Community
 CORE PRINCIPLE: 
 ******************  CORE SYSTEM VISION (Never to be violated):  ****************
 Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
-1. PRIMARY: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
-2. CONTEXTUAL: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
-3. HISTORICAL: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
-5. **PURPOSE**: To detect crisis messages in Discord community communications.
+1. **PRIMARY**: Monitors all messages within our discord server and sends them to our NLP server for semantic classification.
+2. **SECONDARY**: If the NLP server detects a crisis, the bot alerts the appropriate staff members within the Crisis Response Team (CRT) using "pings" (@crisis_response) to the CRT role within the crisis-response channel utilizing discord's embeds feature to show crisis details based on the NLP determined severity of the crisis.
+3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
+4. **PURPOSE**: To detect crisis messages in Discord community communications.
 ********************************************************************************
 {managerDescription} for Ash-Bot Service
 ---

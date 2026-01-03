@@ -8,31 +8,31 @@ Ash-Bot is a CRISIS DETECTION DISCORD BOT that:
 3. **TERTIARY**: Tracks historical patterns and messages and sends them to our NLP server for semantic classification to determine if there is a pattern of escalation over time.
 4. **PURPOSE**: To detect crisis messages in Discord community communications.
 ********************************************************************************
-Ash-Bot Test Fixtures
+Ash-Bot Source Package
 ---
 FILE VERSION: v5.0
+LAST MODIFIED: 2025-01-03
+PHASE: Phase 1
+CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 
-Shared pytest fixtures for the Ash-Bot test suite.
+This is the main source package for Ash-Bot containing:
+- managers: Configuration and resource management
+
+USAGE:
+    from src.managers import create_config_manager
 """
 
-import os
-import sys
-from pathlib import Path
-from typing import Generator
-from unittest.mock import MagicMock, patch
+__version__ = "5.0.0"
+__author__ = "The Alphabet Cartel"
+__email__ = "dev@alphabetcartel.org"
+__url__ = "https://github.com/the-alphabet-cartel/ash-bot"
 
-import pytest
-
-# Ensure src is importable
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
-# Set test environment
-os.environ["BOT_ENVIRONMENT"] = "testing"
-
-
-# =============================================================================
-# Configuration Fixtures
-# =============================================================================
+# Package metadata
+__all__ = [
+    "__version__",
+    "__author__",
+    "__email__",
+    "__url__",
+]
