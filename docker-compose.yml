@@ -177,3 +177,6 @@ networks:
   ash-network:
     name: ash-network
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
