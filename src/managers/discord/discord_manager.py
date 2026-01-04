@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.5-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 1 - Discord Connectivity
+FILE VERSION: v5.0-2-6.0-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 2 - Redis History Storage Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -26,6 +26,8 @@ RESPONSIBILITIES:
 - Route monitored messages to NLP for analysis
 - Log analysis results (Phase 1 - alerting in Phase 3)
 - Graceful shutdown handling
+- Store message history for escalation detection (Phase 2)
+- Pass history context to NLP for pattern analysis (Phase 2)
 
 USAGE:
     from src.managers.discord import create_discord_manager
@@ -35,6 +37,7 @@ USAGE:
         secrets_manager=secrets_manager,
         channel_config=channel_config,
         nlp_client=nlp_client,
+        user_history=user_history,  # Phase 2
     )
 
     await discord_manager.connect()
@@ -54,11 +57,12 @@ if TYPE_CHECKING:
     from src.managers.secrets_manager import SecretsManager
     from src.managers.discord.channel_config_manager import ChannelConfigManager
     from src.managers.nlp.nlp_client_manager import NLPClientManager
+    from src.managers.storage.user_history_manager import UserHistoryManager
 
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-1-1.5-1"
+__version__ = "v5.0-2-6.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -82,12 +86,13 @@ class DiscordManager:
         secrets_manager: Secrets manager for bot token
         channel_config: Channel configuration manager
         nlp_client: NLP client for message analysis
+        user_history: User history manager for escalation tracking (Phase 2)
         bot: discord.ext.commands.Bot instance
         _connected: Whether bot is connected
         _shutdown_event: Asyncio event for shutdown coordination
 
     Example:
-        >>> manager = create_discord_manager(config, secrets, channels, nlp)
+        >>> manager = create_discord_manager(config, secrets, channels, nlp, history)
         >>> await manager.connect()  # Blocks until shutdown
     """
 
@@ -97,6 +102,7 @@ class DiscordManager:
         secrets_manager: "SecretsManager",
         channel_config: "ChannelConfigManager",
         nlp_client: "NLPClientManager",
+        user_history: Optional["UserHistoryManager"] = None,
     ):
         """
         Initialize DiscordManager.
@@ -106,6 +112,7 @@ class DiscordManager:
             secrets_manager: Secrets manager for bot token
             channel_config: Channel configuration manager
             nlp_client: NLP client for message analysis
+            user_history: User history manager (optional, Phase 2)
 
         Note:
             Use create_discord_manager() factory function.
@@ -114,12 +121,14 @@ class DiscordManager:
         self.secrets_manager = secrets_manager
         self.channel_config = channel_config
         self.nlp_client = nlp_client
+        self.user_history = user_history
 
         # State tracking
         self._connected = False
         self._shutdown_event = asyncio.Event()
         self._messages_processed = 0
         self._crises_detected = 0
+        self._history_stores = 0  # Phase 2: Track history storage count
 
         # Create bot with intents
         intents = self._setup_intents()
@@ -367,19 +376,40 @@ class DiscordManager:
         Analyze a message and log the result.
 
         This is a fire-and-forget task that:
-        1. Sends message to NLP API
-        2. Logs the analysis result
-        3. (Phase 3+) Dispatches alerts if needed
+        1. Retrieves user message history for context (Phase 2)
+        2. Sends message to NLP API with history
+        3. Logs the analysis result
+        4. Stores message in history if LOW+ severity (Phase 2)
+        5. (Phase 3+) Dispatches alerts if needed
 
         Args:
             message: Discord message object
         """
         try:
-            # Analyze message
+            # Phase 2: Get user history for context analysis
+            message_history = None
+            if self.user_history:
+                try:
+                    message_history = await self.user_history.get_history(
+                        guild_id=message.guild.id,
+                        user_id=message.author.id,
+                        limit=20,  # Use up to 20 recent messages for context
+                    )
+                    if message_history:
+                        logger.debug(
+                            f"📖 Loaded {len(message_history)} history entries "
+                            f"for user {message.author.id}"
+                        )
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to load history: {e}")
+                    message_history = None
+
+            # Analyze message with history context
             result = await self.nlp_client.analyze_message(
                 message=message.content,
                 user_id=str(message.author.id),
                 channel_id=str(message.channel.id),
+                message_history=message_history,
             )
 
             # Update stats
@@ -389,6 +419,21 @@ class DiscordManager:
 
             # Log result
             self._log_analysis_result(message, result)
+
+            # Phase 2: Store message in history (if LOW+ severity)
+            if self.user_history:
+                try:
+                    stored = await self.user_history.add_message(
+                        guild_id=message.guild.id,
+                        user_id=message.author.id,
+                        message=message.content,
+                        analysis_result=result,
+                        message_id=str(message.id),
+                    )
+                    if stored:
+                        self._history_stores += 1
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to store history: {e}")
 
             # TODO (Phase 3): Dispatch alerts based on severity
             # if result.is_actionable:
@@ -475,6 +520,16 @@ class DiscordManager:
         """Get count of crises detected."""
         return self._crises_detected
 
+    @property
+    def history_stores(self) -> int:
+        """Get count of messages stored in history (Phase 2)."""
+        return self._history_stores
+
+    @property
+    def has_history_manager(self) -> bool:
+        """Check if history manager is configured (Phase 2)."""
+        return self.user_history is not None
+
     # =========================================================================
     # Status Methods
     # =========================================================================
@@ -492,6 +547,8 @@ class DiscordManager:
             "guilds": self.guild_count,
             "messages_processed": self._messages_processed,
             "crises_detected": self._crises_detected,
+            "history_stores": self._history_stores,
+            "history_enabled": self.has_history_manager,
             "bot_user": str(self.bot.user) if self.bot.user else None,
         }
 
@@ -511,6 +568,7 @@ def create_discord_manager(
     secrets_manager: "SecretsManager",
     channel_config: "ChannelConfigManager",
     nlp_client: "NLPClientManager",
+    user_history: Optional["UserHistoryManager"] = None,
 ) -> DiscordManager:
     """
     Factory function for DiscordManager.
@@ -523,6 +581,7 @@ def create_discord_manager(
         secrets_manager: Secrets manager for bot token
         channel_config: Channel configuration manager
         nlp_client: NLP client for message analysis
+        user_history: User history manager (optional, Phase 2)
 
     Returns:
         Configured DiscordManager instance
@@ -533,16 +592,23 @@ def create_discord_manager(
         ...     secrets_manager=secrets,
         ...     channel_config=channels,
         ...     nlp_client=nlp,
+        ...     user_history=history,
         ... )
         >>> await manager.connect()
     """
     logger.info("🏭 Creating DiscordManager")
+
+    if user_history:
+        logger.info("📚 History tracking enabled (Phase 2)")
+    else:
+        logger.info("⚠️ History tracking disabled (no UserHistoryManager)")
 
     return DiscordManager(
         config_manager=config_manager,
         secrets_manager=secrets_manager,
         channel_config=channel_config,
         nlp_client=nlp_client,
+        user_history=user_history,
     )
 
 

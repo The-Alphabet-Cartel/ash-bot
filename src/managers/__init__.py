@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.8-1
+FILE VERSION: v5.0-2-5.0-1
 LAST MODIFIED: 2026-01-03
-PHASE: Phase 1 - Discord Connectivity
+PHASE: Phase 2 - Redis History Storage
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -28,6 +28,8 @@ MANAGERS:
 - DiscordManager: Discord gateway connection (Phase 1)
 - ChannelConfigManager: Channel whitelist management (Phase 1)
 - NLPClientManager: Ash-NLP API client (Phase 1)
+- RedisManager: Redis connection management (Phase 2)
+- UserHistoryManager: User message history storage (Phase 2)
 
 USAGE:
     from src.managers import (
@@ -39,10 +41,14 @@ USAGE:
         create_channel_config_manager,
     )
     from src.managers.nlp import create_nlp_client_manager
+    from src.managers.storage import (
+        create_redis_manager,
+        create_user_history_manager,
+    )
 """
 
 # Module version
-__version__ = "v5.0-1-1.8-1"
+__version__ = "v5.0-2-5.0-1"
 
 # =============================================================================
 # Configuration Manager
@@ -88,6 +94,18 @@ from .nlp import (
 )
 
 # =============================================================================
+# Storage Managers (Phase 2)
+# =============================================================================
+
+from .storage import (
+    RedisManager,
+    create_redis_manager,
+    UserHistoryManager,
+    create_user_history_manager,
+    STORABLE_SEVERITIES,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -112,4 +130,10 @@ __all__ = [
     "NLPClientManager",
     "NLPClientError",
     "create_nlp_client_manager",
+    # Storage (Phase 2)
+    "RedisManager",
+    "create_redis_manager",
+    "UserHistoryManager",
+    "create_user_history_manager",
+    "STORABLE_SEVERITIES",
 ]

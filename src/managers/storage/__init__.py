@@ -11,54 +11,73 @@ MISSION - NEVER TO BE VIOLATED:
     Protect  → Safeguard our LGBTQIA+ community through early intervention
 
 ============================================================================
-Data Models Package for Ash-Bot Service
----
-FILE VERSION: v5.0-2-2.0-1
+Storage Managers Package for Ash-Bot Service
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-2-1.0-1
 LAST MODIFIED: 2026-01-03
 PHASE: Phase 2 - Redis History Storage
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
-This package contains data models and dataclasses:
-- NLP Models: CrisisAnalysisResult, MessageHistoryItem, SignalResult, SeverityLevel
-- History Models: StoredMessage
+
+This package contains storage managers for Ash-Bot:
+
+MANAGERS:
+- RedisManager: Redis connection and low-level operations
+- UserHistoryManager: User message history storage and retrieval
 
 USAGE:
-    from src.models import CrisisAnalysisResult, MessageHistoryItem, SeverityLevel
-    from src.models import StoredMessage
+    from src.managers.storage import (
+        create_redis_manager,
+        create_user_history_manager,
+    )
+
+    # Initialize Redis connection
+    redis = create_redis_manager(config_manager, secrets_manager)
+    await redis.connect()
+
+    # Initialize history manager
+    history = create_user_history_manager(config_manager, redis)
+
+    # Store and retrieve user history
+    await history.add_message(guild_id, user_id, message, analysis_result)
+    recent = await history.get_history(guild_id, user_id, limit=20)
 """
 
 # Module version
-__version__ = "v5.0-2-2.0-1"
+__version__ = "v5.0-2-1.0-1"
 
 # =============================================================================
-# NLP Models
+# Redis Manager
 # =============================================================================
-from .nlp_models import (
-    SeverityLevel,
-    MessageHistoryItem,
-    SignalResult,
-    CrisisAnalysisResult,
+
+from .redis_manager import (
+    RedisManager,
+    create_redis_manager,
 )
 
 # =============================================================================
-# History Models (Phase 2)
+# User History Manager
 # =============================================================================
-from .history_models import (
-    StoredMessage,
+
+from .user_history_manager import (
+    UserHistoryManager,
+    create_user_history_manager,
+    STORABLE_SEVERITIES,
 )
 
 # =============================================================================
 # Public API
 # =============================================================================
+
 __all__ = [
     "__version__",
-    # NLP Models
-    "SeverityLevel",
-    "MessageHistoryItem",
-    "SignalResult",
-    "CrisisAnalysisResult",
-    # History Models
-    "StoredMessage",
+    # Redis
+    "RedisManager",
+    "create_redis_manager",
+    # User History
+    "UserHistoryManager",
+    "create_user_history_manager",
+    "STORABLE_SEVERITIES",
 ]

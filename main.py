@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.6-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 1 - Discord Connectivity
+FILE VERSION: v5.0-2-7.0-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 2 - Redis History Storage
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-1-1.6-1"
+__version__ = "v5.0-2-7.0-1"
 
 
 # =============================================================================
@@ -155,6 +155,7 @@ async def validate_startup(
     secrets_manager,
     nlp_client,
     channel_config,
+    redis_manager,
     logger: logging.Logger,
 ) -> bool:
     """
@@ -164,11 +165,13 @@ async def validate_startup(
     - Discord bot token exists
     - Ash-NLP API is reachable (warning only)
     - At least one channel is configured (warning only)
+    - Redis connection (warning only - Phase 2)
 
     Args:
         secrets_manager: Secrets manager instance
         nlp_client: NLP client instance
         channel_config: Channel config instance
+        redis_manager: Redis manager instance (Phase 2)
         logger: Logger instance
 
     Returns:
@@ -210,6 +213,17 @@ async def validate_startup(
             "   Set BOT_MONITORED_CHANNELS in .env"
         )
 
+    # Phase 2: Check Redis connection (warning only)
+    if redis_manager:
+        if await redis_manager.health_check():
+            logger.info("✅ Redis connection is healthy (Phase 2)")
+        else:
+            logger.warning(
+                "⚠️ Redis is not responding\n"
+                "   Bot will start, but history tracking will be disabled\n"
+                "   Make sure ash-redis container is running"
+            )
+
     return validation_passed
 
 
@@ -248,6 +262,10 @@ async def main_async(args: argparse.Namespace) -> int:
         create_discord_manager,
     )
     from src.managers.nlp import create_nlp_client_manager
+    from src.managers.storage import (
+        create_redis_manager,
+        create_user_history_manager,
+    )
 
     # Initialize managers
     logger.info("🔧 Initializing managers...")
@@ -275,23 +293,52 @@ async def main_async(args: argparse.Namespace) -> int:
             config_manager=config_manager,
         )
 
+        # Phase 2: Create Redis manager
+        redis_manager = None
+        user_history = None
+        try:
+            redis_manager = create_redis_manager(
+                config_manager=config_manager,
+                secrets_manager=secrets_manager,
+            )
+            await redis_manager.connect()
+            logger.info("✅ Redis connected (Phase 2)")
+
+            # Create user history manager
+            user_history = create_user_history_manager(
+                config_manager=config_manager,
+                redis_manager=redis_manager,
+            )
+            logger.info("✅ UserHistoryManager initialized (Phase 2)")
+
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Redis initialization failed: {e}\n"
+                "   Bot will start without history tracking\n"
+                "   Make sure ash-redis container is running"
+            )
+            redis_manager = None
+            user_history = None
+
         # Validate startup
         logger.info("🔍 Validating startup requirements...")
         if not await validate_startup(
             secrets_manager=secrets_manager,
             nlp_client=nlp_client,
             channel_config=channel_config,
+            redis_manager=redis_manager,
             logger=logger,
         ):
             logger.error("❌ Startup validation failed")
             return 1
 
-        # Create Discord manager
+        # Create Discord manager (with history if available)
         discord_manager = create_discord_manager(
             config_manager=config_manager,
             secrets_manager=secrets_manager,
             channel_config=channel_config,
             nlp_client=nlp_client,
+            user_history=user_history,
         )
 
         # Setup signal handlers
@@ -301,7 +348,13 @@ async def main_async(args: argparse.Namespace) -> int:
         logger.info("🚀 Starting Discord bot...")
 
         # Connect to Discord (blocks until shutdown)
-        await discord_manager.connect()
+        try:
+            await discord_manager.connect()
+        finally:
+            # Phase 2: Disconnect Redis on shutdown
+            if redis_manager and redis_manager.is_connected:
+                await redis_manager.disconnect()
+                logger.info("🔌 Redis disconnected")
 
         logger.info("👋 Ash-Bot shutdown complete")
         return 0
