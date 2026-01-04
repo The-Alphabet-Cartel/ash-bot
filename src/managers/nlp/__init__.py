@@ -11,33 +11,44 @@ MISSION - NEVER TO BE VIOLATED:
     Protect  → Safeguard our LGBTQIA+ community through early intervention
 
 ============================================================================
-Ash-Bot Source Package
+NLP Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.8-1
+FILE VERSION: v5.0-1-1.1-1
 LAST MODIFIED: 2026-01-03
 PHASE: Phase 1 - Discord Connectivity
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
-This is the main source package for Ash-Bot containing:
-- managers: Configuration and resource management
-- models: Data classes and types
+This package contains NLP-related managers:
+- NLPClientManager: Async HTTP client for Ash-NLP API
 
 USAGE:
-    from src.managers import create_config_manager
-    from src.models import CrisisAnalysisResult
+    from src.managers.nlp import create_nlp_client_manager
+
+    nlp_client = create_nlp_client_manager(config_manager)
+    result = await nlp_client.analyze_message("I'm feeling down today")
 """
 
-__version__ = "5.0.0"
-__author__ = "The Alphabet Cartel"
-__email__ = "dev@alphabetcartel.org"
-__url__ = "https://github.com/the-alphabet-cartel/ash-bot"
+# Module version
+__version__ = "v5.0-1-1.1-1"
 
-# Package metadata
+# =============================================================================
+# NLP Client Manager
+# =============================================================================
+from .nlp_client_manager import (
+    NLPClientManager,
+    NLPClientError,
+    create_nlp_client_manager,
+)
+
+# =============================================================================
+# Public API
+# =============================================================================
 __all__ = [
     "__version__",
-    "__author__",
-    "__email__",
-    "__url__",
+    # NLP Client Manager
+    "NLPClientManager",
+    "NLPClientError",
+    "create_nlp_client_manager",
 ]
