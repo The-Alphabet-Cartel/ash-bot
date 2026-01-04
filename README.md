@@ -215,6 +215,7 @@ See [secrets/README.md](secrets/README.md) for setup instructions.
 
 ## 📚 Documentation
 
+- [Discord Deployment Guide](docs/discord_deployment_guide.md) - **Start here for new deployments**
 - [System Architecture](docs/architecture/system_architecture.md)
 - [Clean Architecture Charter](docs/standards/clean_architecture_charter.md)
 - [Development Roadmap](docs/v5.0/roadmap.md)

@@ -419,9 +419,9 @@ Phase 2 completed successfully with:
 
 #### Testing
 - [x] Create `tests/test_alerting/` directory
-- [x] Create `tests/test_alerting/test_cooldown_manager.py` (40+ tests)
-- [x] Create `tests/test_alerting/test_embed_builder.py` (40+ tests)
-- [x] Create `tests/test_alerting/test_alert_dispatcher.py` (50+ tests)
+- [x] Create `tests/test_alerting/test_cooldown_manager.py` (23 tests)
+- [x] Create `tests/test_alerting/test_embed_builder.py` (23 tests)
+- [x] Create `tests/test_alerting/test_alert_dispatcher.py` (43 tests)
 
 ### Alert Behavior Matrix
 
@@ -440,7 +440,7 @@ Phase 2 completed successfully with:
 - [x] Acknowledge button updates embed to green
 - [x] Talk to Ash button ready (stubbed for Phase 4)
 - [x] 5-minute cooldown per user (bypassed for escalations)
-- [x] All unit tests passing (130+)
+- [x] All unit tests passing (89 tests)
 
 ### Dependencies
 - Phase 2 complete (Redis for history context)
@@ -453,10 +453,11 @@ Phase 3 completed successfully with:
 - **Button interactions**: Persistent views survive bot restarts
 - **Cooldown system**: In-memory with configurable duration
 - **Talk to Ash**: Button present but stubbed until Phase 4
+- **Configuration audit**: All Discord IDs configurable via JSON/env (Rule #4 compliant)
 
 **Key accomplishments:**
 - 8 new files created
-- 130+ unit tests written
+- 89 unit tests written and passing
 - Full alert routing pipeline
 - Clean Architecture patterns throughout
 
@@ -464,6 +465,8 @@ Phase 3 completed successfully with:
 - Talk to Ash conversation logic
 - Slash commands (/userhistory)
 - CRT DMs for CRITICAL (may add in Phase 4)
+
+**See [Phase 3 Completion Report](phase3/complete.md) for full details.**
 
 ---
 
