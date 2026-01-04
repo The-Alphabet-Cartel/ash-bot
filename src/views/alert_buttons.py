@@ -13,16 +13,16 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Alert Button Views for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-4.0-1
+FILE VERSION: v5.0-4-6.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching
+PHASE: Phase 4 - Ash AI Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
 RESPONSIBILITIES:
 - Provide interactive buttons on crisis alert embeds
-- Handle "Talk to Ash" button (stubbed for Phase 4)
+- Handle "Talk to Ash" button to initiate AI support sessions
 - Handle "Acknowledge" button to mark alerts as handled
 - Update embed appearance on acknowledgment
 
@@ -39,7 +39,7 @@ from typing import Optional
 import logging
 
 # Module version
-__version__ = "v5.0-3-4.0-1"
+__version__ = "v5.0-4-6.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class AlertButtonView(View):
     Button view for crisis alert interactions.
 
     Provides buttons for CRT members to interact with alerts:
-    - Talk to Ash: Initiates Ash AI conversation (Phase 4)
+    - Talk to Ash: Initiates Ash AI conversation
     - Acknowledge: Marks alert as acknowledged by CRT
 
     Attributes:
@@ -102,6 +102,8 @@ class AlertButtonView(View):
         # Tracking
         self._acknowledged = False
         self._acknowledged_by: Optional[int] = None
+        self._ash_session_started = False
+        self._ash_started_by: Optional[int] = None
 
         # Add buttons based on severity
         self._add_buttons()
@@ -143,7 +145,7 @@ class AlertButtonView(View):
         Handle "Talk to Ash" button click.
 
         This initiates an Ash AI conversation with the user.
-        Full implementation in Phase 4.
+        Creates a DM session and sends a welcome message.
 
         Args:
             interaction: Button interaction
@@ -153,21 +155,153 @@ class AlertButtonView(View):
             f"for user {self.user_id}"
         )
 
-        # Phase 4 will implement the full Ash conversation logic
-        # For now, provide feedback that this will be available later
-        await interaction.response.send_message(
-            f"🤖 **Ash AI Conversation Request**\n\n"
-            f"Initiating support conversation with <@{self.user_id}>...\n\n"
-            f"*Full Ash AI integration will be available in Phase 4.*\n"
-            f"For now, please reach out to the user directly.",
-            ephemeral=True,
-        )
+        # Get bot instance
+        bot = interaction.client
 
-        # TODO (Phase 4): Call AshPersonalityManager.start_session()
-        # This will:
-        # 1. Create a conversation session in Redis
-        # 2. Send an opening message to the user
-        # 3. Start monitoring their messages for responses
+        # Check if Ash managers are available
+        if not hasattr(bot, "ash_session_manager") or not bot.ash_session_manager:
+            await interaction.response.send_message(
+                "⚠️ Ash AI is not currently available. "
+                "Please reach out to the user directly.",
+                ephemeral=True,
+            )
+            logger.warning("Ash managers not available on bot instance")
+            return
+
+        session_manager = bot.ash_session_manager
+        personality_manager = bot.ash_personality_manager
+
+        # Check if user already has an active session
+        if session_manager.has_active_session(self.user_id):
+            await interaction.response.send_message(
+                f"ℹ️ <@{self.user_id}> already has an active Ash session. "
+                "They're being supported.",
+                ephemeral=True,
+            )
+            return
+
+        # Check if session was already started from this alert
+        if self._ash_session_started:
+            await interaction.response.send_message(
+                f"ℹ️ Ash session was already started by <@{self._ash_started_by}>. "
+                "The user is being supported.",
+                ephemeral=True,
+            )
+            return
+
+        # Get the user to start session with
+        try:
+            target_user = await bot.fetch_user(self.user_id)
+        except discord.NotFound:
+            await interaction.response.send_message(
+                "⚠️ Could not find the user. They may have left the server.",
+                ephemeral=True,
+            )
+            return
+        except discord.HTTPException as e:
+            logger.error(f"Failed to fetch user {self.user_id}: {e}")
+            await interaction.response.send_message(
+                "⚠️ Failed to connect with user. Please try again.",
+                ephemeral=True,
+            )
+            return
+
+        # Defer response (session creation may take a moment)
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            # Start Ash session
+            from src.managers.ash import SessionExistsError
+
+            try:
+                session = await session_manager.start_session(
+                    user=target_user,
+                    trigger_severity=self.severity,
+                )
+            except SessionExistsError:
+                await interaction.followup.send(
+                    f"ℹ️ <@{self.user_id}> already has an active Ash session.",
+                    ephemeral=True,
+                )
+                return
+
+            # Mark session as started from this alert
+            self._ash_session_started = True
+            self._ash_started_by = interaction.user.id
+
+            # Get welcome message based on severity
+            welcome_msg = personality_manager.get_welcome_message(
+                severity=self.severity,
+                username=target_user.display_name,
+            )
+
+            # Send welcome message to user's DM
+            await session.dm_channel.send(welcome_msg)
+
+            # Add welcome to session history (as assistant message)
+            session.add_assistant_message(welcome_msg)
+
+            # Notify CRT member
+            await interaction.followup.send(
+                f"✅ **Ash session started!**\n\n"
+                f"Ash is now talking with {target_user.display_name} in their DMs.\n"
+                f"Session ID: `{session.session_id}`\n\n"
+                f"The session will timeout after 5 minutes of inactivity "
+                f"or 10 minutes total duration.",
+                ephemeral=True,
+            )
+
+            # Update the embed to show Ash is engaged
+            await self._update_embed_ash_engaged(interaction, target_user.display_name)
+
+            logger.info(
+                f"✅ Ash session {session.session_id} started for user {self.user_id} "
+                f"by CRT member {interaction.user.display_name}"
+            )
+
+        except Exception as e:
+            logger.error(f"❌ Failed to start Ash session: {e}", exc_info=True)
+            await interaction.followup.send(
+                f"⚠️ Failed to start Ash session: {e}\n"
+                "Please reach out to the user directly.",
+                ephemeral=True,
+            )
+
+    async def _update_embed_ash_engaged(
+        self,
+        interaction: discord.Interaction,
+        username: str,
+    ) -> None:
+        """
+        Update the alert embed to show Ash is engaged.
+
+        Args:
+            interaction: Button interaction
+            username: User's display name
+        """
+        try:
+            message = interaction.message
+            if message and message.embeds:
+                embed = message.embeds[0]
+
+                # Add Ash status field
+                embed.add_field(
+                    name="🤖 Ash Status",
+                    value=f"Talking with {username} • Started by {interaction.user.display_name}",
+                    inline=False,
+                )
+
+                # Update the Talk to Ash button to show engaged
+                for item in self.children:
+                    if isinstance(item, Button) and "Talk to Ash" in item.label:
+                        item.label = "💬 Ash Engaged"
+                        item.style = discord.ButtonStyle.secondary
+                        item.disabled = True
+
+                await message.edit(embed=embed, view=self)
+
+        except Exception as e:
+            logger.warning(f"Failed to update embed with Ash status: {e}")
 
     async def _acknowledge_callback(
         self,
@@ -244,9 +378,7 @@ class AlertButtonView(View):
         Called when the view times out (default: 1 hour).
         Buttons will stop working but remain visible.
         """
-        logger.debug(
-            f"AlertButtonView timed out for user {self.user_id}"
-        )
+        logger.debug(f"AlertButtonView timed out for user {self.user_id}")
 
         # Disable all buttons
         for item in self.children:
@@ -271,14 +403,21 @@ class AlertButtonView(View):
         """Get user ID of acknowledger."""
         return self._acknowledged_by
 
+    @property
+    def is_ash_engaged(self) -> bool:
+        """Check if Ash session was started from this alert."""
+        return self._ash_session_started
+
     def __repr__(self) -> str:
         """String representation for debugging."""
         status = "acknowledged" if self._acknowledged else "pending"
+        ash_status = "engaged" if self._ash_session_started else "not engaged"
         return (
             f"AlertButtonView("
             f"user={self.user_id}, "
             f"severity={self.severity}, "
-            f"status={status})"
+            f"status={status}, "
+            f"ash={ash_status})"
         )
 
 
@@ -313,18 +452,138 @@ class PersistentAlertView(View):
         interaction: discord.Interaction,
         button: Button,
     ) -> None:
-        """Handle persistent Talk to Ash button."""
+        """
+        Handle persistent Talk to Ash button.
+
+        For alerts that existed before bot restart, we need to
+        extract the user_id from the embed and start a fresh session.
+        """
         logger.info(
             f"💬 [Persistent] Talk to Ash requested by {interaction.user.id}"
         )
 
-        await interaction.response.send_message(
-            "🤖 **Ash AI Conversation Request**\n\n"
-            "This alert was created before the bot restarted.\n"
-            "Please check the original message and reach out to the user directly.\n\n"
-            "*Full Ash AI integration coming in Phase 4.*",
-            ephemeral=True,
-        )
+        # Get bot instance
+        bot = interaction.client
+
+        # Check if Ash managers are available
+        if not hasattr(bot, "ash_session_manager") or not bot.ash_session_manager:
+            await interaction.response.send_message(
+                "⚠️ Ash AI is not currently available. "
+                "Please reach out to the user directly.",
+                ephemeral=True,
+            )
+            return
+
+        # Try to extract user_id from the embed
+        user_id = None
+        severity = "high"  # Default
+
+        message = interaction.message
+        if message and message.embeds:
+            embed = message.embeds[0]
+
+            # Look for user mention in fields
+            for field in embed.fields:
+                if field.name == "👤 User":
+                    # Extract user ID from mention <@123456>
+                    value = field.value
+                    if "<@" in value:
+                        try:
+                            start = value.index("<@") + 2
+                            end = value.index(">", start)
+                            user_id = int(value[start:end])
+                        except (ValueError, IndexError):
+                            pass
+
+            # Try to get severity from title
+            if embed.title:
+                title_lower = embed.title.lower()
+                if "critical" in title_lower:
+                    severity = "critical"
+                elif "high" in title_lower:
+                    severity = "high"
+
+        if not user_id:
+            await interaction.response.send_message(
+                "⚠️ Could not identify the user from this alert.\n"
+                "This alert was created before the bot restarted.\n"
+                "Please check the message and reach out directly.",
+                ephemeral=True,
+            )
+            return
+
+        # Now proceed similar to normal callback
+        session_manager = bot.ash_session_manager
+        personality_manager = bot.ash_personality_manager
+
+        # Check existing session
+        if session_manager.has_active_session(user_id):
+            await interaction.response.send_message(
+                f"ℹ️ <@{user_id}> already has an active Ash session.",
+                ephemeral=True,
+            )
+            return
+
+        # Defer response
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            # Fetch user
+            target_user = await bot.fetch_user(user_id)
+
+            # Start session
+            from src.managers.ash import SessionExistsError
+
+            try:
+                session = await session_manager.start_session(
+                    user=target_user,
+                    trigger_severity=severity,
+                )
+            except SessionExistsError:
+                await interaction.followup.send(
+                    f"ℹ️ <@{user_id}> already has an active Ash session.",
+                    ephemeral=True,
+                )
+                return
+
+            # Send welcome
+            welcome_msg = personality_manager.get_welcome_message(
+                severity=severity,
+                username=target_user.display_name,
+            )
+            await session.dm_channel.send(welcome_msg)
+            session.add_assistant_message(welcome_msg)
+
+            # Notify CRT
+            await interaction.followup.send(
+                f"✅ **Ash session started!**\n\n"
+                f"Ash is now talking with {target_user.display_name} in their DMs.\n"
+                f"Session ID: `{session.session_id}`",
+                ephemeral=True,
+            )
+
+            # Disable button
+            button.disabled = True
+            button.label = "💬 Ash Engaged"
+            button.style = discord.ButtonStyle.secondary
+            await message.edit(view=self)
+
+            logger.info(
+                f"✅ [Persistent] Ash session {session.session_id} started "
+                f"for user {user_id}"
+            )
+
+        except discord.NotFound:
+            await interaction.followup.send(
+                "⚠️ Could not find the user. They may have left.",
+                ephemeral=True,
+            )
+        except Exception as e:
+            logger.error(f"❌ [Persistent] Failed to start Ash session: {e}")
+            await interaction.followup.send(
+                f"⚠️ Failed to start Ash session. Please reach out directly.",
+                ephemeral=True,
+            )
 
     @discord.ui.button(
         label="✅ Acknowledge",

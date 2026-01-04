@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-7.0-1
+FILE VERSION: v5.0-4-8.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching
+PHASE: Phase 4 - Ash AI Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-3-7.0-1"
+__version__ = "v5.0-4-8.0-1"
 
 
 # =============================================================================
@@ -89,6 +89,7 @@ def setup_logging(log_level: str = "INFO", log_format: str = "text") -> None:
     logging.getLogger("discord.gateway").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("anthropic").setLevel(logging.WARNING)
 
     logger = logging.getLogger(__name__)
     logger.info(f"Logging configured at {log_level} level ({log_format} format)")
@@ -167,6 +168,7 @@ async def validate_startup(
     - At least one channel is configured (warning only)
     - Redis connection (warning only)
     - Alert channels configured (warning only, Phase 3)
+    - Claude API token (warning only, Phase 4)
 
     Args:
         secrets_manager: Secrets manager instance
@@ -246,6 +248,17 @@ async def validate_startup(
             "   Set BOT_CRT_ROLE_ID in .env"
         )
 
+    # Phase 4: Check Claude API token (warning only)
+    claude_token = secrets_manager.get_claude_api_token()
+    if claude_token:
+        logger.info("✅ Claude API token found (Phase 4)")
+    else:
+        logger.warning(
+            "⚠️ Claude API token not found\n"
+            "   Ash AI will be disabled\n"
+            "   Create secrets/claude_api_token to enable"
+        )
+
     return validation_passed
 
 
@@ -273,7 +286,7 @@ async def main_async(args: argparse.Namespace) -> int:
     logger.info("  🤖 Ash-Bot Crisis Detection Service")
     logger.info(f"  Version: {__version__}")
     logger.info(f"  Environment: {args.environment}")
-    logger.info("  Phase: 3 - Alert Dispatching")
+    logger.info("  Phase: 4 - Ash AI Integration")
     logger.info("  Community: The Alphabet Cartel")
     logger.info("  https://discord.gg/alphabetcartel")
     logger.info("=" * 60)
@@ -293,6 +306,11 @@ async def main_async(args: argparse.Namespace) -> int:
         create_cooldown_manager,
         create_embed_builder,
         create_alert_dispatcher,
+    )
+    from src.managers.ash import (
+        create_claude_client_manager,
+        create_ash_session_manager,
+        create_ash_personality_manager,
     )
 
     # Initialize managers
@@ -350,6 +368,8 @@ async def main_async(args: argparse.Namespace) -> int:
 
         # Phase 3: Create alerting managers
         alert_dispatcher = None
+        cooldown_manager = None
+        embed_builder = None
         try:
             # Create cooldown manager
             cooldown_manager = create_cooldown_manager(
@@ -358,10 +378,6 @@ async def main_async(args: argparse.Namespace) -> int:
 
             # Create embed builder
             embed_builder = create_embed_builder()
-
-            # Note: alert_dispatcher needs bot instance, so we create it
-            # after discord_manager but before connect()
-            # We'll set it up after creating the discord manager
 
             logger.info("✅ Alerting managers initialized (Phase 3)")
 
@@ -372,6 +388,42 @@ async def main_async(args: argparse.Namespace) -> int:
             )
             cooldown_manager = None
             embed_builder = None
+
+        # Phase 4: Create Ash AI managers
+        ash_session_manager = None
+        ash_personality_manager = None
+        try:
+            # Check for Claude API token first
+            claude_token = secrets_manager.get_claude_api_token()
+            if claude_token:
+                # Create Claude client
+                claude_client = create_claude_client_manager(
+                    config_manager=config_manager,
+                    secrets_manager=secrets_manager,
+                )
+
+                # Create session manager
+                ash_session_manager = create_ash_session_manager(
+                    config_manager=config_manager,
+                )
+
+                # Create personality manager
+                ash_personality_manager = create_ash_personality_manager(
+                    config_manager=config_manager,
+                    claude_client=claude_client,
+                )
+
+                logger.info("✅ Ash AI managers initialized (Phase 4)")
+            else:
+                logger.info("ℹ️ Ash AI disabled (no Claude API token)")
+
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Ash AI initialization failed: {e}\n"
+                "   Bot will start without Ash AI support"
+            )
+            ash_session_manager = None
+            ash_personality_manager = None
 
         # Validate startup
         logger.info("🔍 Validating startup requirements...")
@@ -385,7 +437,7 @@ async def main_async(args: argparse.Namespace) -> int:
             logger.error("❌ Startup validation failed")
             return 1
 
-        # Create Discord manager (without alert_dispatcher initially)
+        # Create Discord manager with all Phase 4 managers
         discord_manager = create_discord_manager(
             config_manager=config_manager,
             secrets_manager=secrets_manager,
@@ -393,6 +445,8 @@ async def main_async(args: argparse.Namespace) -> int:
             nlp_client=nlp_client,
             user_history=user_history,
             alert_dispatcher=None,  # Will set after creating alert_dispatcher
+            ash_session_manager=ash_session_manager,
+            ash_personality_manager=ash_personality_manager,
         )
 
         # Phase 3: Now create alert_dispatcher with bot instance

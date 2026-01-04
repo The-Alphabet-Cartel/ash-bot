@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-6.0-1
+FILE VERSION: v5.0-4-7.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching Integration
+PHASE: Phase 4 - Ash AI Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -28,6 +28,7 @@ RESPONSIBILITIES:
 - Pass history context to NLP for pattern analysis (Phase 2)
 - Dispatch alerts to CRT channels when crisis detected (Phase 3)
 - Register persistent button views for bot restarts (Phase 3)
+- Route DM messages to active Ash AI sessions (Phase 4)
 
 USAGE:
     from src.managers.discord import create_discord_manager
@@ -38,7 +39,9 @@ USAGE:
         channel_config=channel_config,
         nlp_client=nlp_client,
         user_history=user_history,
-        alert_dispatcher=alert_dispatcher,  # Phase 3
+        alert_dispatcher=alert_dispatcher,
+        ash_session_manager=ash_session_manager,
+        ash_personality_manager=ash_personality_manager,
     )
 
     await discord_manager.connect()
@@ -60,11 +63,13 @@ if TYPE_CHECKING:
     from src.managers.nlp.nlp_client_manager import NLPClientManager
     from src.managers.storage.user_history_manager import UserHistoryManager
     from src.managers.alerting.alert_dispatcher import AlertDispatcher
+    from src.managers.ash.ash_session_manager import AshSessionManager
+    from src.managers.ash.ash_personality_manager import AshPersonalityManager
 
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-3-6.0-1"
+__version__ = "v5.0-4-7.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -81,7 +86,8 @@ class DiscordManager:
 
     This is the core manager that connects Ash-Bot to Discord,
     handles incoming messages, routes them to the NLP API
-    for crisis analysis, and dispatches alerts when needed.
+    for crisis analysis, dispatches alerts when needed, and
+    manages Ash AI conversations in DMs.
 
     Attributes:
         config_manager: Configuration manager instance
@@ -90,12 +96,14 @@ class DiscordManager:
         nlp_client: NLP client for message analysis
         user_history: User history manager for escalation tracking (Phase 2)
         alert_dispatcher: Alert dispatcher for CRT notifications (Phase 3)
+        ash_session_manager: Ash session manager for AI conversations (Phase 4)
+        ash_personality_manager: Ash personality manager for responses (Phase 4)
         bot: discord.ext.commands.Bot instance
         _connected: Whether bot is connected
         _shutdown_event: Asyncio event for shutdown coordination
 
     Example:
-        >>> manager = create_discord_manager(config, secrets, channels, nlp, history, alerts)
+        >>> manager = create_discord_manager(config, secrets, channels, nlp, ...)
         >>> await manager.connect()  # Blocks until shutdown
     """
 
@@ -107,6 +115,8 @@ class DiscordManager:
         nlp_client: "NLPClientManager",
         user_history: Optional["UserHistoryManager"] = None,
         alert_dispatcher: Optional["AlertDispatcher"] = None,
+        ash_session_manager: Optional["AshSessionManager"] = None,
+        ash_personality_manager: Optional["AshPersonalityManager"] = None,
     ):
         """
         Initialize DiscordManager.
@@ -118,6 +128,8 @@ class DiscordManager:
             nlp_client: NLP client for message analysis
             user_history: User history manager (optional, Phase 2)
             alert_dispatcher: Alert dispatcher (optional, Phase 3)
+            ash_session_manager: Ash session manager (optional, Phase 4)
+            ash_personality_manager: Ash personality manager (optional, Phase 4)
 
         Note:
             Use create_discord_manager() factory function.
@@ -128,6 +140,8 @@ class DiscordManager:
         self.nlp_client = nlp_client
         self.user_history = user_history
         self.alert_dispatcher = alert_dispatcher
+        self.ash_session_manager = ash_session_manager
+        self.ash_personality_manager = ash_personality_manager
 
         # State tracking
         self._connected = False
@@ -136,6 +150,7 @@ class DiscordManager:
         self._crises_detected = 0
         self._history_stores = 0  # Phase 2: Track history storage count
         self._alerts_dispatched = 0  # Phase 3: Track alerts sent
+        self._ash_messages_handled = 0  # Phase 4: Track Ash DM messages
 
         # Create bot with intents
         intents = self._setup_intents()
@@ -145,11 +160,18 @@ class DiscordManager:
             help_command=None,  # Disable default help
         )
 
+        # Phase 4: Attach managers to bot for button callbacks
+        self.bot.ash_session_manager = ash_session_manager
+        self.bot.ash_personality_manager = ash_personality_manager
+
         # Register event handlers
         self._register_events()
 
         # Phase 3: Register persistent views for button handling after restart
         self._register_persistent_views()
+
+        # Phase 4: Session cleanup task
+        self._cleanup_task: Optional[asyncio.Task] = None
 
         logger.info("✅ DiscordManager initialized")
 
@@ -166,6 +188,7 @@ class DiscordManager:
         - guild_messages: For message events
         - message_content: For reading message content (privileged)
         - members: For user information
+        - dm_messages: For DM handling (Phase 4)
 
         Returns:
             Configured Intents object
@@ -178,6 +201,9 @@ class DiscordManager:
         # Required for guild and member info
         intents.guilds = True
         intents.members = True
+
+        # Phase 4: Required for DM messages
+        intents.dm_messages = True
 
         logger.debug("Discord intents configured")
         return intents
@@ -281,6 +307,14 @@ class DiscordManager:
         # Signal shutdown
         self._shutdown_event.set()
 
+        # Phase 4: Cancel cleanup task
+        if self._cleanup_task and not self._cleanup_task.done():
+            self._cleanup_task.cancel()
+            try:
+                await self._cleanup_task
+            except asyncio.CancelledError:
+                pass
+
         # Close the bot
         if self.bot and not self.bot.is_closed():
             await self.bot.close()
@@ -350,6 +384,17 @@ class DiscordManager:
         else:
             logger.warning("   ⚠️ Alerting disabled or not configured")
 
+        # Phase 4: Log Ash AI status
+        if self.ash_session_manager and self.ash_personality_manager:
+            logger.info("   🤖 Ash AI enabled")
+            # Start session cleanup task
+            self._cleanup_task = asyncio.create_task(
+                self._session_cleanup_loop(),
+                name="ash-session-cleanup",
+            )
+        else:
+            logger.warning("   ⚠️ Ash AI disabled or not configured")
+
         logger.info("=" * 60)
 
         # Check NLP API health
@@ -364,11 +409,12 @@ class DiscordManager:
 
         Flow:
         1. Ignore bot messages
-        2. Check if channel is monitored
-        3. Check if guild is target guild
-        4. Send to NLP for analysis
-        5. Store in history if LOW+ (Phase 2)
-        6. Dispatch alerts if MEDIUM+ (Phase 3)
+        2. Check if DM with active Ash session (Phase 4)
+        3. Check if channel is monitored
+        4. Check if guild is target guild
+        5. Send to NLP for analysis
+        6. Store in history if LOW+ (Phase 2)
+        7. Dispatch alerts if MEDIUM+ (Phase 3)
 
         Args:
             message: Discord message object
@@ -377,8 +423,9 @@ class DiscordManager:
         if message.author.bot:
             return
 
-        # Ignore DMs (for now)
+        # Phase 4: Check if this is a DM with active Ash session
         if message.guild is None:
+            await self._handle_dm_message(message)
             return
 
         # Check if guild is target guild
@@ -399,6 +446,113 @@ class DiscordManager:
         asyncio.create_task(
             self._analyze_and_process(message), name=f"analyze-{message.id}"
         )
+
+    # =========================================================================
+    # Phase 4: DM Message Handling
+    # =========================================================================
+
+    async def _handle_dm_message(self, message: discord.Message) -> None:
+        """
+        Handle DM messages for Ash AI sessions.
+
+        If user has an active Ash session, route their message
+        to the personality manager for response.
+
+        Args:
+            message: Discord DM message
+        """
+        # Check if Ash is configured
+        if not self.ash_session_manager or not self.ash_personality_manager:
+            return
+
+        # Check if user has active session
+        session = self.ash_session_manager.get_session(message.author.id)
+        if not session:
+            # No active session - ignore DM
+            return
+
+        logger.info(
+            f"💬 Ash DM received from {message.author.display_name} "
+            f"(session: {session.session_id})"
+        )
+
+        self._ash_messages_handled += 1
+
+        # Check for user ending the conversation
+        if self.ash_personality_manager.detect_end_request(message.content):
+            logger.info(f"👋 User {message.author.id} ending Ash session")
+            await self.ash_session_manager.end_session(
+                user_id=message.author.id,
+                reason="user_ended",
+                send_closing=True,
+            )
+            return
+
+        # Check for CRT request
+        if self.ash_personality_manager.detect_crt_request(message.content):
+            logger.info(f"🆘 User {message.author.id} requesting human support")
+
+            # Send handoff message
+            handoff_msg = self.ash_personality_manager.get_handoff_message()
+            await message.channel.send(handoff_msg)
+
+            # End session with transfer reason
+            await self.ash_session_manager.end_session(
+                user_id=message.author.id,
+                reason="transfer",
+                send_closing=True,
+            )
+            return
+
+        # Show typing indicator while generating response
+        async with message.channel.typing():
+            try:
+                # Generate response
+                response = await self.ash_personality_manager.generate_response(
+                    message=message,
+                    session=session,
+                )
+
+                # Send response
+                if response:
+                    await message.channel.send(response)
+
+            except Exception as e:
+                logger.error(
+                    f"❌ Failed to generate Ash response: {e}",
+                    exc_info=True,
+                )
+                # Send fallback
+                fallback = self.ash_personality_manager._get_fallback_response()
+                await message.channel.send(fallback)
+
+    async def _session_cleanup_loop(self) -> None:
+        """
+        Background task to cleanup expired Ash sessions.
+
+        Runs every 30 seconds to check for and end expired sessions.
+        """
+        logger.info("🧹 Ash session cleanup task started")
+
+        while not self._shutdown_event.is_set():
+            try:
+                await asyncio.sleep(30)  # Check every 30 seconds
+
+                if self.ash_session_manager:
+                    expired_count = await self.ash_session_manager.cleanup_expired_sessions()
+                    if expired_count > 0:
+                        logger.info(f"🧹 Cleaned up {expired_count} expired Ash sessions")
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"❌ Session cleanup error: {e}")
+
+        logger.info("🧹 Ash session cleanup task stopped")
+
+    # =========================================================================
+    # Message Analysis
+    # =========================================================================
 
     async def _analyze_and_process(self, message: discord.Message) -> None:
         """
@@ -568,6 +722,11 @@ class DiscordManager:
         return self._alerts_dispatched
 
     @property
+    def ash_messages_handled(self) -> int:
+        """Get count of Ash DM messages handled (Phase 4)."""
+        return self._ash_messages_handled
+
+    @property
     def has_history_manager(self) -> bool:
         """Check if history manager is configured (Phase 2)."""
         return self.user_history is not None
@@ -576,6 +735,14 @@ class DiscordManager:
     def has_alert_dispatcher(self) -> bool:
         """Check if alert dispatcher is configured (Phase 3)."""
         return self.alert_dispatcher is not None
+
+    @property
+    def has_ash_ai(self) -> bool:
+        """Check if Ash AI is configured (Phase 4)."""
+        return (
+            self.ash_session_manager is not None
+            and self.ash_personality_manager is not None
+        )
 
     # =========================================================================
     # Status Methods
@@ -588,7 +755,7 @@ class DiscordManager:
         Returns:
             Status dictionary for logging/debugging
         """
-        return {
+        status = {
             "connected": self.is_connected,
             "latency_ms": round(self.latency * 1000, 2),
             "guilds": self.guild_count,
@@ -596,10 +763,18 @@ class DiscordManager:
             "crises_detected": self._crises_detected,
             "history_stores": self._history_stores,
             "alerts_dispatched": self._alerts_dispatched,
+            "ash_messages_handled": self._ash_messages_handled,
             "history_enabled": self.has_history_manager,
             "alerting_enabled": self.has_alert_dispatcher,
+            "ash_ai_enabled": self.has_ash_ai,
             "bot_user": str(self.bot.user) if self.bot.user else None,
         }
+
+        # Phase 4: Add Ash session info
+        if self.ash_session_manager:
+            status["ash_active_sessions"] = self.ash_session_manager.active_session_count
+
+        return status
 
     def __repr__(self) -> str:
         """String representation for debugging."""
@@ -619,6 +794,8 @@ def create_discord_manager(
     nlp_client: "NLPClientManager",
     user_history: Optional["UserHistoryManager"] = None,
     alert_dispatcher: Optional["AlertDispatcher"] = None,
+    ash_session_manager: Optional["AshSessionManager"] = None,
+    ash_personality_manager: Optional["AshPersonalityManager"] = None,
 ) -> DiscordManager:
     """
     Factory function for DiscordManager.
@@ -633,6 +810,8 @@ def create_discord_manager(
         nlp_client: NLP client for message analysis
         user_history: User history manager (optional, Phase 2)
         alert_dispatcher: Alert dispatcher (optional, Phase 3)
+        ash_session_manager: Ash session manager (optional, Phase 4)
+        ash_personality_manager: Ash personality manager (optional, Phase 4)
 
     Returns:
         Configured DiscordManager instance
@@ -645,6 +824,8 @@ def create_discord_manager(
         ...     nlp_client=nlp,
         ...     user_history=history,
         ...     alert_dispatcher=alerts,
+        ...     ash_session_manager=ash_session,
+        ...     ash_personality_manager=ash_personality,
         ... )
         >>> await manager.connect()
     """
@@ -660,6 +841,11 @@ def create_discord_manager(
     else:
         logger.info("⚠️ Alert dispatching disabled (no AlertDispatcher)")
 
+    if ash_session_manager and ash_personality_manager:
+        logger.info("🤖 Ash AI enabled (Phase 4)")
+    else:
+        logger.info("⚠️ Ash AI disabled (missing managers)")
+
     return DiscordManager(
         config_manager=config_manager,
         secrets_manager=secrets_manager,
@@ -667,6 +853,8 @@ def create_discord_manager(
         nlp_client=nlp_client,
         user_history=user_history,
         alert_dispatcher=alert_dispatcher,
+        ash_session_manager=ash_session_manager,
+        ash_personality_manager=ash_personality_manager,
     )
 
 

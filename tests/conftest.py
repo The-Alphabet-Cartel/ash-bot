@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Ash-Bot Test Fixtures
 ---
-FILE VERSION: v5.0-1-1.7-1
-LAST MODIFIED: 2026-01-03
+FILE VERSION: v5.0-4-9.0-3
+LAST MODIFIED: 2026-01-04
 PHASE: Phase 1 - Discord Connectivity
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -29,7 +29,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -40,7 +40,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Set test environment
 os.environ["BOT_ENVIRONMENT"] = "testing"
 
-__version__ = "v5.0-1-1.7-1"
+__version__ = "v5.0-4-9.0-2"
 
 
 # =============================================================================
@@ -343,3 +343,28 @@ def event_loop_policy():
 
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
+@pytest.fixture
+def mock_event_loop():
+    """
+    Mock asyncio.get_running_loop for Discord View instantiation.
+    
+    Discord's ui.View class calls asyncio.get_running_loop().create_future()
+    in __init__, which fails when no event loop is running (e.g., in sync tests).
+    This fixture provides a mock loop that satisfies the View's requirements.
+    
+    Also patches Client.add_view to prevent "View is already finished" errors
+    when testing DiscordManager initialization.
+    """
+    mock_loop = MagicMock()
+    mock_future = MagicMock()
+    # Ensure the future doesn't mark the view as finished
+    mock_future.done.return_value = False
+    mock_future.cancelled.return_value = False
+    mock_loop.create_future.return_value = mock_future
+    
+    with patch("asyncio.get_running_loop", return_value=mock_loop):
+        # Also patch add_view to prevent "View is already finished" error
+        with patch("discord.client.Client.add_view"):
+            yield mock_loop

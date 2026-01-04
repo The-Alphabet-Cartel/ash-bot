@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-1.0-1
+FILE VERSION: v5.0-4-5.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching
+PHASE: Phase 4 - Ash AI Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -33,6 +33,9 @@ MANAGERS:
 - CooldownManager: Alert cooldown tracking (Phase 3)
 - EmbedBuilder: Discord embed creation (Phase 3)
 - AlertDispatcher: Crisis alert routing (Phase 3)
+- ClaudeClientManager: Claude API client (Phase 4)
+- AshSessionManager: Conversation session management (Phase 4)
+- AshPersonalityManager: Ash personality and responses (Phase 4)
 
 USAGE:
     from src.managers import (
@@ -53,10 +56,15 @@ USAGE:
         create_embed_builder,
         create_alert_dispatcher,
     )
+    from src.managers.ash import (
+        create_claude_client_manager,
+        create_ash_session_manager,
+        create_ash_personality_manager,
+    )
 """
 
 # Module version
-__version__ = "v5.0-3-1.0-1"
+__version__ = "v5.0-4-5.0-1"
 
 # =============================================================================
 # Configuration Manager
@@ -127,6 +135,24 @@ from .alerting import (
 )
 
 # =============================================================================
+# Ash AI Managers (Phase 4)
+# =============================================================================
+
+from .ash import (
+    ClaudeClientManager,
+    create_claude_client_manager,
+    ClaudeAPIError,
+    ClaudeConfigError,
+    AshSession,
+    AshSessionManager,
+    create_ash_session_manager,
+    SessionExistsError,
+    SessionNotFoundError,
+    AshPersonalityManager,
+    create_ash_personality_manager,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -164,4 +190,16 @@ __all__ = [
     "create_embed_builder",
     "AlertDispatcher",
     "create_alert_dispatcher",
+    # Ash AI (Phase 4)
+    "ClaudeClientManager",
+    "create_claude_client_manager",
+    "ClaudeAPIError",
+    "ClaudeConfigError",
+    "AshSession",
+    "AshSessionManager",
+    "create_ash_session_manager",
+    "SessionExistsError",
+    "SessionNotFoundError",
+    "AshPersonalityManager",
+    "create_ash_personality_manager",
 ]
