@@ -12,29 +12,51 @@ MISSION - NEVER TO BE VIOLATED:
 
 ============================================================================
 Managers Package for Ash-Bot Service
-----------------------------------------------------------------------------
-FILE VERSION: v5.0-0-1.0-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 0 - Foundation
+---
+FILE VERSION: v5.0-3-1.0-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 3 - Alert Dispatching
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
+Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
-
 This package contains resource managers for Ash-Bot:
 
 MANAGERS:
 - ConfigManager: Configuration loading and validation
-- SecretsManager: Docker secrets access
+- SecretsManager: Secure credential access
+- DiscordManager: Discord gateway connection (Phase 1)
+- ChannelConfigManager: Channel whitelist management (Phase 1)
+- NLPClientManager: Ash-NLP API client (Phase 1)
+- RedisManager: Redis connection management (Phase 2)
+- UserHistoryManager: User message history storage (Phase 2)
+- CooldownManager: Alert cooldown tracking (Phase 3)
+- EmbedBuilder: Discord embed creation (Phase 3)
+- AlertDispatcher: Crisis alert routing (Phase 3)
 
 USAGE:
-    from src.managers import create_config_manager, create_secrets_manager
-
-    config = create_config_manager(environment="production")
-    secrets = create_secrets_manager()
+    from src.managers import (
+        create_config_manager,
+        create_secrets_manager,
+    )
+    from src.managers.discord import (
+        create_discord_manager,
+        create_channel_config_manager,
+    )
+    from src.managers.nlp import create_nlp_client_manager
+    from src.managers.storage import (
+        create_redis_manager,
+        create_user_history_manager,
+    )
+    from src.managers.alerting import (
+        create_cooldown_manager,
+        create_embed_builder,
+        create_alert_dispatcher,
+    )
 """
 
 # Module version
-__version__ = "v5.0-0-1.0-1"
+__version__ = "v5.0-3-1.0-1"
 
 # =============================================================================
 # Configuration Manager
@@ -59,6 +81,52 @@ from .secrets_manager import (
 )
 
 # =============================================================================
+# Discord Managers (Phase 1)
+# =============================================================================
+
+from .discord import (
+    DiscordManager,
+    create_discord_manager,
+    ChannelConfigManager,
+    create_channel_config_manager,
+)
+
+# =============================================================================
+# NLP Managers (Phase 1)
+# =============================================================================
+
+from .nlp import (
+    NLPClientManager,
+    NLPClientError,
+    create_nlp_client_manager,
+)
+
+# =============================================================================
+# Storage Managers (Phase 2)
+# =============================================================================
+
+from .storage import (
+    RedisManager,
+    create_redis_manager,
+    UserHistoryManager,
+    create_user_history_manager,
+    STORABLE_SEVERITIES,
+)
+
+# =============================================================================
+# Alerting Managers (Phase 3)
+# =============================================================================
+
+from .alerting import (
+    CooldownManager,
+    create_cooldown_manager,
+    EmbedBuilder,
+    create_embed_builder,
+    AlertDispatcher,
+    create_alert_dispatcher,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -74,4 +142,26 @@ __all__ = [
     "get_secret",
     "SecretNotFoundError",
     "KNOWN_SECRETS",
+    # Discord (Phase 1)
+    "DiscordManager",
+    "create_discord_manager",
+    "ChannelConfigManager",
+    "create_channel_config_manager",
+    # NLP (Phase 1)
+    "NLPClientManager",
+    "NLPClientError",
+    "create_nlp_client_manager",
+    # Storage (Phase 2)
+    "RedisManager",
+    "create_redis_manager",
+    "UserHistoryManager",
+    "create_user_history_manager",
+    "STORABLE_SEVERITIES",
+    # Alerting (Phase 3)
+    "CooldownManager",
+    "create_cooldown_manager",
+    "EmbedBuilder",
+    "create_embed_builder",
+    "AlertDispatcher",
+    "create_alert_dispatcher",
 ]

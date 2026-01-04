@@ -100,14 +100,8 @@ class ConfigManager:
         self._resolved_config: Dict[str, Any] = {}
         self._validation_errors: List[str] = []
 
-        # Phase 4: Consensus configuration storage
-        self._consensus_config: Dict[str, Any] = {}
-
         # Load and resolve configuration
         self._load_configuration()
-
-        # Phase 4: Load consensus configuration
-        self._load_consensus_configuration()
 
         logger.info(
             f"✅ ConfigManager v{__version__} initialized "

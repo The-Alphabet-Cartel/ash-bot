@@ -11,33 +11,45 @@ MISSION - NEVER TO BE VIOLATED:
     Protect  → Safeguard our LGBTQIA+ community through early intervention
 
 ============================================================================
-Ash-Bot Source Package
+Views Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.8-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 1 - Discord Connectivity
+FILE VERSION: v5.0-3-1.0-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 3 - Alert Dispatching
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
-This is the main source package for Ash-Bot containing:
-- managers: Configuration and resource management
-- models: Data classes and types
+This package contains Discord UI components (Views) for Ash-Bot:
+
+VIEWS:
+- AlertButtonView: Buttons for crisis alert interactions
 
 USAGE:
-    from src.managers import create_config_manager
-    from src.models import CrisisAnalysisResult
+    from src.views import AlertButtonView
+
+    view = AlertButtonView(user_id=123, message_id=456, severity="high")
+    await channel.send(embed=embed, view=view)
 """
 
-__version__ = "5.0.0"
-__author__ = "The Alphabet Cartel"
-__email__ = "dev@alphabetcartel.org"
-__url__ = "https://github.com/the-alphabet-cartel/ash-bot"
+# Module version
+__version__ = "v5.0-3-1.0-1"
 
-# Package metadata
+# =============================================================================
+# Alert Buttons
+# =============================================================================
+
+from .alert_buttons import (
+    AlertButtonView,
+    PersistentAlertView,
+)
+
+# =============================================================================
+# Public API
+# =============================================================================
+
 __all__ = [
     "__version__",
-    "__author__",
-    "__email__",
-    "__url__",
+    "AlertButtonView",
+    "PersistentAlertView",
 ]

@@ -110,28 +110,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # The bot will be started manually or via a process manager
 # This ensures container stays up for development and testing
 CMD ["tail", "-f", "/dev/null"]
-
-
-# =============================================================================
-# Development Target (optional - for local dev with more tools)
-# =============================================================================
-FROM runtime AS development
-
-# Switch to root to install dev tools
-USER root
-
-# Install development dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Git for version control
-    git \
-    # Vim for quick edits
-    vim \
-    # Process tools
-    procps \
-    && rm -rf /var/lib/apt/lists/*
-
-# Switch back to app user
-USER ${APP_USER}
-
-# Override command for development (keep container running)
-CMD ["tail", "-f", "/dev/null"]
