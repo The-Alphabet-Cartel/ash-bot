@@ -134,12 +134,12 @@ def test_config_dict() -> Dict[str, Any]:
             },
         },
         "nlp": {
-            "base_url": "http://test-nlp:30880",
+            "base_url": "http://10.20.30.253:30880",
             "timeout_seconds": 2,
             "retry_attempts": 1,
             "retry_delay_seconds": 0.1,
             "defaults": {
-                "base_url": "http://ash-nlp:30880",
+                "base_url": "http://10.20.30.253:30880",
                 "timeout_seconds": 5,
                 "retry_attempts": 2,
                 "retry_delay_seconds": 1,
@@ -235,10 +235,30 @@ def test_channel_config(test_config_manager):
 
 @pytest.fixture
 def test_nlp_client(test_config_manager):
-    """Create NLPClientManager for testing."""
+    """Create NLPClientManager for testing.
+    
+    Creates a real client for tests that verify client behavior.
+    Uses test config with http://10.20.30.253:30880 URL.
+    """
     from src.managers.nlp.nlp_client_manager import create_nlp_client_manager
 
     return create_nlp_client_manager(config_manager=test_config_manager)
+
+
+@pytest.fixture
+def mock_nlp_client():
+    """Create mock NLPClientManager for unit tests.
+    
+    Uses a mock to avoid network calls during unit tests.
+    """
+    mock_client = MagicMock()
+    mock_client.base_url = "http://10.20.30.253:30880"
+    mock_client.timeout = 2.0
+    mock_client.is_closed = False
+    mock_client.analyze_message = AsyncMock()
+    mock_client.health_check = AsyncMock(return_value=True)
+    mock_client.close = AsyncMock()
+    return mock_client
 
 
 @pytest.fixture

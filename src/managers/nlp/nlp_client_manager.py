@@ -143,7 +143,8 @@ class NLPClientManager:
     """
 
     # Default configuration values (used if config fails)
-    DEFAULT_BASE_URL = "http://ash-nlp:30880"
+    # DEFAULT_BASE_URL = "http://ash-nlp:30880"
+    DEFAULT_BASE_URL = "http://10.20.30.253:30880"
     DEFAULT_TIMEOUT = 5.0
     DEFAULT_RETRY_ATTEMPTS = 2
     DEFAULT_RETRY_DELAY = 1.0
@@ -219,11 +220,15 @@ class NLPClientManager:
 
         Should be called when done using the client.
         """
-        if self._client is not None and not self._closed:
+        if self._closed:
+            return
+            
+        if self._client is not None:
             await self._client.aclose()
             self._client = None
-            self._closed = True
-            logger.debug("HTTP client closed")
+            
+        self._closed = True
+        logger.debug("HTTP client closed")
 
     async def __aenter__(self) -> "NLPClientManager":
         """Async context manager entry."""

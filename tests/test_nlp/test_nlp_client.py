@@ -51,7 +51,7 @@ class TestNLPClientManagerFactory:
         client = create_nlp_client_manager(test_config_manager)
 
         assert client is not None
-        assert client.base_url == "http://test-nlp:30880"
+        assert client.base_url == "http://10.20.30.253:30880"
         assert client.timeout == 2.0
         assert client.retry_attempts == 1
 

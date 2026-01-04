@@ -39,6 +39,9 @@ __version__ = "v5.0-1-1.1-1"
 from .nlp_client_manager import (
     NLPClientManager,
     NLPClientError,
+    NLPConnectionError,
+    NLPTimeoutError,
+    NLPValidationError,
     create_nlp_client_manager,
 )
 
@@ -50,5 +53,8 @@ __all__ = [
     # NLP Client Manager
     "NLPClientManager",
     "NLPClientError",
+    "NLPConnectionError",
+    "NLPTimeoutError",
+    "NLPValidationError",
     "create_nlp_client_manager",
 ]

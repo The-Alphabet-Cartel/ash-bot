@@ -38,7 +38,7 @@
 #
 # REQUIREMENTS:
 #   - Docker Engine 24.0+
-#   - Docker Compose v2.20+
+#   - Docker Compose v5.0.0+
 #
 # ============================================================================
 
