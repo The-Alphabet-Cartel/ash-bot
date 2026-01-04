@@ -1,7 +1,7 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.0",
-		"last_modified": "2026-01-03",
+		"file_version": "v5.0.1",
+		"last_modified": "2026-01-04",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Production Configuration Overrides",
 		"note": "This file contains ONLY values that differ from default.json",

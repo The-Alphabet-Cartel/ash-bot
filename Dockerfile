@@ -1,8 +1,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Production Dockerfile
 # ============================================================================
-# FILE VERSION: v5.0.2
-# LAST MODIFIED: 2026-01-03
+# FILE VERSION: v5.0.3
+# LAST MODIFIED: 2026-01-04
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -99,14 +99,12 @@ COPY --chown=${APP_USER}:${APP_USER} tests/ ${APP_HOME}/tests/
 # Switch to non-root user
 USER ${APP_USER}
 
-# Expose no ports (Discord bot uses outbound connections only)
-# EXPOSE is not needed but documented for clarity
+# Expose health check port
+EXPOSE 8080
 
-# Health check - verify Python and imports work
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+# Health check - use HTTP endpoint (Phase 5)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# Default command - keep container running
-# The bot will be started manually or via a process manager
-# This ensures container stays up for development and testing
-CMD ["tail", "-f", "/dev/null"]
+# Default command - run the bot
+CMD ["python", "main.py"]

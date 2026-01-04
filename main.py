@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-8.0-1
+FILE VERSION: v5.0-5-8.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-4-8.0-1"
+__version__ = "v5.0-5-8.0-1"
 
 
 # =============================================================================
@@ -90,6 +90,7 @@ def setup_logging(log_level: str = "INFO", log_format: str = "text") -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("anthropic").setLevel(logging.WARNING)
+    logging.getLogger("aiohttp").setLevel(logging.WARNING)
 
     logger = logging.getLogger(__name__)
     logger.info(f"Logging configured at {log_level} level ({log_format} format)")
@@ -286,7 +287,7 @@ async def main_async(args: argparse.Namespace) -> int:
     logger.info("  🤖 Ash-Bot Crisis Detection Service")
     logger.info(f"  Version: {__version__}")
     logger.info(f"  Environment: {args.environment}")
-    logger.info("  Phase: 4 - Ash AI Integration")
+    logger.info("  Phase: 5 - Production Hardening")
     logger.info("  Community: The Alphabet Cartel")
     logger.info("  https://discord.gg/alphabetcartel")
     logger.info("=" * 60)
@@ -312,9 +313,20 @@ async def main_async(args: argparse.Namespace) -> int:
         create_ash_session_manager,
         create_ash_personality_manager,
     )
+    # Phase 5: Import health and metrics managers
+    from src.managers.metrics import create_metrics_manager
+    from src.managers.health import create_health_manager
+    from src.api.health_routes import create_health_server
 
     # Initialize managers
     logger.info("🔧 Initializing managers...")
+
+    # Track managers for health checks
+    discord_manager = None
+    nlp_client = None
+    redis_manager = None
+    ash_session_manager = None
+    health_server = None
 
     try:
         # Set environment for config manager
@@ -329,23 +341,34 @@ async def main_async(args: argparse.Namespace) -> int:
         # Create secrets manager
         secrets_manager = create_secrets_manager()
 
+        # Phase 5: Create metrics manager first (used by other managers)
+        metrics_manager = None
+        metrics_enabled = config_manager.get("metrics", "enabled", True)
+        if metrics_enabled:
+            try:
+                metrics_manager = create_metrics_manager()
+                logger.info("✅ MetricsManager initialized (Phase 5)")
+            except Exception as e:
+                logger.warning(f"⚠️ Metrics initialization failed: {e}")
+
         # Create channel config manager
         channel_config = create_channel_config_manager(
             config_manager=config_manager,
         )
 
-        # Create NLP client manager
+        # Create NLP client manager with metrics
         nlp_client = create_nlp_client_manager(
             config_manager=config_manager,
+            metrics_manager=metrics_manager,
         )
 
-        # Phase 2: Create Redis manager
-        redis_manager = None
+        # Phase 2: Create Redis manager with metrics
         user_history = None
         try:
             redis_manager = create_redis_manager(
                 config_manager=config_manager,
                 secrets_manager=secrets_manager,
+                metrics_manager=metrics_manager,
             )
             await redis_manager.connect()
             logger.info("✅ Redis connected (Phase 2)")
@@ -390,16 +413,16 @@ async def main_async(args: argparse.Namespace) -> int:
             embed_builder = None
 
         # Phase 4: Create Ash AI managers
-        ash_session_manager = None
         ash_personality_manager = None
         try:
             # Check for Claude API token first
             claude_token = secrets_manager.get_claude_api_token()
             if claude_token:
-                # Create Claude client
+                # Create Claude client with metrics
                 claude_client = create_claude_client_manager(
                     config_manager=config_manager,
                     secrets_manager=secrets_manager,
+                    metrics_manager=metrics_manager,
                 )
 
                 # Create session manager
@@ -437,7 +460,7 @@ async def main_async(args: argparse.Namespace) -> int:
             logger.error("❌ Startup validation failed")
             return 1
 
-        # Create Discord manager with all Phase 4 managers
+        # Create Discord manager with all Phase 5 managers
         discord_manager = create_discord_manager(
             config_manager=config_manager,
             secrets_manager=secrets_manager,
@@ -447,6 +470,7 @@ async def main_async(args: argparse.Namespace) -> int:
             alert_dispatcher=None,  # Will set after creating alert_dispatcher
             ash_session_manager=ash_session_manager,
             ash_personality_manager=ash_personality_manager,
+            metrics_manager=metrics_manager,
         )
 
         # Phase 3: Now create alert_dispatcher with bot instance
@@ -465,6 +489,35 @@ async def main_async(args: argparse.Namespace) -> int:
             except Exception as e:
                 logger.warning(f"⚠️ Failed to create AlertDispatcher: {e}")
 
+        # Phase 5: Create health manager and server
+        health_enabled = config_manager.get("health", "enabled", True)
+        if health_enabled:
+            try:
+                health_manager = create_health_manager(
+                    discord_manager=discord_manager,
+                    nlp_client=nlp_client,
+                    redis_manager=redis_manager,
+                    ash_session_manager=ash_session_manager,
+                )
+
+                # Create and start health server
+                health_host = config_manager.get("health", "host", "0.0.0.0")
+                health_port = config_manager.get("health", "port", 8080)
+
+                health_server = create_health_server(
+                    health_manager=health_manager,
+                    metrics_manager=metrics_manager,
+                    host=health_host,
+                    port=health_port,
+                )
+
+                await health_server.start()
+                logger.info(f"✅ Health server started on {health_host}:{health_port} (Phase 5)")
+
+            except Exception as e:
+                logger.warning(f"⚠️ Health server startup failed: {e}")
+                health_server = None
+
         # Setup signal handlers
         discord_manager.setup_signal_handlers()
 
@@ -475,6 +528,11 @@ async def main_async(args: argparse.Namespace) -> int:
         try:
             await discord_manager.connect()
         finally:
+            # Phase 5: Stop health server
+            if health_server:
+                await health_server.stop()
+                logger.info("🔌 Health server stopped")
+
             # Phase 2: Disconnect Redis on shutdown
             if redis_manager and redis_manager.is_connected:
                 await redis_manager.disconnect()

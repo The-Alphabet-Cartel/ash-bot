@@ -1,8 +1,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Docker Compose Configuration
 # ============================================================================
-# FILE VERSION: v5.0.1
-# LAST MODIFIED: 2026-01-03
+# FILE VERSION: v5.0.2
+# LAST MODIFIED: 2026-01-04
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -73,6 +73,10 @@ services:
       - BOT_ENVIRONMENT=production
       - TZ=America/Los_Angeles
 
+    # Port mapping for health checks
+    ports:
+      - "8080:8080"
+
     # Volume mounts
     volumes:
       - ./logs:/app/logs
@@ -83,13 +87,13 @@ services:
       - discord_alert_token
       - discord_bot_token
 
-    # Health check
+    # Health check - uses HTTP endpoint from health server
     healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 120s
 
     # Resource limits (production)
     deploy:

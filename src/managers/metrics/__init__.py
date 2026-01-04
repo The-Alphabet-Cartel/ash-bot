@@ -11,39 +11,48 @@ MISSION - NEVER TO BE VIOLATED:
     Protect  → Safeguard our LGBTQIA+ community through early intervention
 
 ============================================================================
-Ash-Bot Source Package
+Metrics Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.4-1
+FILE VERSION: v5.0-5-5.5-1
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
-This is the main source package for Ash-Bot containing:
-- managers: Configuration and resource management
-- models: Data classes and types
-- prompts: AI system prompts
-- views: Discord UI components
-- utils: Utility functions (circuit breaker, retry logic)
-- api: HTTP endpoints for health checks and metrics
+PACKAGE CONTENTS:
+- MetricsManager: Collects and exports operational metrics
+- Counter: Simple incrementing counter metric
+- Gauge: Metric that can increase or decrease
+- Histogram: Distribution tracking metric
+- LabeledCounter: Counter with label dimensions
 
 USAGE:
-    from src.managers import create_config_manager
-    from src.models import CrisisAnalysisResult
-    from src.utils import CircuitBreaker, retry_async
-    from src.api import create_health_routes, create_health_server
+    from src.managers.metrics import create_metrics_manager
+
+    metrics = create_metrics_manager()
+    metrics.inc_messages_processed()
+    print(metrics.export_json())
 """
 
-__version__ = "5.0.0"
-__author__ = "The Alphabet Cartel"
-__email__ = "dev@alphabetcartel.org"
-__url__ = "https://github.com/the-alphabet-cartel/ash-bot"
+# Module version
+__version__ = "v5.0-5-5.5-1"
 
-# Package metadata
+from .metrics_manager import (
+    MetricsManager,
+    Counter,
+    Gauge,
+    Histogram,
+    LabeledCounter,
+    create_metrics_manager,
+)
+
 __all__ = [
     "__version__",
-    "__author__",
-    "__email__",
-    "__url__",
+    "MetricsManager",
+    "Counter",
+    "Gauge",
+    "Histogram",
+    "LabeledCounter",
+    "create_metrics_manager",
 ]

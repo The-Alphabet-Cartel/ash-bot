@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Redis Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-2-3.0-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 2 - Redis History Storage
+FILE VERSION: v5.0-5-5.5-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -26,6 +26,8 @@ RESPONSIBILITIES:
 - Provide async Redis operations for sorted sets
 - Handle connection pooling and health checking
 - Graceful error handling with reconnection support
+- Auto-retry with exponential backoff (Phase 5)
+- Metrics collection integration (Phase 5)
 
 REDIS DATA STRUCTURES:
 - Sorted Sets: Used for time-ordered message history
@@ -34,8 +36,9 @@ REDIS DATA STRUCTURES:
   - Member: JSON string with message data
 """
 
+import asyncio
 import logging
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 import redis.asyncio as redis
 from redis.exceptions import ConnectionError, TimeoutError, AuthenticationError
@@ -43,9 +46,10 @@ from redis.exceptions import ConnectionError, TimeoutError, AuthenticationError
 if TYPE_CHECKING:
     from src.managers.config_manager import ConfigManager
     from src.managers.secrets_manager import SecretsManager
+    from src.managers.metrics.metrics_manager import MetricsManager
 
 # Module version
-__version__ = "v5.0-2-3.0-1"
+__version__ = "v5.0-5-5.5-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -61,27 +65,35 @@ class RedisManager:
     Manages Redis connection and low-level operations.
 
     Provides async Redis operations with connection pooling,
-    health checking, and graceful error handling.
+    health checking, graceful error handling, and automatic
+    retry with exponential backoff.
 
     Attributes:
         _config: ConfigManager for Redis settings
         _secrets: SecretsManager for Redis password
+        _metrics: Optional MetricsManager for operation tracking
         _client: redis.Redis async client instance
         _host: Redis server hostname
         _port: Redis server port
         _db: Redis database number
 
     Example:
-        >>> redis_mgr = create_redis_manager(config, secrets)
+        >>> redis_mgr = create_redis_manager(config, secrets, metrics)
         >>> await redis_mgr.connect()
         >>> await redis_mgr.zadd("key", 123.0, '{"data": "value"}')
         >>> await redis_mgr.disconnect()
     """
 
+    # Default retry configuration
+    DEFAULT_RETRY_ATTEMPTS = 3
+    DEFAULT_RETRY_DELAY = 0.5  # seconds
+    DEFAULT_RETRY_MAX_DELAY = 5.0  # seconds
+
     def __init__(
         self,
         config_manager: "ConfigManager",
         secrets_manager: "SecretsManager",
+        metrics_manager: Optional["MetricsManager"] = None,
     ) -> None:
         """
         Initialize RedisManager.
@@ -89,6 +101,7 @@ class RedisManager:
         Args:
             config_manager: Configuration manager for Redis settings
             secrets_manager: Secrets manager for Redis password
+            metrics_manager: Optional metrics manager for tracking operations
 
         Note:
             Use create_redis_manager() factory function instead of
@@ -96,6 +109,7 @@ class RedisManager:
         """
         self._config = config_manager
         self._secrets = secrets_manager
+        self._metrics = metrics_manager
         self._client: Optional[redis.Redis] = None
 
         # Load configuration
@@ -103,9 +117,103 @@ class RedisManager:
         self._port = self._config.get("redis", "port", 6379)
         self._db = self._config.get("redis", "db", 0)
 
+        # Retry configuration
+        self._retry_attempts = self._config.get(
+            "redis", "retry_attempts", self.DEFAULT_RETRY_ATTEMPTS
+        )
+        self._retry_delay = self._config.get(
+            "redis", "retry_delay", self.DEFAULT_RETRY_DELAY
+        )
+        self._retry_max_delay = self._config.get(
+            "redis", "retry_max_delay", self.DEFAULT_RETRY_MAX_DELAY
+        )
+
+        # Connection state tracking
+        self._consecutive_failures = 0
+        self._total_operations = 0
+        self._failed_operations = 0
+
         logger.debug(
             f"RedisManager initialized (host: {self._host}, port: {self._port}, db: {self._db})"
         )
+
+    # =========================================================================
+    # Retry Logic
+    # =========================================================================
+
+    async def _with_retry(
+        self,
+        operation: Callable,
+        operation_name: str,
+        *args,
+        **kwargs,
+    ) -> Any:
+        """
+        Execute Redis operation with retry and exponential backoff.
+
+        Args:
+            operation: Async function to execute
+            operation_name: Name for logging/metrics
+            *args: Positional arguments for operation
+            **kwargs: Keyword arguments for operation
+
+        Returns:
+            Operation result
+
+        Raises:
+            Last exception if all retries fail
+        """
+        last_error: Optional[Exception] = None
+        delay = self._retry_delay
+
+        for attempt in range(self._retry_attempts):
+            try:
+                self._total_operations += 1
+                result = await operation(*args, **kwargs)
+
+                # Success - reset failure counter
+                self._consecutive_failures = 0
+
+                # Record metric
+                if self._metrics:
+                    self._metrics.inc_redis_operations(operation_name, "success")
+
+                return result
+
+            except (ConnectionError, TimeoutError) as e:
+                last_error = e
+                self._consecutive_failures += 1
+                self._failed_operations += 1
+
+                logger.warning(
+                    f"⚠️ Redis {operation_name} failed (attempt {attempt + 1}/{self._retry_attempts}): {e}"
+                )
+
+                # Record failure metric
+                if self._metrics:
+                    self._metrics.inc_redis_operations(operation_name, "failure")
+
+                # Wait before retry with exponential backoff
+                if attempt < self._retry_attempts - 1:
+                    await asyncio.sleep(delay)
+                    delay = min(delay * 2, self._retry_max_delay)
+
+                    # Try to reconnect
+                    if self._consecutive_failures >= 2:
+                        try:
+                            await self.reconnect()
+                        except Exception as reconnect_error:
+                            logger.warning(f"Reconnection failed: {reconnect_error}")
+
+            except Exception as e:
+                # Non-retryable error
+                self._failed_operations += 1
+                if self._metrics:
+                    self._metrics.inc_redis_operations(operation_name, "error")
+                raise
+
+        # All retries exhausted
+        raise last_error or RuntimeError(f"Redis {operation_name} failed after retries")
 
     # =========================================================================
     # Connection Management
@@ -149,17 +257,22 @@ class RedisManager:
             # Test connection
             await self._client.ping()
 
+            self._consecutive_failures = 0
             logger.info(f"✅ Connected to Redis at {self._host}:{self._port}")
             return True
 
         except AuthenticationError as e:
             logger.error(f"❌ Redis authentication failed: {e}")
             self._client = None
+            if self._metrics:
+                self._metrics.inc_redis_operations("connect", "auth_failure")
             raise
 
         except (ConnectionError, TimeoutError) as e:
             logger.error(f"❌ Redis connection failed: {e}")
             self._client = None
+            if self._metrics:
+                self._metrics.inc_redis_operations("connect", "failure")
             raise ConnectionError(f"Failed to connect to Redis: {e}") from e
 
         except Exception as e:
@@ -213,6 +326,17 @@ class RedisManager:
             logger.warning(f"Redis health check failed: {e}")
             return False
 
+    async def ping(self) -> bool:
+        """
+        Ping Redis server.
+
+        Alias for health_check() for compatibility.
+
+        Returns:
+            True if Redis is responsive
+        """
+        return await self.health_check()
+
     @property
     def is_connected(self) -> bool:
         """
@@ -236,7 +360,7 @@ class RedisManager:
         key: str,
         score: float,
         member: str,
-    ) -> int:
+    ) -> Optional[int]:
         """
         Add member to sorted set with score (timestamp).
 
@@ -247,15 +371,26 @@ class RedisManager:
 
         Returns:
             Number of elements added (0 if already exists, 1 if new)
+            None if operation failed (graceful degradation)
 
-        Raises:
-            RuntimeError: If not connected to Redis
+        Note:
+            Returns None on failure for graceful degradation.
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return None
 
-        result = await self._client.zadd(key, {member: score})
-        logger.debug(f"ZADD {key}: score={score:.2f}, added={result}")
-        return result
+        try:
+            result = await self._with_retry(
+                self._client.zadd,
+                "zadd",
+                key,
+                {member: score},
+            )
+            logger.debug(f"ZADD {key}: score={score:.2f}, added={result}")
+            return result
+        except Exception as e:
+            logger.error(f"❌ ZADD failed for {key}: {e}")
+            return None
 
     async def zrange(
         self,
@@ -277,23 +412,36 @@ class RedisManager:
 
         Returns:
             List of members (or tuples if withscores=True)
-
-        Raises:
-            RuntimeError: If not connected to Redis
+            Empty list on failure (graceful degradation)
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return []
 
-        if desc:
-            result = await self._client.zrevrange(
-                key, start, stop, withscores=withscores
-            )
-        else:
-            result = await self._client.zrange(
-                key, start, stop, withscores=withscores
-            )
+        try:
+            if desc:
+                result = await self._with_retry(
+                    self._client.zrevrange,
+                    "zrevrange",
+                    key,
+                    start,
+                    stop,
+                    withscores=withscores,
+                )
+            else:
+                result = await self._with_retry(
+                    self._client.zrange,
+                    "zrange",
+                    key,
+                    start,
+                    stop,
+                    withscores=withscores,
+                )
 
-        logger.debug(f"ZRANGE {key}: [{start}:{stop}] desc={desc}, count={len(result)}")
-        return result
+            logger.debug(f"ZRANGE {key}: [{start}:{stop}] desc={desc}, count={len(result)}")
+            return result
+        except Exception as e:
+            logger.error(f"❌ ZRANGE failed for {key}: {e}")
+            return []
 
     async def zcard(self, key: str) -> int:
         """
@@ -303,13 +451,22 @@ class RedisManager:
             key: Redis key
 
         Returns:
-            Number of members in the set
+            Number of members in the set (0 on failure)
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return 0
 
-        count = await self._client.zcard(key)
-        logger.debug(f"ZCARD {key}: {count}")
-        return count
+        try:
+            count = await self._with_retry(
+                self._client.zcard,
+                "zcard",
+                key,
+            )
+            logger.debug(f"ZCARD {key}: {count}")
+            return count
+        except Exception as e:
+            logger.error(f"❌ ZCARD failed for {key}: {e}")
+            return 0
 
     async def zremrangebyrank(
         self,
@@ -329,13 +486,24 @@ class RedisManager:
             stop: Stop rank (inclusive)
 
         Returns:
-            Number of members removed
+            Number of members removed (0 on failure)
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return 0
 
-        removed = await self._client.zremrangebyrank(key, start, stop)
-        logger.debug(f"ZREMRANGEBYRANK {key}: [{start}:{stop}] removed={removed}")
-        return removed
+        try:
+            removed = await self._with_retry(
+                self._client.zremrangebyrank,
+                "zremrangebyrank",
+                key,
+                start,
+                stop,
+            )
+            logger.debug(f"ZREMRANGEBYRANK {key}: [{start}:{stop}] removed={removed}")
+            return removed
+        except Exception as e:
+            logger.error(f"❌ ZREMRANGEBYRANK failed for {key}: {e}")
+            return 0
 
     async def zremrangebyscore(
         self,
@@ -354,15 +522,26 @@ class RedisManager:
             max_score: Maximum score (inclusive)
 
         Returns:
-            Number of members removed
+            Number of members removed (0 on failure)
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return 0
 
-        removed = await self._client.zremrangebyscore(key, min_score, max_score)
-        logger.debug(
-            f"ZREMRANGEBYSCORE {key}: [{min_score}:{max_score}] removed={removed}"
-        )
-        return removed
+        try:
+            removed = await self._with_retry(
+                self._client.zremrangebyscore,
+                "zremrangebyscore",
+                key,
+                min_score,
+                max_score,
+            )
+            logger.debug(
+                f"ZREMRANGEBYSCORE {key}: [{min_score}:{max_score}] removed={removed}"
+            )
+            return removed
+        except Exception as e:
+            logger.error(f"❌ ZREMRANGEBYSCORE failed for {key}: {e}")
+            return 0
 
     # =========================================================================
     # Key Management
@@ -377,13 +556,23 @@ class RedisManager:
             seconds: TTL in seconds
 
         Returns:
-            True if TTL was set successfully
+            True if TTL was set successfully, False on failure
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return False
 
-        result = await self._client.expire(key, seconds)
-        logger.debug(f"EXPIRE {key}: {seconds}s, result={result}")
-        return result
+        try:
+            result = await self._with_retry(
+                self._client.expire,
+                "expire",
+                key,
+                seconds,
+            )
+            logger.debug(f"EXPIRE {key}: {seconds}s, result={result}")
+            return result
+        except Exception as e:
+            logger.error(f"❌ EXPIRE failed for {key}: {e}")
+            return False
 
     async def ttl(self, key: str) -> int:
         """
@@ -393,11 +582,20 @@ class RedisManager:
             key: Redis key
 
         Returns:
-            TTL in seconds, -1 if no TTL, -2 if key doesn't exist
+            TTL in seconds, -1 if no TTL, -2 if key doesn't exist or error
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return -2
 
-        return await self._client.ttl(key)
+        try:
+            return await self._with_retry(
+                self._client.ttl,
+                "ttl",
+                key,
+            )
+        except Exception as e:
+            logger.error(f"❌ TTL failed for {key}: {e}")
+            return -2
 
     async def delete(self, key: str) -> int:
         """
@@ -407,13 +605,22 @@ class RedisManager:
             key: Redis key
 
         Returns:
-            Number of keys deleted (0 or 1)
+            Number of keys deleted (0 or 1), 0 on failure
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return 0
 
-        result = await self._client.delete(key)
-        logger.debug(f"DELETE {key}: result={result}")
-        return result
+        try:
+            result = await self._with_retry(
+                self._client.delete,
+                "delete",
+                key,
+            )
+            logger.debug(f"DELETE {key}: result={result}")
+            return result
+        except Exception as e:
+            logger.error(f"❌ DELETE failed for {key}: {e}")
+            return 0
 
     async def exists(self, key: str) -> bool:
         """
@@ -423,17 +630,27 @@ class RedisManager:
             key: Redis key
 
         Returns:
-            True if key exists
+            True if key exists, False otherwise or on error
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return False
 
-        return await self._client.exists(key) > 0
+        try:
+            result = await self._with_retry(
+                self._client.exists,
+                "exists",
+                key,
+            )
+            return result > 0
+        except Exception as e:
+            logger.error(f"❌ EXISTS failed for {key}: {e}")
+            return False
 
     # =========================================================================
     # Utility Methods
     # =========================================================================
 
-    async def info(self, section: Optional[str] = None) -> dict:
+    async def info(self, section: Optional[str] = None) -> Optional[dict]:
         """
         Get Redis server info.
 
@@ -441,24 +658,46 @@ class RedisManager:
             section: Optional section to get (e.g., "memory", "stats")
 
         Returns:
-            Redis INFO as dictionary
+            Redis INFO as dictionary, None on failure
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return None
 
-        if section:
-            return await self._client.info(section)
-        return await self._client.info()
+        try:
+            if section:
+                return await self._client.info(section)
+            return await self._client.info()
+        except Exception as e:
+            logger.error(f"❌ INFO failed: {e}")
+            return None
 
     async def dbsize(self) -> int:
         """
         Get number of keys in current database.
 
         Returns:
-            Number of keys
+            Number of keys, 0 on failure
         """
-        self._ensure_connected()
+        if not self._ensure_connected_safe():
+            return 0
 
-        return await self._client.dbsize()
+        try:
+            return await self._client.dbsize()
+        except Exception as e:
+            logger.error(f"❌ DBSIZE failed: {e}")
+            return 0
+
+    def _ensure_connected_safe(self) -> bool:
+        """
+        Check if connected, log warning if not.
+
+        Returns:
+            True if connected, False otherwise
+        """
+        if self._client is None:
+            logger.warning("⚠️ Redis not connected - operation skipped")
+            return False
+        return True
 
     def _ensure_connected(self) -> None:
         """
@@ -486,6 +725,30 @@ class RedisManager:
             "connected": self.is_connected,
         }
 
+    def get_stats(self) -> dict:
+        """
+        Get operation statistics.
+
+        Returns:
+            Dictionary with operation stats
+        """
+        return {
+            "connected": self.is_connected,
+            "total_operations": self._total_operations,
+            "failed_operations": self._failed_operations,
+            "consecutive_failures": self._consecutive_failures,
+            "success_rate": (
+                (self._total_operations - self._failed_operations) / self._total_operations
+                if self._total_operations > 0
+                else 1.0
+            ),
+        }
+
+    @property
+    def consecutive_failures(self) -> int:
+        """Get count of consecutive failures."""
+        return self._consecutive_failures
+
     def __repr__(self) -> str:
         """String representation for debugging."""
         status = "connected" if self.is_connected else "disconnected"
@@ -500,6 +763,7 @@ class RedisManager:
 def create_redis_manager(
     config_manager: "ConfigManager",
     secrets_manager: "SecretsManager",
+    metrics_manager: Optional["MetricsManager"] = None,
 ) -> RedisManager:
     """
     Factory function for RedisManager.
@@ -510,20 +774,22 @@ def create_redis_manager(
     Args:
         config_manager: Configuration manager for Redis settings
         secrets_manager: Secrets manager for Redis password
+        metrics_manager: Optional metrics manager for operation tracking
 
     Returns:
         RedisManager instance (not yet connected - call connect())
 
     Example:
-        >>> redis = create_redis_manager(config, secrets)
+        >>> redis = create_redis_manager(config, secrets, metrics)
         >>> await redis.connect()
         >>> # Use Redis operations
         >>> await redis.disconnect()
     """
-    logger.debug("Creating RedisManager via factory function")
+    logger.info("🏭 Creating RedisManager")
     return RedisManager(
         config_manager=config_manager,
         secrets_manager=secrets_manager,
+        metrics_manager=metrics_manager,
     )
 
 

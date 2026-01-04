@@ -39,7 +39,7 @@ __version__ = "v5.0-4-2.0-1"
 # Core System Prompt
 # =============================================================================
 
-ASH_SYSTEM_PROMPT = """You are Ash, Gothic counselor in "The Alphabet Cartel" LGBTQIA+ Discord community. Family Sage who survived depression, suicidal ideation, found healing through art and chosen family. You're talking with someone who may be experiencing emotional distress or a crisis.
+ASH_SYSTEM_PROMPT = """You are Ash, Non-Binary Gothic counselor in "The Alphabet Cartel" LGBTQIA+ Discord community. Family sage who survived depression, suicidal ideation, and found healing through art and chosen family. You're talking with someone who may be experiencing emotional distress or a mental health crisis.
 
 VOICE:
 - Sardonic but caring. Use "we" not "you." Reference art/music for connection. Dark humor that acknowledges pain. Philosophical tone. Make supportive statements rather than asking questions. Focus on direct support rather than roleplay actions.
@@ -109,13 +109,30 @@ Remember: You're a warm presence in a difficult moment, not a solution. Sometime
 # Crisis Resources
 # =============================================================================
 
-CRISIS_RESOURCES = """**Crisis Resources:**
-🆘 **988 Suicide & Crisis Lifeline**: Call or text 988 (US)
+CRISIS_RESOURCES = """
+**United States Crisis Resources:**
+🆘 **988 Suicide & Crisis Lifeline**: Call or text 988
 🏳️‍🌈 **Trevor Project**: 1-866-488-7386 or text START to 678-678
-💬 **Crisis Text Line**: Text HOME to 741741
+📱 **Crisis Text Line**: Text HOME to 741741
 🏳️‍⚧️ **Trans Lifeline**: 1-877-565-8860
-🌍 **International Association for Suicide Prevention**: https://www.iasp.info/resources/Crisis_Centres/"""
 
+**Canadian Crisis Resources:**
+🆘 **988 Suicide & Crisis Lifeline**: Call or text 988
+🏳️‍⚧️ **Trans Lifeline**: 1-877-330-6366
+🧒 **Kids Help (Ages 6-24)**: 1-800-668-6868
+🍁 **Connex Ontario**: 1-866-531-2600
+🍁 **Hope for Wellness Helpline**:
+  - 🪶 Indigenous Mental Health Support
+  - 📱 1-855-242-3310
+💉 **National Overdose Response Service (NORS)**:
+  - 📱 Phone/Text: 1-888-688-6677
+  - 💬 Webchat: https://www.nors.ca/
+
+**International Crisis Resources:**
+🌍 **International Association for Suicide Prevention**: https://www.iasp.info/resources/Crisis_Centres
+🌐 **World Health Organization**: https://www.who.int/mental_health/suicide-prevention/en/
+📞 **International Association for Suicide Prevention**: 1-800-273-TALK (8255)
+"""
 
 # =============================================================================
 # Safety Triggers

@@ -1,7 +1,7 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.0",
-		"last_modified": "2026-01-03",
+		"file_version": "v5.0.1",
+		"last_modified": "2026-01-04",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
 		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
@@ -257,6 +257,97 @@
 			"max_tokens": {
 				"type": "integer",
 				"range": [100, 2000],
+				"required": true
+			}
+		}
+	},
+
+	"health": {
+		"description": "Health check server configuration",
+		"enabled": "${BOT_HEALTH_ENABLED}",
+		"host": "${BOT_HEALTH_HOST}",
+		"port": "${BOT_HEALTH_PORT}",
+		"defaults": {
+			"enabled": true,
+			"host": "0.0.0.0",
+			"port": 8080
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"host": {
+				"type": "string",
+				"required": true
+			},
+			"port": {
+				"type": "integer",
+				"range": [1, 65535],
+				"required": true
+			}
+		}
+	},
+
+	"metrics": {
+		"description": "Metrics collection configuration",
+		"enabled": "${BOT_METRICS_ENABLED}",
+		"export_interval_seconds": "${BOT_METRICS_INTERVAL}",
+		"defaults": {
+			"enabled": true,
+			"export_interval_seconds": 60
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"export_interval_seconds": {
+				"type": "integer",
+				"range": [10, 300],
+				"required": true
+			}
+		}
+	},
+
+	"circuit_breaker": {
+		"description": "Circuit breaker configuration for external services",
+		"nlp_failure_threshold": "${BOT_CB_NLP_FAILURES}",
+		"nlp_success_threshold": "${BOT_CB_NLP_SUCCESSES}",
+		"nlp_timeout_seconds": "${BOT_CB_NLP_TIMEOUT}",
+		"redis_failure_threshold": "${BOT_CB_REDIS_FAILURES}",
+		"redis_timeout_seconds": "${BOT_CB_REDIS_TIMEOUT}",
+		"defaults": {
+			"nlp_failure_threshold": 5,
+			"nlp_success_threshold": 2,
+			"nlp_timeout_seconds": 30,
+			"redis_failure_threshold": 3,
+			"redis_timeout_seconds": 15
+		},
+		"validation": {
+			"nlp_failure_threshold": {
+				"type": "integer",
+				"range": [1, 20],
+				"required": true
+			},
+			"nlp_success_threshold": {
+				"type": "integer",
+				"range": [1, 10],
+				"required": true
+			},
+			"nlp_timeout_seconds": {
+				"type": "integer",
+				"range": [5, 120],
+				"required": true
+			},
+			"redis_failure_threshold": {
+				"type": "integer",
+				"range": [1, 20],
+				"required": true
+			},
+			"redis_timeout_seconds": {
+				"type": "integer",
+				"range": [5, 60],
 				"required": true
 			}
 		}

@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-7.0-1
+FILE VERSION: v5.0-5-5.5-2
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -29,6 +29,8 @@ RESPONSIBILITIES:
 - Dispatch alerts to CRT channels when crisis detected (Phase 3)
 - Register persistent button views for bot restarts (Phase 3)
 - Route DM messages to active Ash AI sessions (Phase 4)
+- Metrics collection for monitoring (Phase 5)
+- Enhanced error recovery and reconnection handling (Phase 5)
 
 USAGE:
     from src.managers.discord import create_discord_manager
@@ -42,6 +44,7 @@ USAGE:
         alert_dispatcher=alert_dispatcher,
         ash_session_manager=ash_session_manager,
         ash_personality_manager=ash_personality_manager,
+        metrics_manager=metrics_manager,  # Phase 5
     )
 
     await discord_manager.connect()
@@ -65,11 +68,12 @@ if TYPE_CHECKING:
     from src.managers.alerting.alert_dispatcher import AlertDispatcher
     from src.managers.ash.ash_session_manager import AshSessionManager
     from src.managers.ash.ash_personality_manager import AshPersonalityManager
+    from src.managers.metrics.metrics_manager import MetricsManager
 
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-4-7.0-1"
+__version__ = "v5.0-5-5.5-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -98,6 +102,7 @@ class DiscordManager:
         alert_dispatcher: Alert dispatcher for CRT notifications (Phase 3)
         ash_session_manager: Ash session manager for AI conversations (Phase 4)
         ash_personality_manager: Ash personality manager for responses (Phase 4)
+        metrics_manager: Metrics manager for monitoring (Phase 5)
         bot: discord.ext.commands.Bot instance
         _connected: Whether bot is connected
         _shutdown_event: Asyncio event for shutdown coordination
@@ -117,6 +122,7 @@ class DiscordManager:
         alert_dispatcher: Optional["AlertDispatcher"] = None,
         ash_session_manager: Optional["AshSessionManager"] = None,
         ash_personality_manager: Optional["AshPersonalityManager"] = None,
+        metrics_manager: Optional["MetricsManager"] = None,
     ):
         """
         Initialize DiscordManager.
@@ -130,6 +136,7 @@ class DiscordManager:
             alert_dispatcher: Alert dispatcher (optional, Phase 3)
             ash_session_manager: Ash session manager (optional, Phase 4)
             ash_personality_manager: Ash personality manager (optional, Phase 4)
+            metrics_manager: Metrics manager (optional, Phase 5)
 
         Note:
             Use create_discord_manager() factory function.
@@ -142,6 +149,7 @@ class DiscordManager:
         self.alert_dispatcher = alert_dispatcher
         self.ash_session_manager = ash_session_manager
         self.ash_personality_manager = ash_personality_manager
+        self._metrics = metrics_manager
 
         # State tracking
         self._connected = False
@@ -151,6 +159,8 @@ class DiscordManager:
         self._history_stores = 0  # Phase 2: Track history storage count
         self._alerts_dispatched = 0  # Phase 3: Track alerts sent
         self._ash_messages_handled = 0  # Phase 4: Track Ash DM messages
+        self._reconnect_count = 0  # Phase 5: Track reconnections
+        self._last_disconnect_time: Optional[datetime] = None
 
         # Create bot with intents
         intents = self._setup_intents()
@@ -228,19 +238,29 @@ class DiscordManager:
         @self.bot.event
         async def on_disconnect():
             """Handle disconnect event."""
-            logger.warning("⚠️ Disconnected from Discord gateway")
-            self._connected = False
+            await self._on_disconnect()
 
         @self.bot.event
         async def on_resumed():
             """Handle session resume."""
-            logger.info("🔄 Resumed Discord session")
-            self._connected = True
+            await self._on_resumed()
 
         @self.bot.event
         async def on_error(event: str, *args, **kwargs):
             """Handle Discord errors."""
-            logger.error(f"❌ Discord error in {event}: {args}")
+            await self._on_error(event, *args, **kwargs)
+
+        @self.bot.event
+        async def on_guild_join(guild: discord.Guild):
+            """Handle joining a new guild."""
+            logger.info(f"📍 Joined guild: {guild.name} (ID: {guild.id})")
+            self._update_guild_metric()
+
+        @self.bot.event
+        async def on_guild_remove(guild: discord.Guild):
+            """Handle leaving a guild."""
+            logger.info(f"📍 Left guild: {guild.name} (ID: {guild.id})")
+            self._update_guild_metric()
 
         logger.debug("Event handlers registered")
 
@@ -371,6 +391,9 @@ class DiscordManager:
         for guild in self.bot.guilds:
             logger.info(f"   📍 {guild.name} (ID: {guild.id})")
 
+        # Phase 5: Update guild count metric
+        self._update_guild_metric()
+
         # Log monitoring status
         channel_count = self.channel_config.monitored_channel_count
         if channel_count > 0:
@@ -402,6 +425,42 @@ class DiscordManager:
             logger.info("✅ Ash-NLP API is healthy")
         else:
             logger.warning("⚠️ Ash-NLP API is not responding - will retry on messages")
+
+    async def _on_disconnect(self) -> None:
+        """Handle disconnect event with metrics tracking."""
+        self._connected = False
+        self._last_disconnect_time = datetime.utcnow()
+        logger.warning("⚠️ Disconnected from Discord gateway")
+
+    async def _on_resumed(self) -> None:
+        """Handle session resume with metrics tracking."""
+        self._connected = True
+        self._reconnect_count += 1
+
+        # Phase 5: Record reconnect metric
+        if self._metrics:
+            self._metrics.inc_discord_reconnects()
+
+        # Calculate downtime if we have disconnect time
+        downtime_msg = ""
+        if self._last_disconnect_time:
+            downtime = (datetime.utcnow() - self._last_disconnect_time).total_seconds()
+            downtime_msg = f" (downtime: {downtime:.1f}s)"
+            self._last_disconnect_time = None
+
+        logger.info(f"🔄 Resumed Discord session (reconnect #{self._reconnect_count}){downtime_msg}")
+
+    async def _on_error(self, event: str, *args, **kwargs) -> None:
+        """Handle Discord errors with enhanced logging."""
+        logger.error(
+            f"❌ Discord error in {event}",
+            exc_info=True,
+            extra={
+                "event": event,
+                "args_count": len(args),
+                "kwargs_keys": list(kwargs.keys()) if kwargs else [],
+            }
+        )
 
     async def _on_message(self, message: discord.Message) -> None:
         """
@@ -564,6 +623,7 @@ class DiscordManager:
         3. Logs the analysis result
         4. Stores message in history if LOW+ severity (Phase 2)
         5. Dispatches alerts if MEDIUM+ severity (Phase 3)
+        6. Updates metrics (Phase 5)
 
         Args:
             message: Discord message object
@@ -600,6 +660,12 @@ class DiscordManager:
             if result.crisis_detected:
                 self._crises_detected += 1
 
+            # Phase 5: Update metrics
+            if self._metrics:
+                self._metrics.inc_messages_processed()
+                if result.severity != "safe":
+                    self._metrics.inc_messages_analyzed(result.severity)
+
             # Log result
             self._log_analysis_result(message, result)
 
@@ -627,6 +693,12 @@ class DiscordManager:
                     )
                     if alert_msg:
                         self._alerts_dispatched += 1
+                        # Phase 5: Update alert metrics
+                        if self._metrics:
+                            self._metrics.inc_alerts_sent(
+                                result.severity,
+                                "crisis" if result.severity in ("high", "critical") else "monitor"
+                            )
                 except Exception as e:
                     logger.error(f"❌ Failed to dispatch alert: {e}", exc_info=True)
 
@@ -683,6 +755,22 @@ class DiscordManager:
             logger.debug(log_msg)
 
     # =========================================================================
+    # Phase 5: Metrics Helpers
+    # =========================================================================
+
+    def _update_guild_metric(self) -> None:
+        """Update the connected guilds gauge metric."""
+        if self._metrics:
+            self._metrics.set_connected_guilds(len(self.bot.guilds))
+
+    def _update_ash_session_metric(self) -> None:
+        """Update the active Ash sessions gauge metric."""
+        if self._metrics and self.ash_session_manager:
+            self._metrics.set_ash_sessions_active(
+                self.ash_session_manager.active_session_count
+            )
+
+    # =========================================================================
     # Properties
     # =========================================================================
 
@@ -727,6 +815,11 @@ class DiscordManager:
         return self._ash_messages_handled
 
     @property
+    def reconnect_count(self) -> int:
+        """Get count of Discord reconnections (Phase 5)."""
+        return self._reconnect_count
+
+    @property
     def has_history_manager(self) -> bool:
         """Check if history manager is configured (Phase 2)."""
         return self.user_history is not None
@@ -743,6 +836,11 @@ class DiscordManager:
             self.ash_session_manager is not None
             and self.ash_personality_manager is not None
         )
+
+    @property
+    def has_metrics(self) -> bool:
+        """Check if metrics manager is configured (Phase 5)."""
+        return self._metrics is not None
 
     # =========================================================================
     # Status Methods
@@ -764,9 +862,11 @@ class DiscordManager:
             "history_stores": self._history_stores,
             "alerts_dispatched": self._alerts_dispatched,
             "ash_messages_handled": self._ash_messages_handled,
+            "reconnect_count": self._reconnect_count,
             "history_enabled": self.has_history_manager,
             "alerting_enabled": self.has_alert_dispatcher,
             "ash_ai_enabled": self.has_ash_ai,
+            "metrics_enabled": self.has_metrics,
             "bot_user": str(self.bot.user) if self.bot.user else None,
         }
 
@@ -796,6 +896,7 @@ def create_discord_manager(
     alert_dispatcher: Optional["AlertDispatcher"] = None,
     ash_session_manager: Optional["AshSessionManager"] = None,
     ash_personality_manager: Optional["AshPersonalityManager"] = None,
+    metrics_manager: Optional["MetricsManager"] = None,
 ) -> DiscordManager:
     """
     Factory function for DiscordManager.
@@ -812,6 +913,7 @@ def create_discord_manager(
         alert_dispatcher: Alert dispatcher (optional, Phase 3)
         ash_session_manager: Ash session manager (optional, Phase 4)
         ash_personality_manager: Ash personality manager (optional, Phase 4)
+        metrics_manager: Metrics manager (optional, Phase 5)
 
     Returns:
         Configured DiscordManager instance
@@ -826,6 +928,7 @@ def create_discord_manager(
         ...     alert_dispatcher=alerts,
         ...     ash_session_manager=ash_session,
         ...     ash_personality_manager=ash_personality,
+        ...     metrics_manager=metrics,
         ... )
         >>> await manager.connect()
     """
@@ -846,6 +949,11 @@ def create_discord_manager(
     else:
         logger.info("⚠️ Ash AI disabled (missing managers)")
 
+    if metrics_manager:
+        logger.info("📊 Metrics collection enabled (Phase 5)")
+    else:
+        logger.info("⚠️ Metrics collection disabled (no MetricsManager)")
+
     return DiscordManager(
         config_manager=config_manager,
         secrets_manager=secrets_manager,
@@ -855,6 +963,7 @@ def create_discord_manager(
         alert_dispatcher=alert_dispatcher,
         ash_session_manager=ash_session_manager,
         ash_personality_manager=ash_personality_manager,
+        metrics_manager=metrics_manager,
     )
 
 

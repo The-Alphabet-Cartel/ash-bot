@@ -5,7 +5,7 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.1.0  
 **Last Updated**: 2026-01-04  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
 
@@ -19,8 +19,9 @@
    - [Create Application](#step-1-create-application)
    - [Configure Bot User](#step-2-configure-bot-user)
    - [Set Privileged Intents](#step-3-set-privileged-intents)
-   - [Configure OAuth2](#step-4-configure-oauth2)
-   - [Generate Invite Link](#step-5-generate-invite-link)
+   - [Configure Installation](#step-4-configure-installation)
+   - [Configure OAuth2](#step-5-configure-oauth2)
+   - [Generate Invite Link](#step-6-generate-invite-link)
 4. [Discord Server Setup](#discord-server-setup)
    - [Channel Structure](#channel-structure)
    - [Role Configuration](#role-configuration)
@@ -29,6 +30,7 @@
 6. [Verification Checklist](#verification-checklist)
 7. [Troubleshooting](#troubleshooting)
 8. [Updating Bot Scope](#updating-bot-scope)
+9. [Known Discord Portal Limitations](#known-discord-portal-limitations)
 
 ---
 
@@ -55,13 +57,15 @@ This guide walks through the complete process of setting up Ash-Bot on Discord's
 
 Before starting, ensure you have:
 
-- [ ] Discord account with a verified email
-- [ ] Administrator access to your target Discord server
-- [ ] Access to Discord Developer Portal: https://discord.com/developers/applications
+- [x] Discord account with a verified email
+- [x] Administrator access to your target Discord server
+- [x] Access to Discord Developer Portal: https://discord.com/developers/applications
 
 ---
 
 ## Discord Developer Portal Setup
+
+> ⚠️ **Portal Update Notice (January 2026)**: Discord has updated their Developer Portal. You must now configure an "Installation" profile before OAuth2 settings become available. This guide has been updated to reflect these changes.
 
 ### Step 1: Create Application
 
@@ -111,8 +115,12 @@ Before starting, ensure you have:
      ```
 
    **Public Bot**:
-   - **Disable** "Public Bot" toggle (recommended for private communities)
-   - This prevents others from inviting your bot
+   > ⚠️ **Important Limitation**: Due to Discord's current restrictions, **Private bots cannot have a default authorization link**. If you need to use the OAuth2 URL Generator for easy invites, you must keep the bot **Public**.
+   
+   - For private communities: You can still keep it Public but simply don't share the invite link
+   - For true private deployment: Disable "Public Bot" but you'll need to manually construct invite URLs or use server-specific integrations
+   
+   See [Known Discord Portal Limitations](#known-discord-portal-limitations) for details.
 
    **Requires OAuth2 Code Grant**:
    - Leave **disabled** (not needed for bot-only functionality)
@@ -143,7 +151,41 @@ Ash-Bot requires **Privileged Gateway Intents** to function properly.
 
 ---
 
-### Step 4: Configure OAuth2
+### Step 4: Configure Installation
+
+> 🆕 **New Step (2026)**: Discord now requires configuring an Installation profile before OAuth2 URL generation is available.
+
+1. In the left sidebar, click **"Installation"**
+
+2. **Installation Contexts** - Select where your bot can be installed:
+
+   | Context | Select | Description |
+   |---------|--------|-------------|
+   | **User Install** | ⬜ | Bot available to individual users (not needed for Ash-Bot) |
+   | **Guild Install** | ✅ | Bot available to servers (required for Ash-Bot) |
+
+   For Ash-Bot, select **Guild Install** only, as the bot is designed to work within servers.
+
+3. **Default Install Settings** - Configure for Guild Install:
+   
+   Under "Guild Install", click to configure:
+   
+   **Scopes**:
+   | Scope | Select | Purpose |
+   |-------|--------|---------|
+   | `bot` | ✅ | Core bot functionality |
+   | `applications.commands` | ✅ | Slash commands (/userhistory) |
+
+   **Permissions**:
+   Select the bot permissions (same as OAuth2 permissions below)
+
+4. Click **"Save Changes"**
+
+> ℹ️ **Note**: After configuring Installation, the OAuth2 URL Generator will become available.
+
+---
+
+### Step 5: Configure OAuth2
 
 1. In the left sidebar, click **"OAuth2"** → **"General"**
 
@@ -197,7 +239,7 @@ Ash-Bot requires **Privileged Gateway Intents** to function properly.
 
 ---
 
-### Step 5: Generate Invite Link
+### Step 6: Generate Invite Link
 
 1. After selecting scopes and permissions, the **Generated URL** appears at the bottom
 
@@ -407,6 +449,7 @@ Use this checklist to verify your setup:
 - [ ] Bot token saved to `secrets/discord_bot_token`
 - [ ] Message Content Intent enabled
 - [ ] Server Members Intent enabled
+- [ ] Installation configured (Guild Install) ← **New step**
 - [ ] OAuth2 scopes selected (bot, applications.commands)
 - [ ] Bot permissions configured
 - [ ] Invite link generated and used
@@ -516,6 +559,33 @@ Use this checklist to verify your setup:
 
 ---
 
+### OAuth2 URL Generator Not Available
+
+**Symptom**: Can't access OAuth2 URL Generator or it shows errors
+
+**Solutions**:
+1. Go to **Installation** tab first
+2. Configure at least one Installation Context (Guild Install)
+3. Save changes
+4. OAuth2 URL Generator should now work
+
+See [Known Discord Portal Limitations](#known-discord-portal-limitations) for details.
+
+---
+
+### "Private application cannot have a default authorization link"
+
+**Symptom**: Error when trying to save OAuth2 settings with Public Bot disabled
+
+**Solutions**:
+1. **Option A** (Recommended): Keep "Public Bot" enabled but don't share the invite link publicly
+2. **Option B**: Disable "Public Bot" but manually construct invite URLs
+3. **Option C**: Use the Installation tab's default settings instead of OAuth2 URL Generator
+
+See [Known Discord Portal Limitations](#known-discord-portal-limitations) for details.
+
+---
+
 ## Updating Bot Scope
 
 When you need to add new permissions or features:
@@ -555,6 +625,76 @@ When you need to add new permissions or features:
 
 ---
 
+## Known Discord Portal Limitations
+
+> ⚠️ **Updated January 2026**: Discord has made changes to their Developer Portal that affect bot configuration.
+
+### Limitation 1: Installation Profile Required for OAuth2
+
+**Issue**: The OAuth2 URL Generator won't work until you configure an Installation profile.
+
+**Background**: Discord now requires you to specify whether your bot supports "User Install" (available to individual users) or "Guild Install" (available to servers) before OAuth2 settings are accessible.
+
+**Solution**:
+1. Go to **Installation** tab
+2. Enable **Guild Install** for server-based bots like Ash-Bot
+3. Configure the default scopes and permissions
+4. Save changes
+5. OAuth2 URL Generator will now work
+
+---
+
+### Limitation 2: Private Bots Cannot Have Default Authorization Links
+
+**Issue**: When you disable "Public Bot", Discord shows:
+```
+Private application cannot have a default authorization link
+```
+
+**Background**: Discord prevents private applications from having default install links because private apps are intended for personal use or specific teams, not general distribution.
+
+**Impact on Ash-Bot**: 
+- Ash-Bot is a community-specific bot, so private mode makes sense
+- However, private mode prevents easy invite link generation
+
+**Solutions**:
+
+**Option A: Keep Public, Don't Share Link** (Recommended for most users)
+- Leave "Public Bot" **enabled**
+- Simply don't share the invite link publicly
+- Your bot is effectively private since no one has the link
+- This allows normal OAuth2 URL generation
+
+**Option B: True Private Mode**
+- Disable "Public Bot"
+- Don't use OAuth2 URL Generator
+- Manually construct invite URL:
+  ```
+  https://discord.com/api/oauth2/authorize?client_id=YOUR_APP_ID&permissions=274877991936&scope=bot%20applications.commands
+  ```
+- Or invite via Server Settings → Integrations
+
+**Option C: Use Installation Tab Only**
+- Configure everything in the Installation tab
+- Don't use OAuth2 URL Generator
+- Use the install link from Installation → Default Install Settings
+
+**Recommendation**: For The Alphabet Cartel's use case, **Option A** is recommended. The bot is "public" in Discord's terms but effectively private since only you have the invite link.
+
+---
+
+### Limitation 3: Portal UI Changes Frequently
+
+**Issue**: Discord regularly updates their Developer Portal UI.
+
+**Mitigation**:
+- This guide was updated January 2026
+- If something looks different, look for similar options with different labels
+- Check Discord's developer documentation: https://discord.com/developers/docs
+- Report issues to our team for guide updates
+
+---
+
 ## Quick Reference Card
 
 ### Developer Portal URLs
@@ -564,6 +704,7 @@ When you need to add new permissions or features:
 | Applications | https://discord.com/developers/applications |
 | Your App | https://discord.com/developers/applications/YOUR_APP_ID |
 | Bot Settings | https://discord.com/developers/applications/YOUR_APP_ID/bot |
+| Installation | https://discord.com/developers/applications/YOUR_APP_ID/installation |
 | OAuth2 | https://discord.com/developers/applications/YOUR_APP_ID/oauth2 |
 
 ### Minimum Required Intents

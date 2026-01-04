@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-5.0-1
+FILE VERSION: v5.0-5-5.4-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -36,6 +36,8 @@ MANAGERS:
 - ClaudeClientManager: Claude API client (Phase 4)
 - AshSessionManager: Conversation session management (Phase 4)
 - AshPersonalityManager: Ash personality and responses (Phase 4)
+- MetricsManager: Operational metrics collection (Phase 5)
+- HealthManager: Component health monitoring (Phase 5)
 
 USAGE:
     from src.managers import (
@@ -61,10 +63,12 @@ USAGE:
         create_ash_session_manager,
         create_ash_personality_manager,
     )
+    from src.managers.metrics import create_metrics_manager
+    from src.managers.health import create_health_manager
 """
 
 # Module version
-__version__ = "v5.0-4-5.0-1"
+__version__ = "v5.0-5-5.4-1"
 
 # =============================================================================
 # Configuration Manager
@@ -153,6 +157,32 @@ from .ash import (
 )
 
 # =============================================================================
+# Metrics Manager (Phase 5)
+# =============================================================================
+
+from .metrics import (
+    MetricsManager,
+    create_metrics_manager,
+    Counter,
+    Gauge,
+    Histogram,
+    LabeledCounter,
+)
+
+# =============================================================================
+# Health Manager (Phase 5)
+# =============================================================================
+
+from .health import (
+    HealthManager,
+    HealthStatus,
+    ComponentStatus,
+    ComponentHealth,
+    SystemHealth,
+    create_health_manager,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -202,4 +232,18 @@ __all__ = [
     "SessionNotFoundError",
     "AshPersonalityManager",
     "create_ash_personality_manager",
+    # Metrics (Phase 5)
+    "MetricsManager",
+    "create_metrics_manager",
+    "Counter",
+    "Gauge",
+    "Histogram",
+    "LabeledCounter",
+    # Health (Phase 5)
+    "HealthManager",
+    "HealthStatus",
+    "ComponentStatus",
+    "ComponentHealth",
+    "SystemHealth",
+    "create_health_manager",
 ]
