@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-2-6.0-1
+FILE VERSION: v5.0-3-6.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 2 - Redis History Storage Integration
+PHASE: Phase 3 - Alert Dispatching Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -24,10 +24,10 @@ RESPONSIBILITIES:
 - Establish and maintain Discord gateway connection
 - Handle on_ready and on_message events
 - Route monitored messages to NLP for analysis
-- Log analysis results (Phase 1 - alerting in Phase 3)
-- Graceful shutdown handling
 - Store message history for escalation detection (Phase 2)
 - Pass history context to NLP for pattern analysis (Phase 2)
+- Dispatch alerts to CRT channels when crisis detected (Phase 3)
+- Register persistent button views for bot restarts (Phase 3)
 
 USAGE:
     from src.managers.discord import create_discord_manager
@@ -37,7 +37,8 @@ USAGE:
         secrets_manager=secrets_manager,
         channel_config=channel_config,
         nlp_client=nlp_client,
-        user_history=user_history,  # Phase 2
+        user_history=user_history,
+        alert_dispatcher=alert_dispatcher,  # Phase 3
     )
 
     await discord_manager.connect()
@@ -58,11 +59,12 @@ if TYPE_CHECKING:
     from src.managers.discord.channel_config_manager import ChannelConfigManager
     from src.managers.nlp.nlp_client_manager import NLPClientManager
     from src.managers.storage.user_history_manager import UserHistoryManager
+    from src.managers.alerting.alert_dispatcher import AlertDispatcher
 
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-2-6.0-1"
+__version__ = "v5.0-3-6.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -78,8 +80,8 @@ class DiscordManager:
     Manages Discord gateway connection and event handling.
 
     This is the core manager that connects Ash-Bot to Discord,
-    handles incoming messages, and routes them to the NLP API
-    for crisis analysis.
+    handles incoming messages, routes them to the NLP API
+    for crisis analysis, and dispatches alerts when needed.
 
     Attributes:
         config_manager: Configuration manager instance
@@ -87,12 +89,13 @@ class DiscordManager:
         channel_config: Channel configuration manager
         nlp_client: NLP client for message analysis
         user_history: User history manager for escalation tracking (Phase 2)
+        alert_dispatcher: Alert dispatcher for CRT notifications (Phase 3)
         bot: discord.ext.commands.Bot instance
         _connected: Whether bot is connected
         _shutdown_event: Asyncio event for shutdown coordination
 
     Example:
-        >>> manager = create_discord_manager(config, secrets, channels, nlp, history)
+        >>> manager = create_discord_manager(config, secrets, channels, nlp, history, alerts)
         >>> await manager.connect()  # Blocks until shutdown
     """
 
@@ -103,6 +106,7 @@ class DiscordManager:
         channel_config: "ChannelConfigManager",
         nlp_client: "NLPClientManager",
         user_history: Optional["UserHistoryManager"] = None,
+        alert_dispatcher: Optional["AlertDispatcher"] = None,
     ):
         """
         Initialize DiscordManager.
@@ -113,6 +117,7 @@ class DiscordManager:
             channel_config: Channel configuration manager
             nlp_client: NLP client for message analysis
             user_history: User history manager (optional, Phase 2)
+            alert_dispatcher: Alert dispatcher (optional, Phase 3)
 
         Note:
             Use create_discord_manager() factory function.
@@ -122,6 +127,7 @@ class DiscordManager:
         self.channel_config = channel_config
         self.nlp_client = nlp_client
         self.user_history = user_history
+        self.alert_dispatcher = alert_dispatcher
 
         # State tracking
         self._connected = False
@@ -129,6 +135,7 @@ class DiscordManager:
         self._messages_processed = 0
         self._crises_detected = 0
         self._history_stores = 0  # Phase 2: Track history storage count
+        self._alerts_dispatched = 0  # Phase 3: Track alerts sent
 
         # Create bot with intents
         intents = self._setup_intents()
@@ -140,6 +147,9 @@ class DiscordManager:
 
         # Register event handlers
         self._register_events()
+
+        # Phase 3: Register persistent views for button handling after restart
+        self._register_persistent_views()
 
         logger.info("✅ DiscordManager initialized")
 
@@ -207,6 +217,19 @@ class DiscordManager:
             logger.error(f"❌ Discord error in {event}: {args}")
 
         logger.debug("Event handlers registered")
+
+    def _register_persistent_views(self) -> None:
+        """
+        Register persistent views for handling buttons after bot restart.
+
+        Phase 3: Buttons on existing alert embeds will still work
+        after the bot restarts.
+        """
+        from src.views.alert_buttons import PersistentAlertView
+
+        # Add persistent view to bot
+        self.bot.add_view(PersistentAlertView())
+        logger.debug("Persistent alert views registered")
 
     # =========================================================================
     # Connection Management
@@ -321,6 +344,12 @@ class DiscordManager:
         else:
             logger.warning("   ⚠️ No channels configured for monitoring!")
 
+        # Log alerting status (Phase 3)
+        if self.alert_dispatcher and self.alert_dispatcher.is_enabled:
+            logger.info("   🚨 Alerting enabled")
+        else:
+            logger.warning("   ⚠️ Alerting disabled or not configured")
+
         logger.info("=" * 60)
 
         # Check NLP API health
@@ -338,7 +367,8 @@ class DiscordManager:
         2. Check if channel is monitored
         3. Check if guild is target guild
         4. Send to NLP for analysis
-        5. Log results (Phase 1 - alerting in Phase 3)
+        5. Store in history if LOW+ (Phase 2)
+        6. Dispatch alerts if MEDIUM+ (Phase 3)
 
         Args:
             message: Discord message object
@@ -365,22 +395,21 @@ class DiscordManager:
             f"user={message.author.id}, length={len(message.content)}"
         )
 
-        # Analyze message with NLP (fire and forget in Phase 1)
-        # In Phase 3+, we'll await this and dispatch alerts
+        # Analyze message (fire and forget)
         asyncio.create_task(
-            self._analyze_and_log(message), name=f"analyze-{message.id}"
+            self._analyze_and_process(message), name=f"analyze-{message.id}"
         )
 
-    async def _analyze_and_log(self, message: discord.Message) -> None:
+    async def _analyze_and_process(self, message: discord.Message) -> None:
         """
-        Analyze a message and log the result.
+        Analyze a message and process the result.
 
         This is a fire-and-forget task that:
         1. Retrieves user message history for context (Phase 2)
         2. Sends message to NLP API with history
         3. Logs the analysis result
         4. Stores message in history if LOW+ severity (Phase 2)
-        5. (Phase 3+) Dispatches alerts if needed
+        5. Dispatches alerts if MEDIUM+ severity (Phase 3)
 
         Args:
             message: Discord message object
@@ -435,9 +464,17 @@ class DiscordManager:
                 except Exception as e:
                     logger.warning(f"⚠️ Failed to store history: {e}")
 
-            # TODO (Phase 3): Dispatch alerts based on severity
-            # if result.is_actionable:
-            #     await self.alert_dispatcher.dispatch(message, result)
+            # Phase 3: Dispatch alerts if MEDIUM+ severity
+            if self.alert_dispatcher:
+                try:
+                    alert_msg = await self.alert_dispatcher.dispatch_alert(
+                        message=message,
+                        result=result,
+                    )
+                    if alert_msg:
+                        self._alerts_dispatched += 1
+                except Exception as e:
+                    logger.error(f"❌ Failed to dispatch alert: {e}", exc_info=True)
 
         except Exception as e:
             logger.error(
@@ -526,9 +563,19 @@ class DiscordManager:
         return self._history_stores
 
     @property
+    def alerts_dispatched(self) -> int:
+        """Get count of alerts dispatched (Phase 3)."""
+        return self._alerts_dispatched
+
+    @property
     def has_history_manager(self) -> bool:
         """Check if history manager is configured (Phase 2)."""
         return self.user_history is not None
+
+    @property
+    def has_alert_dispatcher(self) -> bool:
+        """Check if alert dispatcher is configured (Phase 3)."""
+        return self.alert_dispatcher is not None
 
     # =========================================================================
     # Status Methods
@@ -548,7 +595,9 @@ class DiscordManager:
             "messages_processed": self._messages_processed,
             "crises_detected": self._crises_detected,
             "history_stores": self._history_stores,
+            "alerts_dispatched": self._alerts_dispatched,
             "history_enabled": self.has_history_manager,
+            "alerting_enabled": self.has_alert_dispatcher,
             "bot_user": str(self.bot.user) if self.bot.user else None,
         }
 
@@ -569,6 +618,7 @@ def create_discord_manager(
     channel_config: "ChannelConfigManager",
     nlp_client: "NLPClientManager",
     user_history: Optional["UserHistoryManager"] = None,
+    alert_dispatcher: Optional["AlertDispatcher"] = None,
 ) -> DiscordManager:
     """
     Factory function for DiscordManager.
@@ -582,6 +632,7 @@ def create_discord_manager(
         channel_config: Channel configuration manager
         nlp_client: NLP client for message analysis
         user_history: User history manager (optional, Phase 2)
+        alert_dispatcher: Alert dispatcher (optional, Phase 3)
 
     Returns:
         Configured DiscordManager instance
@@ -593,6 +644,7 @@ def create_discord_manager(
         ...     channel_config=channels,
         ...     nlp_client=nlp,
         ...     user_history=history,
+        ...     alert_dispatcher=alerts,
         ... )
         >>> await manager.connect()
     """
@@ -603,12 +655,18 @@ def create_discord_manager(
     else:
         logger.info("⚠️ History tracking disabled (no UserHistoryManager)")
 
+    if alert_dispatcher:
+        logger.info("🚨 Alert dispatching enabled (Phase 3)")
+    else:
+        logger.info("⚠️ Alert dispatching disabled (no AlertDispatcher)")
+
     return DiscordManager(
         config_manager=config_manager,
         secrets_manager=secrets_manager,
         channel_config=channel_config,
         nlp_client=nlp_client,
         user_history=user_history,
+        alert_dispatcher=alert_dispatcher,
     )
 
 

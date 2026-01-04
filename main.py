@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-2-7.0-1
+FILE VERSION: v5.0-3-7.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 2 - Redis History Storage
+PHASE: Phase 3 - Alert Dispatching
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-2-7.0-1"
+__version__ = "v5.0-3-7.0-1"
 
 
 # =============================================================================
@@ -165,13 +165,14 @@ async def validate_startup(
     - Discord bot token exists
     - Ash-NLP API is reachable (warning only)
     - At least one channel is configured (warning only)
-    - Redis connection (warning only - Phase 2)
+    - Redis connection (warning only)
+    - Alert channels configured (warning only, Phase 3)
 
     Args:
         secrets_manager: Secrets manager instance
         nlp_client: NLP client instance
         channel_config: Channel config instance
-        redis_manager: Redis manager instance (Phase 2)
+        redis_manager: Redis manager instance
         logger: Logger instance
 
     Returns:
@@ -224,6 +225,27 @@ async def validate_startup(
                 "   Make sure ash-redis container is running"
             )
 
+    # Phase 3: Check alert channels (warning only)
+    alert_channels = channel_config.get_all_alert_channels()
+    if alert_channels:
+        logger.info(f"✅ {len(alert_channels)} alert channels configured (Phase 3)")
+    else:
+        logger.warning(
+            "⚠️ No alert channels configured\n"
+            "   Alerts will not be sent until channels are configured\n"
+            "   Set BOT_ALERT_CHANNEL_* in .env"
+        )
+
+    # Phase 3: Check CRT role (warning only)
+    if channel_config.has_crt_role():
+        logger.info("✅ CRT role configured for pinging (Phase 3)")
+    else:
+        logger.warning(
+            "⚠️ CRT role not configured\n"
+            "   HIGH/CRITICAL alerts won't ping anyone\n"
+            "   Set BOT_CRT_ROLE_ID in .env"
+        )
+
     return validation_passed
 
 
@@ -251,6 +273,7 @@ async def main_async(args: argparse.Namespace) -> int:
     logger.info("  🤖 Ash-Bot Crisis Detection Service")
     logger.info(f"  Version: {__version__}")
     logger.info(f"  Environment: {args.environment}")
+    logger.info("  Phase: 3 - Alert Dispatching")
     logger.info("  Community: The Alphabet Cartel")
     logger.info("  https://discord.gg/alphabetcartel")
     logger.info("=" * 60)
@@ -265,6 +288,11 @@ async def main_async(args: argparse.Namespace) -> int:
     from src.managers.storage import (
         create_redis_manager,
         create_user_history_manager,
+    )
+    from src.managers.alerting import (
+        create_cooldown_manager,
+        create_embed_builder,
+        create_alert_dispatcher,
     )
 
     # Initialize managers
@@ -320,6 +348,31 @@ async def main_async(args: argparse.Namespace) -> int:
             redis_manager = None
             user_history = None
 
+        # Phase 3: Create alerting managers
+        alert_dispatcher = None
+        try:
+            # Create cooldown manager
+            cooldown_manager = create_cooldown_manager(
+                config_manager=config_manager,
+            )
+
+            # Create embed builder
+            embed_builder = create_embed_builder()
+
+            # Note: alert_dispatcher needs bot instance, so we create it
+            # after discord_manager but before connect()
+            # We'll set it up after creating the discord manager
+
+            logger.info("✅ Alerting managers initialized (Phase 3)")
+
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Alerting initialization failed: {e}\n"
+                "   Bot will start without alert dispatching"
+            )
+            cooldown_manager = None
+            embed_builder = None
+
         # Validate startup
         logger.info("🔍 Validating startup requirements...")
         if not await validate_startup(
@@ -332,14 +385,31 @@ async def main_async(args: argparse.Namespace) -> int:
             logger.error("❌ Startup validation failed")
             return 1
 
-        # Create Discord manager (with history if available)
+        # Create Discord manager (without alert_dispatcher initially)
         discord_manager = create_discord_manager(
             config_manager=config_manager,
             secrets_manager=secrets_manager,
             channel_config=channel_config,
             nlp_client=nlp_client,
             user_history=user_history,
+            alert_dispatcher=None,  # Will set after creating alert_dispatcher
         )
+
+        # Phase 3: Now create alert_dispatcher with bot instance
+        if cooldown_manager and embed_builder:
+            try:
+                alert_dispatcher = create_alert_dispatcher(
+                    config_manager=config_manager,
+                    channel_config=channel_config,
+                    embed_builder=embed_builder,
+                    cooldown_manager=cooldown_manager,
+                    bot=discord_manager.bot,
+                )
+                # Inject alert_dispatcher into discord_manager
+                discord_manager.alert_dispatcher = alert_dispatcher
+                logger.info("✅ AlertDispatcher configured (Phase 3)")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to create AlertDispatcher: {e}")
 
         # Setup signal handlers
         discord_manager.setup_signal_handlers()

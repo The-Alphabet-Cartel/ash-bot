@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-2-5.0-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 2 - Redis History Storage
+FILE VERSION: v5.0-3-1.0-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 3 - Alert Dispatching
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -30,6 +30,9 @@ MANAGERS:
 - NLPClientManager: Ash-NLP API client (Phase 1)
 - RedisManager: Redis connection management (Phase 2)
 - UserHistoryManager: User message history storage (Phase 2)
+- CooldownManager: Alert cooldown tracking (Phase 3)
+- EmbedBuilder: Discord embed creation (Phase 3)
+- AlertDispatcher: Crisis alert routing (Phase 3)
 
 USAGE:
     from src.managers import (
@@ -45,10 +48,15 @@ USAGE:
         create_redis_manager,
         create_user_history_manager,
     )
+    from src.managers.alerting import (
+        create_cooldown_manager,
+        create_embed_builder,
+        create_alert_dispatcher,
+    )
 """
 
 # Module version
-__version__ = "v5.0-2-5.0-1"
+__version__ = "v5.0-3-1.0-1"
 
 # =============================================================================
 # Configuration Manager
@@ -106,6 +114,19 @@ from .storage import (
 )
 
 # =============================================================================
+# Alerting Managers (Phase 3)
+# =============================================================================
+
+from .alerting import (
+    CooldownManager,
+    create_cooldown_manager,
+    EmbedBuilder,
+    create_embed_builder,
+    AlertDispatcher,
+    create_alert_dispatcher,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -136,4 +157,11 @@ __all__ = [
     "UserHistoryManager",
     "create_user_history_manager",
     "STORABLE_SEVERITIES",
+    # Alerting (Phase 3)
+    "CooldownManager",
+    "create_cooldown_manager",
+    "EmbedBuilder",
+    "create_embed_builder",
+    "AlertDispatcher",
+    "create_alert_dispatcher",
 ]

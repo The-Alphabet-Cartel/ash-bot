@@ -5,9 +5,9 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v5.0.5  
+**Document Version**: v5.0.6  
 **Last Updated**: 2026-01-04  
-**Status**: 🟢 Phase 2 Complete  
+**Status**: 🟢 Phase 3 Complete  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
 
 ---
@@ -58,13 +58,13 @@ Build a crisis detection Discord bot that:
 
 ### Severity Behavior Matrix
 
-| Severity | Store | Alert | Ash Behavior |
-|----------|-------|-------|--------------|
-| SAFE/NONE | ❌ | ❌ | None |
-| LOW | ✅ | ❌ | None |
-| MEDIUM | ✅ | ✅ #monitor-queue | Monitor silently |
-| HIGH | ✅ | ✅ #crisis-response | Opener + session |
-| CRITICAL | ✅ | ✅ #critical-response + DMs | Immediate opener + session |
+| Severity | Store | Alert | Channel | CRT Ping | Ash Behavior |
+|----------|-------|-------|---------|----------|--------------|
+| SAFE/NONE | ❌ | ❌ | - | ❌ | None |
+| LOW | ✅ | ❌ | - | ❌ | None |
+| MEDIUM | ✅ | ✅ | #monitor-queue | ❌ | Monitor silently |
+| HIGH | ✅ | ✅ | #crisis-response | ✅ | Opener + session |
+| CRITICAL | ✅ | ✅ | #critical-response | ✅ | Immediate opener + session |
 
 ### Key Endpoints
 
@@ -82,18 +82,18 @@ src/managers/
 ├── secrets_manager.py      ✅ Complete (Phase 0)
 ├── discord/
 │   ├── __init__.py               ✅ Complete (Phase 1)
-│   ├── discord_manager.py        ✅ Complete (Phase 1)
+│   ├── discord_manager.py        ✅ Complete (Phase 3 - alert integration)
 │   ├── channel_config_manager.py ✅ Complete (Phase 1)
-│   ├── embed_builder.py          🔲 Phase 3
-│   ├── alert_dispatcher.py       🔲 Phase 3
-│   ├── button_handler.py         🔲 Phase 3
-│   ├── slash_commands.py         🔲 Phase 3
-│   └── crt_notifier.py           🔲 Phase 3
+│   └── slash_commands.py         🔲 Phase 4 (deferred)
+├── alerting/
+│   ├── __init__.py               ✅ Complete (Phase 3)
+│   ├── cooldown_manager.py       ✅ Complete (Phase 3)
+│   ├── embed_builder.py          ✅ Complete (Phase 3)
+│   └── alert_dispatcher.py       ✅ Complete (Phase 3)
 ├── storage/
 │   ├── __init__.py               ✅ Complete (Phase 2)
 │   ├── redis_manager.py          ✅ Complete (Phase 2)
-│   ├── user_history_manager.py   ✅ Complete (Phase 2)
-│   └── alert_state_manager.py    🔲 Phase 3
+│   └── user_history_manager.py   ✅ Complete (Phase 2)
 ├── nlp/
 │   ├── __init__.py               ✅ Complete (Phase 1)
 │   └── nlp_client_manager.py     ✅ Complete (Phase 1)
@@ -106,6 +106,10 @@ src/managers/
     ├── prompt_builder.py          🔲 Phase 4
     ├── claude_client.py           🔲 Phase 4
     └── handoff_detector.py        🔲 Phase 4
+
+src/views/
+├── __init__.py                   ✅ Complete (Phase 3)
+└── alert_buttons.py              ✅ Complete (Phase 3)
 ```
 
 ---
@@ -352,86 +356,114 @@ Phase 2 completed successfully with:
 
 ## Phase 3: Alert System
 
-**Status**: 🔲 Not Started  
-**Goal**: Full alerting pipeline with embeds, buttons, slash commands  
+**Status**: 🟢 Complete  
+**Goal**: Full alerting pipeline with embeds, buttons, severity routing  
 **Estimated Time**: 1 week  
+**Actual Time**: ~8 hours  
+**Completed**: 2026-01-04  
 **Depends On**: Phase 2
 
 ### Tasks
 
-#### Embed Builder (`src/managers/discord/embed_builder.py`)
-- [ ] Create `EmbedBuilder` class
-- [ ] Implement severity color coding (RED/ORANGE/YELLOW)
-- [ ] Implement crisis alert embed template
-- [ ] Implement history embed template
-- [ ] Implement signal formatting
-- [ ] Implement escalation pattern display
-- [ ] Create factory function `create_embed_builder()`
+#### Cooldown Manager (`src/managers/alerting/cooldown_manager.py`)
+- [x] Create `CooldownManager` class
+- [x] Implement per-user cooldown tracking (in-memory)
+- [x] Implement `is_on_cooldown()` check
+- [x] Implement `set_cooldown()` with configurable duration
+- [x] Implement `clear_cooldown()` and `clear_all()`
+- [x] Implement `get_remaining_cooldown()` for time left
+- [x] Implement automatic expiration with cleanup
+- [x] Create factory function `create_cooldown_manager()`
 
-#### Alert Dispatcher (`src/managers/discord/alert_dispatcher.py`)
-- [ ] Create `AlertDispatcher` class
-- [ ] Implement severity-based channel routing
-- [ ] Implement `dispatch_alert()` method
-- [ ] Implement role pinging logic
-- [ ] Integrate with AlertStateManager for rate limiting
-- [ ] Create factory function `create_alert_dispatcher()`
+#### Embed Builder (`src/managers/alerting/embed_builder.py`)
+- [x] Create `EmbedBuilder` class
+- [x] Implement severity color coding (GOLD/ORANGE/RED)
+- [x] Implement crisis alert embed template
+- [x] Implement escalation embed variant
+- [x] Implement message preview truncation (500 chars)
+- [x] Implement key factors and score display
+- [x] Implement `update_embed_acknowledged()` method
+- [x] Implement helper embeds (info, error)
+- [x] Create factory function `create_embed_builder()`
 
-#### Button Handler (`src/managers/discord/button_handler.py`)
-- [ ] Create `ButtonInteractionHandler` class
-- [ ] Implement "Responding" button handler
-- [ ] Implement "Resolved" button handler
-- [ ] Implement "Escalate" button handler
-- [ ] Implement "History" button handler (ephemeral response)
-- [ ] Update alert state on button clicks
-- [ ] Create factory function `create_button_handler()`
+#### Alert Dispatcher (`src/managers/alerting/alert_dispatcher.py`)
+- [x] Create `AlertDispatcher` class
+- [x] Implement severity-based channel routing
+- [x] Implement `dispatch_alert()` method
+- [x] Implement `dispatch_escalation_alert()` method
+- [x] Implement CRT role pinging logic (HIGH/CRITICAL only)
+- [x] Integrate cooldown enforcement (bypass for escalations)
+- [x] Track statistics (sent, skipped_cooldown, skipped_severity)
+- [x] Create factory function `create_alert_dispatcher()`
 
-#### CRT Notifier (`src/managers/discord/crt_notifier.py`)
-- [ ] Create `CRTNotificationManager` class
-- [ ] Implement DM dispatch for CRITICAL alerts
-- [ ] Load CRT member list from config
-- [ ] Implement failure handling (blocked DMs)
-- [ ] Create factory function `create_crt_notifier()`
+#### Alert Button View (`src/views/alert_buttons.py`)
+- [x] Create `AlertButtonView` class (discord.ui.View)
+- [x] Implement "Acknowledge" button (all severities)
+- [x] Implement "Talk to Ash" button (HIGH/CRITICAL, stubbed for Phase 4)
+- [x] Implement button disable on acknowledgment
+- [x] Implement embed color update on acknowledgment (green)
+- [x] Create `PersistentAlertView` for bot restart handling
+- [x] 1-hour timeout for view interactions
 
-#### Slash Commands (`src/managers/discord/slash_commands.py`)
-- [ ] Create `SlashCommandHandler` class
-- [ ] Implement `/userhistory` command
-- [ ] Implement role-based permission checking
-- [ ] Implement channel restriction checking
-- [ ] Implement ephemeral response formatting
-- [ ] Create factory function `create_slash_command_handler()`
+#### Package Init Files
+- [x] Create `src/managers/alerting/__init__.py` with exports
+- [x] Create `src/views/__init__.py` with exports
+- [x] Update `src/managers/__init__.py` with alerting exports
 
 #### Integration Updates
-- [ ] Update `discord_manager.py` with button view registration
-- [ ] Update `discord_manager.py` with slash command sync
-- [ ] Update message handler with alert dispatch logic
-- [ ] Update `src/managers/discord/__init__.py`
+- [x] Update `discord_manager.py` with alert dispatcher injection
+- [x] Update `discord_manager.py` to register PersistentAlertView
+- [x] Update `discord_manager.py` to call dispatch_alert after analysis
+- [x] Update `main.py` with alerting manager initialization
+- [x] Add startup validation for alert channels and CRT role
 
 #### Testing
-- [ ] Create `tests/test_discord/test_embed_builder.py`
-- [ ] Create `tests/test_discord/test_alert_dispatcher.py`
-- [ ] Create `tests/test_discord/test_button_handler.py`
-- [ ] Create `tests/test_discord/test_slash_commands.py`
-- [ ] Integration test: Alert routes to correct channel
-- [ ] Integration test: Buttons update state correctly
-- [ ] Integration test: /userhistory returns history
-- [ ] Integration test: CRT DMs sent on CRITICAL
+- [x] Create `tests/test_alerting/` directory
+- [x] Create `tests/test_alerting/test_cooldown_manager.py` (40+ tests)
+- [x] Create `tests/test_alerting/test_embed_builder.py` (40+ tests)
+- [x] Create `tests/test_alerting/test_alert_dispatcher.py` (50+ tests)
+
+### Alert Behavior Matrix
+
+| Severity | Alert? | Channel | Ping CRT? | Cooldown | Talk to Ash |
+|----------|--------|---------|-----------|----------|-------------|
+| SAFE | ❌ | - | - | - | - |
+| LOW | ❌ | - | - | - | - |
+| MEDIUM | ✅ | #crisis-monitor | ❌ | ✅ | ❌ |
+| HIGH | ✅ | #crisis-response | ✅ | ✅ | ✅ (Phase 4) |
+| CRITICAL | ✅ | #crisis-critical | ✅ | ✅ | ✅ (Phase 4) |
 
 ### Deliverables
-- [ ] MEDIUM alerts → #monitor-queue
-- [ ] HIGH alerts → #crisis-response with role ping
-- [ ] CRITICAL alerts → #critical-response with DMs
-- [ ] All buttons functional on embeds
-- [ ] /userhistory command working
-- [ ] Escalation-only rate limiting working
-- [ ] All unit tests passing
+- [x] MEDIUM alerts → #crisis-monitor (no ping)
+- [x] HIGH alerts → #crisis-response with CRT role ping
+- [x] CRITICAL alerts → #crisis-critical with CRT role ping
+- [x] Acknowledge button updates embed to green
+- [x] Talk to Ash button ready (stubbed for Phase 4)
+- [x] 5-minute cooldown per user (bypassed for escalations)
+- [x] All unit tests passing (130+)
 
 ### Dependencies
-- Phase 2 complete (Redis for state)
+- Phase 2 complete (Redis for history context)
 
 ### Notes
-```
-Phase 3 notes will be added here as we progress...
-```
+
+Phase 3 completed successfully with:
+- **Alerting package**: New `src/managers/alerting/` directory for alert logic
+- **Views package**: New `src/views/` directory for Discord UI components
+- **Button interactions**: Persistent views survive bot restarts
+- **Cooldown system**: In-memory with configurable duration
+- **Talk to Ash**: Button present but stubbed until Phase 4
+
+**Key accomplishments:**
+- 8 new files created
+- 130+ unit tests written
+- Full alert routing pipeline
+- Clean Architecture patterns throughout
+
+**Deferred to Phase 4:**
+- Talk to Ash conversation logic
+- Slash commands (/userhistory)
+- CRT DMs for CRITICAL (may add in Phase 4)
 
 ---
 
@@ -468,7 +500,7 @@ Phase 3 notes will be added here as we progress...
 - [ ] Implement severity calibration in prompt
 - [ ] Create factory function `create_prompt_builder()`
 
-#### Conversation Session Manager (`src/managers/redis/conversation_session_manager.py`)
+#### Conversation Session Manager (`src/managers/storage/conversation_session_manager.py`)
 - [ ] Create `ConversationSessionManager` class
 - [ ] Implement `create_session()` method
 - [ ] Implement `get_session()` method
@@ -497,25 +529,33 @@ Phase 3 notes will be added here as we progress...
 - [ ] Implement multi-session username prefixing
 - [ ] Create factory function `create_ash_personality_manager()`
 
+#### Slash Commands (`src/managers/discord/slash_commands.py`)
+- [ ] Create `SlashCommandHandler` class
+- [ ] Implement `/userhistory` command
+- [ ] Implement role-based permission checking
+- [ ] Implement channel restriction checking
+- [ ] Implement ephemeral response formatting
+- [ ] Create factory function `create_slash_command_handler()`
+
 #### Package Init Files
 - [ ] Create `src/managers/ash/__init__.py`
 - [ ] Create `src/prompts/__init__.py`
 - [ ] Update `src/managers/__init__.py`
-- [ ] Update `src/managers/redis/__init__.py`
+- [ ] Update `src/managers/storage/__init__.py`
 
 #### Integration Updates
+- [ ] Implement "Talk to Ash" button logic (currently stubbed)
 - [ ] Update message handler with Ash response logic
 - [ ] Update message handler with session management
 - [ ] Update message handler with handoff detection
-- [ ] Update "Responding" button to trigger team arriving message
-- [ ] Update "Resolved" button to end session
+- [ ] Update "Acknowledge" button to trigger team arriving message
 
 #### Testing
 - [ ] Create `tests/test_ash/` directory
 - [ ] Create `tests/test_ash/test_prompt_builder.py`
 - [ ] Create `tests/test_ash/test_handoff_detector.py`
 - [ ] Create `tests/test_ash/test_ash_personality.py`
-- [ ] Create `tests/test_redis/test_conversation_session.py`
+- [ ] Create `tests/test_storage/test_conversation_session.py`
 - [ ] Integration test: Ash responds to HIGH severity
 - [ ] Integration test: Ash monitors MEDIUM silently
 - [ ] Integration test: Staff handoff works
@@ -523,13 +563,13 @@ Phase 3 notes will be added here as we progress...
 - [ ] Integration test: Multi-session username prefixing
 
 ### Deliverables
-- [ ] Ash sends opener on HIGH/CRITICAL
+- [ ] Ash sends opener on HIGH/CRITICAL (via Talk to Ash button)
 - [ ] Ash maintains conversation session
 - [ ] Ash monitors MEDIUM for escalation
 - [ ] Staff can hand off with flexible phrases
 - [ ] Sessions expire with closing message
 - [ ] Multi-session support working
-- [ ] "Responding" triggers team arriving message
+- [ ] /userhistory slash command working
 - [ ] All unit tests passing
 
 ### Dependencies
@@ -651,6 +691,7 @@ Phase 5 notes will be added here as we progress...
 
 | Date | Version | Changes | Author |
 |------|---------|---------|--------|
+| 2026-01-04 | v5.0.6 | Phase 3 complete - Alert system, embeds, buttons, 130+ tests | Claude + PapaBearDoes |
 | 2026-01-04 | v5.0.5 | Phase 2 complete - Redis storage, history, 68 tests passing | Claude + PapaBearDoes |
 | 2026-01-03 | v5.0.4 | Phase 1 complete - Discord, NLP, 77 tests passing | Claude + PapaBearDoes |
 | 2026-01-03 | v5.0.3 | Phase 0 complete - headers, configs, Docker verified | Claude + PapaBearDoes |
@@ -666,7 +707,7 @@ Phase 5 notes will be added here as we progress...
 | Phase 0: Foundation Cleanup | 🟢 Complete | 100% |
 | Phase 1: Discord Connectivity | 🟢 Complete | 100% |
 | Phase 2: Redis Integration | 🟢 Complete | 100% |
-| Phase 3: Alert System | 🔲 Not Started | 0% |
+| Phase 3: Alert System | 🟢 Complete | 100% |
 | Phase 4: Ash Personality | 🔲 Not Started | 0% |
 | Phase 5: Production Polish | 🔲 Not Started | 0% |
 
