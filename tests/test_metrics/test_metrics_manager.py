@@ -341,6 +341,8 @@ class TestMetricsManager:
 
     def test_redis_operation_metrics(self, metrics):
         """Test Redis operation metrics."""
+        # inc_redis_operations uses 2 labels: (operation, status)
+        # Default status is "success"
         metrics.inc_redis_operations("get")
         metrics.inc_redis_operations("get")
         metrics.inc_redis_operations("set")
@@ -348,8 +350,9 @@ class TestMetricsManager:
         
         json_data = metrics.export_json()
         redis_ops = json_data["counters"]["redis_operations"]
-        assert redis_ops.get(("get",), 0) == 2
-        assert redis_ops.get(("set",), 0) == 1
+        # Keys are 2-tuples: (operation, status)
+        assert redis_ops.get(("get", "success"), 0) == 2
+        assert redis_ops.get(("set", "success"), 0) == 1
 
     def test_redis_error_counting(self, metrics):
         """Test Redis error counting."""

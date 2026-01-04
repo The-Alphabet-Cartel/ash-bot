@@ -383,30 +383,38 @@ class TestKeyManagement:
 
 
 # =============================================================================
-# Error Handling Tests
+# Error Handling Tests (Graceful Degradation - Phase 5)
 # =============================================================================
 
 
 class TestErrorHandling:
-    """Tests for error handling."""
+    """Tests for error handling with graceful degradation.
+    
+    Phase 5 changed behavior: operations without connection now return
+    safe defaults instead of raising exceptions, supporting operational
+    continuity for crisis detection.
+    """
 
     @pytest.mark.asyncio
-    async def test_operation_without_connection_raises(self, redis_manager):
-        """Test operations without connection raise RuntimeError."""
-        with pytest.raises(RuntimeError, match="Not connected to Redis"):
-            await redis_manager.zadd("test:key", 123.0, "value")
+    async def test_operation_without_connection_returns_none(self, redis_manager):
+        """Test operations without connection return None (graceful degradation)."""
+        # Phase 5: Returns None instead of raising RuntimeError
+        result = await redis_manager.zadd("test:key", 123.0, "value")
+        assert result is None
 
     @pytest.mark.asyncio
-    async def test_zrange_without_connection_raises(self, redis_manager):
-        """Test zrange without connection raises RuntimeError."""
-        with pytest.raises(RuntimeError, match="Not connected to Redis"):
-            await redis_manager.zrange("test:key", 0, 9)
+    async def test_zrange_without_connection_returns_empty(self, redis_manager):
+        """Test zrange without connection returns empty list (graceful degradation)."""
+        # Phase 5: Returns [] instead of raising RuntimeError
+        result = await redis_manager.zrange("test:key", 0, 9)
+        assert result == []
 
     @pytest.mark.asyncio
-    async def test_expire_without_connection_raises(self, redis_manager):
-        """Test expire without connection raises RuntimeError."""
-        with pytest.raises(RuntimeError, match="Not connected to Redis"):
-            await redis_manager.expire("test:key", 3600)
+    async def test_expire_without_connection_returns_false(self, redis_manager):
+        """Test expire without connection returns False (graceful degradation)."""
+        # Phase 5: Returns False instead of raising RuntimeError
+        result = await redis_manager.expire("test:key", 3600)
+        assert result is False
 
 
 # =============================================================================

@@ -13,7 +13,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.5-2
+FILE VERSION: v5.0-5-5.5-3
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
@@ -73,7 +73,7 @@ if TYPE_CHECKING:
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-5-5.5-2"
+__version__ = "v5.0-5-5.5-3"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -421,7 +421,7 @@ class DiscordManager:
         logger.info("=" * 60)
 
         # Check NLP API health
-        if await self.nlp_client.health_check():
+        if await self.nlp_client.check_health():
             logger.info("✅ Ash-NLP API is healthy")
         else:
             logger.warning("⚠️ Ash-NLP API is not responding - will retry on messages")

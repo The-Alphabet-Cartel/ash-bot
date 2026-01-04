@@ -14,7 +14,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-8.0-1
+FILE VERSION: v5.0-5-8.0-3
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-5-8.0-1"
+__version__ = "v5.0-5-8.0-3"
 
 
 # =============================================================================
@@ -196,7 +196,7 @@ async def validate_startup(
         logger.info("✅ Discord bot token found")
 
     # Check NLP API (warning only)
-    if await nlp_client.health_check():
+    if await nlp_client.check_health():
         logger.info("✅ Ash-NLP API is healthy")
     else:
         logger.warning(
@@ -412,40 +412,35 @@ async def main_async(args: argparse.Namespace) -> int:
             cooldown_manager = None
             embed_builder = None
 
-        # Phase 4: Create Ash AI managers
+        # Phase 4: Prepare Claude client (session manager needs bot, created later)
+        claude_client = None
         ash_personality_manager = None
         try:
             # Check for Claude API token first
             claude_token = secrets_manager.get_claude_api_token()
             if claude_token:
-                # Create Claude client with metrics
+                # Create Claude client (no metrics_manager support yet)
                 claude_client = create_claude_client_manager(
                     config_manager=config_manager,
                     secrets_manager=secrets_manager,
-                    metrics_manager=metrics_manager,
                 )
 
-                # Create session manager
-                ash_session_manager = create_ash_session_manager(
-                    config_manager=config_manager,
-                )
-
-                # Create personality manager
+                # Create personality manager (doesn't need bot)
                 ash_personality_manager = create_ash_personality_manager(
                     config_manager=config_manager,
                     claude_client=claude_client,
                 )
 
-                logger.info("✅ Ash AI managers initialized (Phase 4)")
+                logger.info("✅ Claude client and personality manager initialized (Phase 4)")
             else:
                 logger.info("ℹ️ Ash AI disabled (no Claude API token)")
 
         except Exception as e:
             logger.warning(
-                f"⚠️ Ash AI initialization failed: {e}\n"
+                f"⚠️ Claude/personality initialization failed: {e}\n"
                 "   Bot will start without Ash AI support"
             )
-            ash_session_manager = None
+            claude_client = None
             ash_personality_manager = None
 
         # Validate startup
@@ -460,7 +455,7 @@ async def main_async(args: argparse.Namespace) -> int:
             logger.error("❌ Startup validation failed")
             return 1
 
-        # Create Discord manager with all Phase 5 managers
+        # Create Discord manager (without Ash session manager - needs bot first)
         discord_manager = create_discord_manager(
             config_manager=config_manager,
             secrets_manager=secrets_manager,
@@ -468,10 +463,25 @@ async def main_async(args: argparse.Namespace) -> int:
             nlp_client=nlp_client,
             user_history=user_history,
             alert_dispatcher=None,  # Will set after creating alert_dispatcher
-            ash_session_manager=ash_session_manager,
+            ash_session_manager=None,  # Will set after creating with bot
             ash_personality_manager=ash_personality_manager,
             metrics_manager=metrics_manager,
         )
+
+        # Phase 4: Now create Ash session manager with bot instance
+        if claude_client and ash_personality_manager:
+            try:
+                ash_session_manager = create_ash_session_manager(
+                    config_manager=config_manager,
+                    bot=discord_manager.bot,
+                )
+                # Inject into discord_manager
+                discord_manager.ash_session_manager = ash_session_manager
+                discord_manager.bot.ash_session_manager = ash_session_manager
+                logger.info("✅ AshSessionManager configured (Phase 4)")
+            except Exception as e:
+                logger.warning(f"⚠️ AshSessionManager creation failed: {e}")
+                ash_session_manager = None
 
         # Phase 3: Now create alert_dispatcher with bot instance
         if cooldown_manager and embed_builder:
@@ -500,13 +510,20 @@ async def main_async(args: argparse.Namespace) -> int:
                     ash_session_manager=ash_session_manager,
                 )
 
-                # Create and start health server
+                # Create and start health server (need routes first)
                 health_host = config_manager.get("health", "host", "0.0.0.0")
-                health_port = config_manager.get("health", "port", 8080)
+                health_port = config_manager.get("health", "port", 30882)
 
-                health_server = create_health_server(
+                # Import health routes factory
+                from src.api.health_routes import create_health_routes
+
+                # Create routes, then server
+                health_routes = create_health_routes(
                     health_manager=health_manager,
                     metrics_manager=metrics_manager,
+                )
+                health_server = create_health_server(
+                    routes=health_routes,
                     host=health_host,
                     port=health_port,
                 )

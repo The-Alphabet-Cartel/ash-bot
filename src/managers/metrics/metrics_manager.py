@@ -13,7 +13,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Metrics Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.5-2
+FILE VERSION: v5.0-5-5.5-3
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
@@ -90,7 +90,7 @@ class Counter:
     help_text: str = ""
     value: int = 0
     labels: Dict[str, str] = field(default_factory=dict)
-    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+    _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
     def inc(self, amount: int = 1) -> None:
         """
@@ -133,7 +133,7 @@ class Gauge:
     help_text: str = ""
     value: float = 0.0
     labels: Dict[str, str] = field(default_factory=dict)
-    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+    _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
     def set(self, value: float) -> None:
         """Set gauge to specific value."""
@@ -182,7 +182,7 @@ class Histogram:
     sum: float = 0.0
     count: int = 0
     labels: Dict[str, str] = field(default_factory=dict)
-    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+    _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
     def __post_init__(self):
         """Initialize bucket counts."""

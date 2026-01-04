@@ -13,7 +13,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 NLP Client Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.5-1
+FILE VERSION: v5.0-5-5.5-2
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     from src.managers.metrics.metrics_manager import MetricsManager
 
 # Module version
-__version__ = "v5.0-5-5.5-1"
+__version__ = "v5.0-5-5.5-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -375,6 +375,40 @@ class NLPClientManager:
             return data.get("message", data.get("detail", str(data)))
         except Exception:
             return response.text[:200] if response.text else f"HTTP {response.status_code}"
+
+    async def health_check(self) -> bool:
+        """
+        Check if NLP API is healthy and responsive.
+
+        Returns:
+            True if API is healthy and ready, False otherwise.
+        """
+        try:
+            client = await self._get_client()
+            response = await client.get("/health")
+            
+            if response.status_code != 200:
+                logger.warning(f"NLP health check returned status {response.status_code}")
+                return False
+            
+            data = response.json()
+            is_ready = data.get("ready", False)
+            
+            if not is_ready:
+                logger.warning("NLP API is not ready")
+                return False
+            
+            return True
+            
+        except httpx.TimeoutException:
+            logger.warning("NLP health check timed out")
+            return False
+        except httpx.ConnectError as e:
+            logger.warning(f"NLP health check connection error: {e}")
+            return False
+        except Exception as e:
+            logger.warning(f"NLP health check failed: {e}")
+            return False
 
     @property
     def circuit_state(self) -> str:
