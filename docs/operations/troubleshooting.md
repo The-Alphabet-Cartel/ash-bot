@@ -5,7 +5,7 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.1.0  
 **Created**: 2026-01-04  
 **Phase**: 5 - Production Hardening  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
@@ -31,16 +31,16 @@
 
 ```bash
 # Overall health
-curl -s http://localhost:8080/health | jq
+curl -s http://localhost:30882/health | jq
 
 # Detailed component status
-curl -s http://localhost:8080/health/detailed | jq
+curl -s http://localhost:30882/health/detailed | jq
 
 # Check specific component
-curl -s http://localhost:8080/health/detailed | jq '.components.discord'
-curl -s http://localhost:8080/health/detailed | jq '.components.nlp'
-curl -s http://localhost:8080/health/detailed | jq '.components.redis'
-curl -s http://localhost:8080/health/detailed | jq '.components.ash'
+curl -s http://localhost:30882/health/detailed | jq '.components.discord'
+curl -s http://localhost:30882/health/detailed | jq '.components.nlp'
+curl -s http://localhost:30882/health/detailed | jq '.components.redis'
+curl -s http://localhost:30882/health/detailed | jq '.components.ash'
 ```
 
 ### Quick Log Checks
@@ -66,10 +66,10 @@ docker compose logs --since 5m ash-bot
    └── docker compose ps
 
 2. Is health check passing?
-   └── curl http://localhost:8080/health
+   └── curl http://localhost:30882/health
 
 3. Which component is failing?
-   └── curl http://localhost:8080/health/detailed
+   └── curl http://localhost:30882/health/detailed
 
 4. What do the logs say?
    └── docker compose logs --tail 50 ash-bot
@@ -469,7 +469,7 @@ Model claude-3-5-sonnet not available
 
 ```bash
 # Check Claude health
-curl -s http://localhost:8080/health/detailed | jq '.components.ash'
+curl -s http://localhost:30882/health/detailed | jq '.components.ash'
 
 # Test Claude API directly
 curl https://api.anthropic.com/v1/messages \
@@ -662,7 +662,7 @@ docker compose logs ash-bot | grep "Alert dispatched\|Alert sent"
 docker compose logs ash-bot
 
 # Check for port conflicts
-netstat -tlpn | grep 8080
+netstat -tlpn | grep 30882
 
 # Check for resource limits
 docker compose config | grep -A 10 deploy
@@ -735,7 +735,7 @@ When seeking help, collect:
 
 1. **Health status**:
    ```bash
-   curl http://localhost:8080/health/detailed > health.json
+   curl http://localhost:30882/health/detailed > health.json
    ```
 
 2. **Recent logs**:

@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.1",
+		"file_version": "v5.0.2",
 		"last_modified": "2026-01-04",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -270,7 +270,7 @@
 		"defaults": {
 			"enabled": true,
 			"host": "0.0.0.0",
-			"port": 8080
+			"port": 30882
 		},
 		"validation": {
 			"enabled": {
@@ -283,7 +283,7 @@
 			},
 			"port": {
 				"type": "integer",
-				"range": [1, 65535],
+				"range": [1024, 65535],
 				"required": true
 			}
 		}

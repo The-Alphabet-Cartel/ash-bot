@@ -5,7 +5,7 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.0.1  
 **Created**: 2026-01-04  
 **Phase**: 6 - Final Testing & Documentation  
 **Status**: 🔲 Not Started  
@@ -505,10 +505,10 @@ docker inspect ash-bot --format='{{.State.Health.Status}}'
 # Expected: healthy
 
 # Check health endpoint directly
-curl -s http://localhost:8080/health
-curl -s http://localhost:8080/health/ready
-curl -s http://localhost:8080/health/detailed | jq
-curl -s http://localhost:8080/metrics
+curl -s http://localhost:30882/health
+curl -s http://localhost:30882/health/ready
+curl -s http://localhost:30882/health/detailed | jq
+curl -s http://localhost:30882/metrics
 ```
 
 ### 6.4.4: Restart Recovery Test

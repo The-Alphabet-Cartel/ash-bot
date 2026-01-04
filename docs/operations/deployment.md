@@ -5,7 +5,7 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.1.0  
 **Created**: 2026-01-04  
 **Phase**: 5 - Production Hardening  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
@@ -108,7 +108,7 @@ docker compose up -d
 
 ```bash
 docker compose ps
-curl http://localhost:8080/health
+curl http://localhost:30882/health
 docker compose logs -f ash-bot
 ```
 
@@ -120,7 +120,7 @@ docker compose logs -f ash-bot
 git pull origin main
 docker compose build
 docker compose up -d
-curl http://localhost:8080/health
+curl http://localhost:30882/health
 ```
 
 ---

@@ -5,7 +5,7 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.1.0  
 **Created**: 2026-01-04  
 **Phase**: 5 - Production Hardening  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
@@ -29,10 +29,10 @@
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Health Check | `http://localhost:8080/health` | Liveness probe |
-| Readiness | `http://localhost:8080/health/ready` | Readiness probe |
-| Detailed Status | `http://localhost:8080/health/detailed` | Full component status |
-| Metrics | `http://localhost:8080/metrics` | Prometheus metrics |
+| Health Check | `http://localhost:30882/health` | Liveness probe |
+| Readiness | `http://localhost:30882/health/ready` | Readiness probe |
+| Detailed Status | `http://localhost:30882/health/detailed` | Full component status |
+| Metrics | `http://localhost:30882/metrics` | Prometheus metrics |
 | Ash-NLP API | `http://ash-nlp:30880/health` | NLP service health |
 
 ### Essential Commands
@@ -48,7 +48,7 @@ docker compose down
 docker compose logs -f ash-bot
 
 # Check health
-curl http://localhost:8080/health
+curl http://localhost:30882/health
 
 # Restart bot only
 docker compose restart ash-bot
@@ -88,7 +88,7 @@ Before starting Ash-Bot, verify:
 
 - [ ] **Network configured**:
   - `ash-network` Docker network exists
-  - Ports 8080 (health) are available
+  - Port 30882 (health) is available
 
 ### Starting the Bot
 
@@ -132,19 +132,19 @@ docker compose logs -f ash-bot
 
 2. **Check health endpoint**:
    ```bash
-   curl http://localhost:8080/health
+   curl http://localhost:30882/health
    # Expected: {"status": "healthy", ...}
    ```
 
 3. **Check readiness**:
    ```bash
-   curl http://localhost:8080/health/ready
+   curl http://localhost:30882/health/ready
    # Expected: HTTP 200, {"ready": true, ...}
    ```
 
 4. **Check detailed status**:
    ```bash
-   curl http://localhost:8080/health/detailed
+   curl http://localhost:30882/health/detailed
    # Expected: All components "up"
    ```
 
@@ -160,7 +160,7 @@ If startup fails, check:
 
 1. **Token issues**: Verify `secrets/discord_bot_token` is correct
 2. **Network issues**: Verify Redis and NLP are reachable
-3. **Port conflicts**: Verify port 8080 is available
+3. **Port conflicts**: Verify port 30882 is available
 4. **Permission issues**: Verify Docker can read secrets
 
 See [Troubleshooting Guide](troubleshooting.md) for detailed solutions.
@@ -176,7 +176,7 @@ See [Troubleshooting Guide](troubleshooting.md) for detailed solutions.
 Returns 200 if the process is running.
 
 ```bash
-curl -s http://localhost:8080/health | jq
+curl -s http://localhost:30882/health | jq
 ```
 
 Response:
@@ -192,7 +192,7 @@ Response:
 Returns 200 if ready to serve, 503 if not ready.
 
 ```bash
-curl -s http://localhost:8080/health/ready | jq
+curl -s http://localhost:30882/health/ready | jq
 ```
 
 Response (ready):
@@ -216,7 +216,7 @@ Response (not ready):
 Returns complete component status.
 
 ```bash
-curl -s http://localhost:8080/health/detailed | jq
+curl -s http://localhost:30882/health/detailed | jq
 ```
 
 Response:
@@ -570,7 +570,7 @@ cp config/backup/* config/
 docker compose up -d
 
 # 5. Verify
-curl http://localhost:8080/health
+curl http://localhost:30882/health
 ```
 
 ---
@@ -584,7 +584,7 @@ curl http://localhost:8080/health
 | `BOT_ENVIRONMENT` | production | Environment name |
 | `BOT_LOG_LEVEL` | INFO | Logging level |
 | `BOT_HEALTH_ENABLED` | true | Enable health endpoints |
-| `BOT_HEALTH_PORT` | 8080 | Health endpoint port |
+| `BOT_HEALTH_PORT` | 30882 | Health endpoint port |
 | `BOT_METRICS_ENABLED` | true | Enable metrics collection |
 
 ### Docker Commands Reference
