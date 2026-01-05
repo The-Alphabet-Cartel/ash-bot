@@ -1,26 +1,3 @@
-<!--
-============================================================================
-Ash-Bot: Crisis Detection Discord Bot
-The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
-============================================================================
-
-MISSION - NEVER TO BE VIOLATED:
-    Monitor  → Send messages to Ash-NLP for crisis classification
-    Alert    → Notify Crisis Response Team via embeds when crisis detected
-    Track    → Maintain user history for escalation pattern detection
-    Protect  → Safeguard our LGBTQIA+ community through early intervention
-
-============================================================================
-Crisis Response Team Guide - Non-Technical Usage Guide
-----------------------------------------------------------------------------
-FILE VERSION: v5.0-6-3.0-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 6 - Final Testing & Documentation
-CLEAN ARCHITECTURE: Compliant
-Repository: https://github.com/the-alphabet-cartel/ash-bot
-============================================================================
--->
-
 # Crisis Response Team Guide
 
 ## Welcome, CRT Member! 💜
@@ -109,12 +86,13 @@ Alerts go to different channels based on severity:
 
 | Severity | Channel | Who Gets Pinged |
 |----------|---------|-----------------|
-| 🔴 CRITICAL | #crisis-response | @CrisisResponse + DMs to leads |
+| 🔴 CRITICAL | #crisis-critical | @CrisisResponse + DMs to leads |
 | 🟠 HIGH | #crisis-response | @CrisisResponse |
 | 🟡 MEDIUM | #crisis-monitor | No ping (check periodically) |
 
 ### Your Responsibility
 
+- **#crisis-critical**: Check immediately when pinged
 - **#crisis-response**: Check immediately when pinged
 - **#crisis-monitor**: Check at least every few hours during your shift
 
@@ -179,7 +157,7 @@ The alert will update to show your name and timestamp.
 
 ### Step 2: Go to the User
 
-1. Click on the channel name in the alert (e.g., #venting)
+1. Click on the channel name in the alert (e.g., #general-chat)
 2. Find the user's recent messages
 3. Read what they wrote to understand the context
 
@@ -193,7 +171,7 @@ You have several options:
 
 **Option B: Send a DM**
 - Good for: Private matters, more serious situations
-- Example: "Hey, I saw your message in #venting. I'm here if you want to talk privately."
+- Example: "Hey, I saw your message in #general-chat. I'm here if you want to talk privately."
 
 **Option C: Let Ash Help First**
 - Click "Talk to Ash" button
@@ -373,7 +351,7 @@ Click "Acknowledge" → Read Context → Reach Out → Document if needed
 
 - Ask in #crt-discussion
 - Tag @TechTeam for technical issues
-- Check #crt-announcements for updates
+- Check #project-details for updates
 
 ### Difficult Situations?
 
@@ -384,7 +362,7 @@ Click "Acknowledge" → Read Context → Reach Out → Document if needed
 ### Technical Problems?
 
 If Ash-Bot isn't working:
-1. Check #bot-status for announcements
+1. Check #bot-alerts for announcements
 2. Tag @TechTeam
 3. Continue monitoring manually until fixed
 
@@ -404,7 +382,7 @@ Thank you for everything you do. 💜
 
 If someone is in **immediate danger**, these resources can help:
 
-- **988 Suicide & Crisis Lifeline**: Call or text 988 (US)
+- **988 Suicide & Crisis Lifeline**: Call or text 988 (US and Canada)
 - **Crisis Text Line**: Text HOME to 741741 (US)
 - **Trevor Project** (LGBTQ+): 1-866-488-7386
 - **Trans Lifeline**: 877-565-8860
