@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.6",
+		"file_version": "v5.0.7",
 		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -389,7 +389,7 @@
 	},
 
 	"response_metrics": {
-		"description": "Response time tracking for crisis alerts (Phase 8)",
+		"description": "Response time tracking for crisis alerts (Phase 8.1)",
 		"enabled": "${BOT_RESPONSE_METRICS_ENABLED}",
 		"retention_days": "${BOT_RESPONSE_METRICS_RETENTION_DAYS}",
 		"aggregate_retention_days": "${BOT_RESPONSE_METRICS_AGGREGATE_RETENTION_DAYS}",
@@ -411,6 +411,40 @@
 			"aggregate_retention_days": {
 				"type": "integer",
 				"range": [30, 730],
+				"required": true
+			}
+		}
+	},
+
+	"weekly_report": {
+		"description": "Weekly CRT report configuration (Phase 8.2)",
+		"enabled": "${BOT_WEEKLY_REPORT_ENABLED}",
+		"channel_id": "${BOT_WEEKLY_REPORT_CHANNEL_ID}",
+		"report_day": "${BOT_WEEKLY_REPORT_DAY}",
+		"report_hour": "${BOT_WEEKLY_REPORT_HOUR}",
+		"defaults": {
+			"enabled": true,
+			"channel_id": null,
+			"report_day": "monday",
+			"report_hour": 9
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"channel_id": {
+				"type": "string",
+				"required": false
+			},
+			"report_day": {
+				"type": "string",
+				"allowed_values": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+				"required": true
+			},
+			"report_hour": {
+				"type": "integer",
+				"range": [0, 23],
 				"required": true
 			}
 		}

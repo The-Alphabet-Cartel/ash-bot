@@ -9,7 +9,7 @@
 **Created**: 2026-01-05  
 **Updated**: 2026-01-05  
 **Phase**: 8 - Metrics & Reporting  
-**Status**: 🟡 In Progress (8.1 Complete)  
+**Status**: 🟡 In Progress (8.1, 8.2 Complete)  
 **Estimated Time**: 10-14 hours  
 **Dependencies**: Phase 7 Complete
 
@@ -76,7 +76,7 @@ Before starting Phase 8, ensure:
 | Step | Feature | Status | Completed |
 |------|---------|--------|----------|
 | 8.1 | Response Time Tracking | ✅ Complete | 2026-01-05 |
-| 8.2 | Weekly CRT Report | 🔵 Not Started | - |
+| 8.2 | Weekly CRT Report | ✅ Complete | 2026-01-05 |
 | 8.3 | Data Retention Policy | 🔵 Not Started | - |
 
 ---
@@ -294,7 +294,11 @@ BOT_METRICS_AGGREGATE_RETENTION_DAYS=365                  # Days to retain daily
 
 **Goal**: Generate and post automated weekly summary to a configurable channel.
 
-**Estimated Time**: 4-6 hours
+**Status**: ✅ **COMPLETE** (2026-01-05)
+
+**Completion Report**: See `docs/v5.0/phase8/phase8_2_complete.md`
+
+**Estimated Time**: 4-6 hours (Actual: ~2 hours)
 
 ### 8.2.1: Report Contents
 
@@ -379,13 +383,13 @@ BOT_WEEKLY_REPORT_HOUR=9                                  # Hour (0-23) in UTC
 
 ### 8.2.4: Acceptance Criteria
 
-- [ ] Report generates correctly from metrics
-- [ ] Report posts to configured channel
-- [ ] Scheduler runs on configured day/time
-- [ ] Empty weeks handled gracefully
-- [ ] Top responders shown (without revealing private info)
-- [ ] Feature can be disabled via config
-- [ ] Missing channel ID prevents startup crash
+- [x] Report generates correctly from metrics
+- [x] Report posts to configured channel
+- [x] Scheduler runs on configured day/time
+- [x] Empty weeks handled gracefully
+- [x] Top responders shown (without revealing private info)
+- [x] Feature can be disabled via config
+- [x] Missing channel ID prevents startup crash
 
 ---
 
