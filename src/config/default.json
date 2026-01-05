@@ -270,7 +270,7 @@
 		"defaults": {
 			"enabled": true,
 			"host": "0.0.0.0",
-			"port": 30882
+			"port": 30881
 		},
 		"validation": {
 			"enabled": {

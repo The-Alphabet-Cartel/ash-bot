@@ -99,12 +99,12 @@ COPY --chown=${APP_USER}:${APP_USER} tests/ ${APP_HOME}/tests/
 # Switch to non-root user
 USER ${APP_USER}
 
-# Expose health check port (Ash ecosystem standard: 30882)
-EXPOSE 30882
+# Expose health check port (Ash ecosystem standard: 30881)
+EXPOSE 30881
 
 # Health check - use HTTP endpoint (Phase 5)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD curl -f http://localhost:30882/health || exit 1
+    CMD curl -f http://localhost:30881/health || exit 1
 
 # Default command - run the bot
 CMD ["python", "main.py"]

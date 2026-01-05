@@ -403,10 +403,10 @@ class TestHealthServer:
     @pytest.mark.asyncio
     async def test_health_server_starts_on_configured_port(self):
         """Test health server starts on configured port."""
-        configured_port = 30882
+        configured_port = 30881
 
         # Server should bind to this port
-        assert configured_port == 30882
+        assert configured_port == 30881
 
     @pytest.mark.asyncio
     async def test_health_server_handles_concurrent_requests(self):

@@ -73,9 +73,9 @@ services:
       - BOT_ENVIRONMENT=production
       - TZ=America/Los_Angeles
 
-    # Port mapping for health checks (Ash ecosystem: 30882)
+    # Port mapping for health checks (Ash ecosystem: 30881)
     ports:
-      - "30882:30882"
+      - "30881:30881"
 
     # Volume mounts
     volumes:
@@ -90,7 +90,7 @@ services:
 
     # Health check - uses HTTP endpoint from health server
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:30882/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:30881/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -513,7 +513,7 @@ async def main_async(args: argparse.Namespace) -> int:
 
                 # Create and start health server (need routes first)
                 health_host = config_manager.get("health", "host", "0.0.0.0")
-                health_port = config_manager.get("health", "port", 30882)
+                health_port = config_manager.get("health", "port", 30881)
 
                 # Import health routes factory
                 from src.api.health_routes import create_health_routes

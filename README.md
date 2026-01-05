@@ -70,7 +70,7 @@ Ash-Bot is a crisis detection Discord bot that monitors community messages for s
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │                 Production Hardening (Phase 5)                   │   │
-│  │  HealthManager ─► HealthServer (:30882) ─► /health, /metrics     │   │
+│  │  HealthManager ─► HealthServer (:30881) ─► /health, /metrics     │   │
 │  │  MetricsManager ─► Prometheus-format export                      │   │
 │  │  CircuitBreaker + RetryLogic for all external services           │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
@@ -164,7 +164,7 @@ Ash-Bot is a crisis detection Discord bot that monitors community messages for s
    docker ps
    
    # Check health endpoint
-   curl http://localhost:30882/health
+   curl http://localhost:30881/health
    
    # View logs
    docker compose logs -f ash-bot

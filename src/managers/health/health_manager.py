@@ -236,7 +236,7 @@ class HealthManager:
         # Health check timeout
         self._check_timeout = 5.0  # seconds
 
-        logger.info(f"✅ HealthManager v{__version__} initialized (version: {version})")
+        logger.info(f"✅ HealthManager {__version__} initialized (version: {version})")
         logger.debug(
             f"HealthManager components: discord={discord_manager is not None}, "
             f"nlp={nlp_client is not None}, redis={redis_manager is not None}, "
@@ -621,7 +621,10 @@ class HealthManager:
                     message="Ash AI fully operational",
                     last_check=datetime.utcnow(),
                     latency_ms=latency_ms,
-                    details={"active_sessions": active_sessions, "claude_available": True},
+                    details={
+                        "active_sessions": active_sessions,
+                        "claude_available": True,
+                    },
                 )
             elif self._ash:
                 return ComponentHealth(
@@ -630,7 +633,10 @@ class HealthManager:
                     message="Ash sessions available, Claude not configured",
                     last_check=datetime.utcnow(),
                     latency_ms=latency_ms,
-                    details={"active_sessions": active_sessions, "claude_available": False},
+                    details={
+                        "active_sessions": active_sessions,
+                        "claude_available": False,
+                    },
                 )
             else:
                 return ComponentHealth(

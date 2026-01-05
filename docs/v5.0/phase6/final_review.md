@@ -117,7 +117,7 @@ All managers use factory function pattern per Clean Architecture Rule #1:
 
 ### 2.4 Network Security ✅
 
-- ✅ Health endpoint on internal port only (30882)
+- ✅ Health endpoint on internal port only (30881)
 - ✅ Redis not exposed externally (internal network only)
 - ✅ Discord communication via official discord.py library
 - ✅ NLP API on internal Docker network

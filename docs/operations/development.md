@@ -116,7 +116,7 @@ docker compose logs -f ash-bot
 
 ```bash
 docker ps
-curl http://localhost:30882/health
+curl http://localhost:30881/health
 docker exec ash-bot python -m pytest tests/ -v
 ```
 

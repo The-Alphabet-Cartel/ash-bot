@@ -108,7 +108,7 @@ docker compose up -d
 
 ```bash
 docker compose ps
-curl http://localhost:30882/health
+curl http://localhost:30881/health
 docker compose logs -f ash-bot
 ```
 
@@ -120,7 +120,7 @@ docker compose logs -f ash-bot
 git pull origin main
 docker compose build
 docker compose up -d
-curl http://localhost:30882/health
+curl http://localhost:30881/health
 ```
 
 ---

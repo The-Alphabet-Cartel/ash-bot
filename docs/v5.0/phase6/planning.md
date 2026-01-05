@@ -517,10 +517,10 @@ docker inspect ash-bot --format='{{.State.Health.Status}}'
 # Expected: healthy
 
 # Check health endpoint directly
-curl -s http://localhost:30882/health
-curl -s http://localhost:30882/health/ready
-curl -s http://localhost:30882/health/detailed | jq
-curl -s http://localhost:30882/metrics
+curl -s http://localhost:30881/health
+curl -s http://localhost:30881/health/ready
+curl -s http://localhost:30881/health/detailed | jq
+curl -s http://localhost:30881/metrics
 ```
 
 ### 6.4.4: Restart Recovery Test

@@ -361,7 +361,7 @@ def mock_config_manager() -> MagicMock:
         ("alerting", "cooldown_seconds", 60): 60,
         ("alerting", "enabled", True): True,
         ("health", "enabled", True): True,
-        ("health", "port", 30882): 30882,
+        ("health", "port", 30881): 30881,
         ("metrics", "enabled", True): True,
         ("ash", "enabled", True): True,
         ("ash", "session_timeout_seconds", 300): 300,
