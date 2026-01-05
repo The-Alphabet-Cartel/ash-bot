@@ -12,20 +12,21 @@ MISSION - NEVER TO BE VIOLATED:
 
 ============================================================================
 Alert Dispatcher for Ash-Bot Service
----
-FILE VERSION: v5.0-7-1.0-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 7 - Core Safety & User Preferences
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-8-1.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 8 - Metrics & Reporting
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
-Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
+
 RESPONSIBILITIES:
 - Determine if alert should be sent (severity + cooldown)
 - Route alerts to appropriate channels by severity
 - Build and send embeds with interactive buttons
 - Ping CRT role for HIGH/CRITICAL alerts
 - Track cooldowns to prevent spam
+- Record response metrics for alert tracking (Phase 8)
 
 USAGE:
     from src.managers.alerting import create_alert_dispatcher
@@ -52,12 +53,13 @@ if TYPE_CHECKING:
     from src.managers.alerting.embed_builder import EmbedBuilder
     from src.managers.alerting.cooldown_manager import CooldownManager
     from src.managers.alerting.auto_initiate_manager import AutoInitiateManager
+    from src.managers.metrics.response_metrics_manager import ResponseMetricsManager
     from src.models.nlp_models import CrisisAnalysisResult
 
 from src.views.alert_buttons import AlertButtonView
 
 # Module version
-__version__ = "v5.0-7-1.0-1"
+__version__ = "v5.0-8-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -91,6 +93,7 @@ class AlertDispatcher:
     5. Add interactive buttons
     6. Ping CRT role if needed
     7. Set cooldown for user
+    8. Record response metrics (Phase 8)
 
     Attributes:
         config_manager: ConfigManager for settings
@@ -98,6 +101,7 @@ class AlertDispatcher:
         embed_builder: EmbedBuilder for embed creation
         cooldown_manager: CooldownManager for rate limiting
         bot: Discord bot instance for sending
+        response_metrics: ResponseMetricsManager for tracking (Phase 8)
 
     Example:
         >>> dispatcher = create_alert_dispatcher(...)
@@ -114,6 +118,7 @@ class AlertDispatcher:
         cooldown_manager: "CooldownManager",
         bot: commands.Bot,
         auto_initiate_manager: Optional["AutoInitiateManager"] = None,
+        response_metrics_manager: Optional["ResponseMetricsManager"] = None,
     ):
         """
         Initialize AlertDispatcher.
@@ -125,6 +130,7 @@ class AlertDispatcher:
             cooldown_manager: Cooldown tracking instance
             bot: Discord bot instance
             auto_initiate_manager: Optional auto-initiate manager (Phase 7)
+            response_metrics_manager: Optional response metrics manager (Phase 8)
 
         Note:
             Use create_alert_dispatcher() factory function.
@@ -135,6 +141,7 @@ class AlertDispatcher:
         self._cooldown = cooldown_manager
         self._bot = bot
         self._auto_initiate = auto_initiate_manager
+        self._response_metrics = response_metrics_manager
 
         # Load configuration
         self._enabled = self._config.get("alerting", "enabled", True)
@@ -151,7 +158,8 @@ class AlertDispatcher:
         logger.info(
             f"✅ AlertDispatcher initialized "
             f"(enabled={self._enabled}, min_severity={self._min_severity}, "
-            f"auto_initiate={'enabled' if auto_initiate_manager else 'disabled'})"
+            f"auto_initiate={'enabled' if auto_initiate_manager else 'disabled'}, "
+            f"response_metrics={'enabled' if response_metrics_manager else 'disabled'})"
         )
 
     # =========================================================================
@@ -229,6 +237,7 @@ class AlertDispatcher:
         message: discord.Message,
         result: "CrisisAnalysisResult",
         force: bool = False,
+        channel_sensitivity: float = 1.0,
     ) -> Optional[discord.Message]:
         """
         Dispatch a crisis alert if appropriate.
@@ -237,6 +246,7 @@ class AlertDispatcher:
             message: Original Discord message
             result: NLP analysis result
             force: If True, bypass cooldown check
+            channel_sensitivity: Channel sensitivity modifier (Phase 7)
 
         Returns:
             Sent alert message, or None if not sent
@@ -269,17 +279,24 @@ class AlertDispatcher:
             )
             return None
 
+        # Phase 8: Generate alert ID for metrics tracking
+        alert_id = None
+        if self._response_metrics:
+            from src.managers.metrics.response_metrics_manager import ResponseMetricsManager
+            alert_id = ResponseMetricsManager.generate_alert_id()
+
         # Build embed
         embed = self._embed_builder.build_crisis_embed(
             message=message,
             result=result,
         )
 
-        # Build button view
+        # Build button view with alert_id for metrics tracking
         view = AlertButtonView(
             user_id=message.author.id,
             message_id=message.id,
             severity=severity,
+            alert_id=alert_id,  # Phase 8: Pass alert_id to view
         )
 
         # Build content (CRT ping if needed)
@@ -306,8 +323,19 @@ class AlertDispatcher:
             logger.info(
                 f"🚨 Alert dispatched for user {message.author.id} "
                 f"(severity: {severity}, channel: #{channel.name}, "
-                f"ping_crt: {content is not None})"
+                f"ping_crt: {content is not None}, alert_id: {alert_id})"
             )
+
+            # Phase 8: Record alert creation in response metrics
+            if self._response_metrics and alert_id:
+                await self._response_metrics.record_alert_created(
+                    alert_id=alert_id,
+                    alert_message_id=alert_message.id,
+                    user_id=message.author.id,
+                    channel_id=message.channel.id,
+                    severity=severity,
+                    channel_sensitivity=channel_sensitivity,
+                )
 
             # Phase 7: Track alert for auto-initiate
             if self._auto_initiate and self._auto_initiate.is_enabled:
@@ -341,6 +369,7 @@ class AlertDispatcher:
         result: "CrisisAnalysisResult",
         history_count: int,
         trend: str,
+        channel_sensitivity: float = 1.0,
     ) -> Optional[discord.Message]:
         """
         Dispatch an escalation alert (when pattern detected).
@@ -352,6 +381,7 @@ class AlertDispatcher:
             result: NLP analysis result
             history_count: Number of messages in history
             trend: Trend direction (escalating, stable, etc.)
+            channel_sensitivity: Channel sensitivity modifier (Phase 7)
 
         Returns:
             Sent alert message, or None if not sent
@@ -369,6 +399,12 @@ class AlertDispatcher:
         if channel is None:
             return None
 
+        # Phase 8: Generate alert ID for metrics tracking
+        alert_id = None
+        if self._response_metrics:
+            from src.managers.metrics.response_metrics_manager import ResponseMetricsManager
+            alert_id = ResponseMetricsManager.generate_alert_id()
+
         # Build escalation embed
         embed = self._embed_builder.build_escalation_embed(
             message=message,
@@ -377,11 +413,12 @@ class AlertDispatcher:
             trend=trend,
         )
 
-        # Build button view
+        # Build button view with alert_id
         view = AlertButtonView(
             user_id=message.author.id,
             message_id=message.id,
             severity=severity,
+            alert_id=alert_id,  # Phase 8
         )
 
         # Always ping CRT for escalations
@@ -406,8 +443,19 @@ class AlertDispatcher:
             logger.warning(
                 f"📈 Escalation alert dispatched for user {message.author.id} "
                 f"(severity: {severity}, trend: {trend}, "
-                f"history: {history_count} messages)"
+                f"history: {history_count} messages, alert_id: {alert_id})"
             )
+
+            # Phase 8: Record alert creation in response metrics
+            if self._response_metrics and alert_id:
+                await self._response_metrics.record_alert_created(
+                    alert_id=alert_id,
+                    alert_message_id=alert_message.id,
+                    user_id=message.author.id,
+                    channel_id=message.channel.id,
+                    severity=severity,
+                    channel_sensitivity=channel_sensitivity,
+                )
 
             return alert_message
 
@@ -418,10 +466,6 @@ class AlertDispatcher:
         except discord.HTTPException as e:
             logger.error(f"❌ Failed to send escalation alert: {e}")
             return None
-
-    # =========================================================================
-    # Properties
-    # =========================================================================
 
     # =========================================================================
     # Auto-Initiate Integration (Phase 7)
@@ -447,6 +491,28 @@ class AlertDispatcher:
     def auto_initiate_manager(self) -> Optional["AutoInitiateManager"]:
         """Get the auto-initiate manager (if set)."""
         return self._auto_initiate
+
+    # =========================================================================
+    # Response Metrics Integration (Phase 8)
+    # =========================================================================
+
+    def set_response_metrics_manager(
+        self,
+        response_metrics_manager: "ResponseMetricsManager",
+    ) -> None:
+        """
+        Set the response metrics manager after initialization.
+
+        Args:
+            response_metrics_manager: ResponseMetricsManager instance
+        """
+        self._response_metrics = response_metrics_manager
+        logger.debug("ResponseMetricsManager set on AlertDispatcher")
+
+    @property
+    def response_metrics_manager(self) -> Optional["ResponseMetricsManager"]:
+        """Get the response metrics manager (if set)."""
+        return self._response_metrics
 
     # =========================================================================
     # Properties
@@ -486,6 +552,7 @@ class AlertDispatcher:
             "alerts_skipped_cooldown": self._alerts_skipped_cooldown,
             "alerts_skipped_severity": self._alerts_skipped_severity,
             "alert_channels": self._channel_config.get_all_alert_channels(),
+            "response_metrics_enabled": self._response_metrics is not None,
         }
 
     def __repr__(self) -> str:
@@ -508,6 +575,7 @@ def create_alert_dispatcher(
     embed_builder: "EmbedBuilder",
     cooldown_manager: "CooldownManager",
     bot: commands.Bot,
+    response_metrics_manager: Optional["ResponseMetricsManager"] = None,
 ) -> AlertDispatcher:
     """
     Factory function for AlertDispatcher.
@@ -521,6 +589,7 @@ def create_alert_dispatcher(
         embed_builder: Embed builder instance
         cooldown_manager: Cooldown tracking instance
         bot: Discord bot instance
+        response_metrics_manager: Optional response metrics manager (Phase 8)
 
     Returns:
         Configured AlertDispatcher instance
@@ -532,6 +601,7 @@ def create_alert_dispatcher(
         ...     embed_builder=embed_builder,
         ...     cooldown_manager=cooldown,
         ...     bot=bot,
+        ...     response_metrics_manager=response_metrics,
         ... )
         >>> await dispatcher.dispatch_alert(message, result)
     """
@@ -543,6 +613,7 @@ def create_alert_dispatcher(
         embed_builder=embed_builder,
         cooldown_manager=cooldown_manager,
         bot=bot,
+        response_metrics_manager=response_metrics_manager,
     )
 
 

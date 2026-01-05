@@ -5,10 +5,11 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.2.0  
 **Created**: 2026-01-05  
+**Updated**: 2026-01-05  
 **Phase**: 8 - Metrics & Reporting  
-**Status**: 🔵 Planning  
+**Status**: ✅ Complete (All Steps)  
 **Estimated Time**: 10-14 hours  
 **Dependencies**: Phase 7 Complete
 
@@ -63,16 +64,31 @@ Phase 8 focuses on operational metrics and reporting capabilities. These feature
 
 Before starting Phase 8, ensure:
 
-- [ ] Phase 7 complete (Core Safety & User Preferences)
-- [ ] Auto-initiate feature operational
-- [ ] Redis operational with authentication
-- [ ] All Phase 7 tests passing
+- [x] Phase 7 complete (Core Safety & User Preferences)
+- [x] Auto-initiate feature operational
+- [x] Redis operational with authentication
+- [x] All Phase 7 tests passing
+
+---
+
+## Progress Summary
+
+| Step | Feature | Status | Completed |
+|------|---------|--------|----------|
+| 8.1 | Response Time Tracking | ✅ Complete | 2026-01-05 |
+| 8.2 | Weekly CRT Report | ✅ Complete | 2026-01-05 |
+| 8.3 | Data Retention Policy | ✅ Complete | 2026-01-05 |
+| Bonus | PUID/PGID Container Support | ✅ Complete | 2026-01-05 |
 
 ---
 
 ## Step 8.1: Response Time Tracking
 
 **Goal**: Track and store response time metrics for all crisis alerts.
+
+**Status**: ✅ **COMPLETE** (2026-01-05)
+
+**Completion Report**: See `docs/v5.0/phase8/phase8_1_complete.md`
 
 **Estimated Time**: 3-4 hours
 
@@ -265,13 +281,13 @@ BOT_METRICS_AGGREGATE_RETENTION_DAYS=365                  # Days to retain daily
 
 ### 8.1.6: Acceptance Criteria
 
-- [ ] Alert creation time recorded
-- [ ] Acknowledgment time recorded
-- [ ] Ash contact time recorded (manual and auto)
-- [ ] Time deltas calculated correctly
-- [ ] Daily aggregates computed
-- [ ] TTL applied to stored data
-- [ ] Feature can be disabled via config
+- [x] Alert creation time recorded
+- [x] Acknowledgment time recorded
+- [x] Ash contact time recorded (manual and auto)
+- [x] Time deltas calculated correctly
+- [x] Daily aggregates computed
+- [x] TTL applied to stored data
+- [x] Feature can be disabled via config
 
 ---
 
@@ -279,7 +295,11 @@ BOT_METRICS_AGGREGATE_RETENTION_DAYS=365                  # Days to retain daily
 
 **Goal**: Generate and post automated weekly summary to a configurable channel.
 
-**Estimated Time**: 4-6 hours
+**Status**: ✅ **COMPLETE** (2026-01-05)
+
+**Completion Report**: See `docs/v5.0/phase8/phase8_2_complete.md`
+
+**Estimated Time**: 4-6 hours (Actual: ~2 hours)
 
 ### 8.2.1: Report Contents
 
@@ -364,13 +384,13 @@ BOT_WEEKLY_REPORT_HOUR=9                                  # Hour (0-23) in UTC
 
 ### 8.2.4: Acceptance Criteria
 
-- [ ] Report generates correctly from metrics
-- [ ] Report posts to configured channel
-- [ ] Scheduler runs on configured day/time
-- [ ] Empty weeks handled gracefully
-- [ ] Top responders shown (without revealing private info)
-- [ ] Feature can be disabled via config
-- [ ] Missing channel ID prevents startup crash
+- [x] Report generates correctly from metrics
+- [x] Report posts to configured channel
+- [x] Scheduler runs on configured day/time
+- [x] Empty weeks handled gracefully
+- [x] Top responders shown (without revealing private info)
+- [x] Feature can be disabled via config
+- [x] Missing channel ID prevents startup crash
 
 ---
 
@@ -378,7 +398,11 @@ BOT_WEEKLY_REPORT_HOUR=9                                  # Hour (0-23) in UTC
 
 **Goal**: Automatically purge old data based on configurable retention periods.
 
-**Estimated Time**: 3-4 hours
+**Status**: ✅ **COMPLETE** (2026-01-05)
+
+**Completion Report**: See `docs/v5.0/phase8/phase8_3_complete.md`
+
+**Estimated Time**: 3-4 hours (Actual: ~2 hours)
 
 ### 8.3.1: Data Categories and Retention
 
@@ -424,14 +448,56 @@ BOT_RETENTION_CLEANUP_HOUR=3                              # Hour (0-23) to run d
 # ------------------------------------------------------- #
 ```
 
-### 8.3.4: Acceptance Criteria
+---
 
-- [ ] Daily cleanup runs at configured hour
-- [ ] Expired data removed correctly
-- [ ] TTLs enforced on all relevant keys
-- [ ] Storage stats available
-- [ ] Cleanup report logged
-- [ ] Feature can be disabled via config
+## Bonus: PUID/PGID Container Support
+
+**Goal**: LinuxServer.io-style user/group ID configuration for NAS environments.
+
+**Status**: ✅ **COMPLETE** (2026-01-05)
+
+### Why This Feature
+
+When running containers on NAS systems (Synology, TrueNAS, Unraid) or shared storage environments, file permissions become critical. Files created by the container need to match the host user's UID/GID to avoid permission issues.
+
+### Implementation
+
+| File | Changes |
+|------|--------|
+| `docker-entrypoint.sh` | **NEW** - Runtime user/group modification script |
+| `Dockerfile` | Added `gosu`, entrypoint script, container labels |
+| `docker-compose.yml` | Added PUID/PGID environment variables |
+| `.env.template` | Added PUID/PGID documentation |
+| `docs/operations/deployment.md` | Added User/Group Configuration section |
+
+### How It Works
+
+1. Container starts as root (required for user modification)
+2. Entrypoint script reads `PUID` and `PGID` environment variables
+3. Internal `bot` user is modified to match specified IDs
+4. Permissions fixed on `/app/logs` and other directories
+5. `gosu` drops privileges to run application as modified user
+
+### Configuration
+
+```bash
+# In .env file
+PUID=1000                                                 # User ID to run container as
+PGID=1000                                                 # Group ID to run container as
+```
+
+### Verification
+
+Container logs show configured PUID/PGID on startup:
+
+```
+[entrypoint] INFO: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[entrypoint] INFO:   🤖 Ash-Bot Container Starting
+[entrypoint] INFO: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[entrypoint] INFO:   PUID: 1000
+[entrypoint] INFO:   PGID: 1000
+[entrypoint] INFO: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ---
 
@@ -479,21 +545,22 @@ BOT_RETENTION_CLEANUP_HOUR=3                              # Hour (0-23) to run d
 
 ### Must Have (Critical)
 
-- [ ] Response times tracked for all alerts
-- [ ] Weekly report generates and posts
-- [ ] Data cleanup runs daily
-- [ ] All features configurable via environment
+- [x] Response times tracked for all alerts
+- [x] Weekly report generates and posts
+- [x] Data cleanup runs daily
+- [x] All features configurable via environment
 
 ### Should Have (Important)
 
-- [ ] Daily aggregates for efficient reporting
-- [ ] Storage stats available
-- [ ] Graceful handling of missing data
+- [x] Daily aggregates for efficient reporting
+- [x] Storage stats available
+- [x] Graceful handling of missing data
 
 ### Nice to Have (Bonus)
 
-- [ ] Manual report trigger command
-- [ ] Storage usage alerts
+- [x] Manual report trigger command
+- [x] PUID/PGID container support (LinuxServer.io style)
+- [ ] Storage usage alerts (deferred to Phase 10)
 
 ---
 

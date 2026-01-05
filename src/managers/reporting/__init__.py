@@ -11,29 +11,42 @@ MISSION - NEVER TO BE VIOLATED:
     Protect  → Safeguard our LGBTQIA+ community through early intervention
 
 ============================================================================
-Storage Manager Tests Package for Ash-Bot Service
+Reporting Package - Automated Report Generation and Delivery
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-8-3.0-1
+FILE VERSION: v5.0-8-2.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 8 - Metrics & Reporting (Step 8.3)
+PHASE: Phase 8 - Metrics & Reporting
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
-Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
 
-Test suite for storage managers:
-- test_redis_manager.py: RedisManager unit tests
-- test_redis_manager_phase5.py: RedisManager Phase 5 tests (retry logic, metrics)
-- test_user_history_manager.py: UserHistoryManager unit tests
-- test_data_retention.py: DataRetentionManager unit tests (Phase 8.3)
+PACKAGE CONTENTS:
+- WeeklyReportManager: Generates and posts weekly CRT summary reports
 
 USAGE:
-    # Run all storage tests
-    pytest tests/test_storage/ -v
+    from src.managers.reporting import create_weekly_report_manager
 
-    # Run specific test file
-    pytest tests/test_storage/test_redis_manager.py -v
-    pytest tests/test_storage/test_data_retention.py -v
+    report_mgr = create_weekly_report_manager(
+        config_manager=config,
+        response_metrics_manager=metrics,
+        bot=discord_bot,
+    )
+
+    await report_mgr.start()
 """
 
-__version__ = "v5.0-8-3.0-1"
+from src.managers.reporting.weekly_report_manager import (
+    WeeklyReportManager,
+    create_weekly_report_manager,
+    DAY_NAME_TO_WEEKDAY,
+)
+
+
+__version__ = "v5.0-8-2.0-1"
+
+
+__all__ = [
+    "WeeklyReportManager",
+    "create_weekly_report_manager",
+    "DAY_NAME_TO_WEEKDAY",
+]

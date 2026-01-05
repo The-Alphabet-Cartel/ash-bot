@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.5",
+		"file_version": "v5.0.8",
 		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -383,6 +383,117 @@
 			"export_interval_seconds": {
 				"type": "integer",
 				"range": [10, 300],
+				"required": true
+			}
+		}
+	},
+
+	"response_metrics": {
+		"description": "Response time tracking for crisis alerts (Phase 8.1)",
+		"enabled": "${BOT_RESPONSE_METRICS_ENABLED}",
+		"retention_days": "${BOT_RESPONSE_METRICS_RETENTION_DAYS}",
+		"aggregate_retention_days": "${BOT_RESPONSE_METRICS_AGGREGATE_RETENTION_DAYS}",
+		"defaults": {
+			"enabled": true,
+			"retention_days": 90,
+			"aggregate_retention_days": 365
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"retention_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			},
+			"aggregate_retention_days": {
+				"type": "integer",
+				"range": [30, 730],
+				"required": true
+			}
+		}
+	},
+
+	"weekly_report": {
+		"description": "Weekly CRT report configuration (Phase 8.2)",
+		"enabled": "${BOT_WEEKLY_REPORT_ENABLED}",
+		"channel_id": "${BOT_WEEKLY_REPORT_CHANNEL_ID}",
+		"report_day": "${BOT_WEEKLY_REPORT_DAY}",
+		"report_hour": "${BOT_WEEKLY_REPORT_HOUR}",
+		"defaults": {
+			"enabled": true,
+			"channel_id": null,
+			"report_day": "monday",
+			"report_hour": 9
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"channel_id": {
+				"type": "string",
+				"required": false
+			},
+			"report_day": {
+				"type": "string",
+				"allowed_values": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+				"required": true
+			},
+			"report_hour": {
+				"type": "integer",
+				"range": [0, 23],
+				"required": true
+			}
+		}
+	},
+
+	"data_retention": {
+		"description": "Data retention and automated cleanup configuration (Phase 8.3)",
+		"enabled": "${BOT_RETENTION_ENABLED}",
+		"alert_metrics_days": "${BOT_RETENTION_ALERT_METRICS_DAYS}",
+		"aggregates_days": "${BOT_RETENTION_AGGREGATES_DAYS}",
+		"message_history_days": "${BOT_RETENTION_MESSAGE_HISTORY_DAYS}",
+		"session_data_days": "${BOT_RETENTION_SESSION_DATA_DAYS}",
+		"cleanup_hour": "${BOT_RETENTION_CLEANUP_HOUR}",
+		"defaults": {
+			"enabled": true,
+			"alert_metrics_days": 90,
+			"aggregates_days": 365,
+			"message_history_days": 7,
+			"session_data_days": 30,
+			"cleanup_hour": 3
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"alert_metrics_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			},
+			"aggregates_days": {
+				"type": "integer",
+				"range": [30, 730],
+				"required": true
+			},
+			"message_history_days": {
+				"type": "integer",
+				"range": [1, 30],
+				"required": true
+			},
+			"session_data_days": {
+				"type": "integer",
+				"range": [7, 90],
+				"required": true
+			},
+			"cleanup_hour": {
+				"type": "integer",
+				"range": [0, 23],
 				"required": true
 			}
 		}

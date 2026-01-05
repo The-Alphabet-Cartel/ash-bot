@@ -17,9 +17,9 @@ Manages automatic Ash outreach when CRT staff doesn't respond to alerts
 within a configurable timeout. Ensures no community member in crisis
 is left without support during off-hours or when staff is unavailable.
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-7-1.0-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 7 - Core Safety & User Preferences
+FILE VERSION: v5.0-8-1.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 8 - Metrics & Reporting
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 ============================================================================
@@ -40,9 +40,10 @@ if TYPE_CHECKING:
     from src.managers.storage.redis_manager import RedisManager
     from src.managers.ash.ash_session_manager import AshSessionManager
     from src.managers.ash.ash_personality_manager import AshPersonalityManager
+    from src.managers.metrics.response_metrics_manager import ResponseMetricsManager
 
 # Module version
-__version__ = "v5.0-7-1.0-1"
+__version__ = "v5.0-8-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -211,6 +212,9 @@ class AutoInitiateManager:
         self._ash_sessions: Optional["AshSessionManager"] = None
         self._ash_personality: Optional["AshPersonalityManager"] = None
 
+        # Response metrics manager (Phase 8)
+        self._response_metrics: Optional["ResponseMetricsManager"] = None
+
         # In-memory tracking (primary)
         self._pending_alerts: Dict[int, PendingAlert] = {}
 
@@ -261,6 +265,19 @@ class AutoInitiateManager:
         self._ash_sessions = ash_session_manager
         self._ash_personality = ash_personality_manager
         logger.debug("Ash managers injected into AutoInitiateManager")
+
+    def set_response_metrics_manager(
+        self,
+        response_metrics_manager: "ResponseMetricsManager",
+    ) -> None:
+        """
+        Inject response metrics manager after initialization (Phase 8).
+
+        Args:
+            response_metrics_manager: ResponseMetricsManager for tracking
+        """
+        self._response_metrics = response_metrics_manager
+        logger.debug("ResponseMetricsManager injected into AutoInitiateManager")
 
     # =========================================================================
     # Lifecycle Methods
@@ -552,6 +569,9 @@ class AutoInitiateManager:
             await session.dm_channel.send(welcome_msg)
             session.add_assistant_message(welcome_msg)
 
+            # Phase 8: Record auto-initiation metrics
+            await self._record_auto_initiate_metrics(pending)
+
             # Update the alert embed
             await self._update_alert_embed(pending)
 
@@ -584,6 +604,33 @@ class AutoInitiateManager:
             # Remove from pending (whether success or failure)
             self._pending_alerts.pop(pending.alert_message_id, None)
             await self._delete_alert_from_redis(pending.alert_message_id)
+
+    async def _record_auto_initiate_metrics(
+        self,
+        pending: PendingAlert,
+    ) -> None:
+        """
+        Record auto-initiation metrics (Phase 8).
+
+        Args:
+            pending: The pending alert that was auto-initiated
+        """
+        try:
+            if not self._response_metrics or not self._response_metrics.is_enabled:
+                return
+
+            await self._response_metrics.record_ash_contacted_by_message_id(
+                alert_message_id=pending.alert_message_id,
+                initiated_by="auto",
+                was_auto_initiated=True,
+            )
+
+            logger.debug(
+                f"📊 Auto-initiate metrics recorded for alert {pending.alert_message_id}"
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to record auto-initiate metrics: {e}")
 
     async def _update_alert_embed(self, pending: PendingAlert) -> None:
         """
