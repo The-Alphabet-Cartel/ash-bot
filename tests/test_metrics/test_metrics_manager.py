@@ -3,6 +3,14 @@
 Ash-Bot: Crisis Detection Discord Bot
 The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
 Test Suite for Metrics Manager
 ---
 FILE VERSION: v5.0-5-5.2-1
@@ -166,7 +174,7 @@ class TestHistogram:
     def test_histogram_observe(self):
         """Test histogram observation."""
         histogram = Histogram(name="test", buckets=(0.1, 0.5, 1.0))
-        
+
         histogram.observe(0.05)
         assert histogram.count == 1
         assert histogram.sum == 0.05
@@ -178,12 +186,12 @@ class TestHistogram:
     def test_histogram_buckets(self):
         """Test histogram bucket counts."""
         histogram = Histogram(name="test", buckets=(0.1, 0.5, 1.0))
-        
+
         histogram.observe(0.05)  # Goes in 0.1, 0.5, 1.0, +Inf
         histogram.observe(0.25)  # Goes in 0.5, 1.0, +Inf
         histogram.observe(0.75)  # Goes in 1.0, +Inf
-        histogram.observe(5.0)   # Goes only in +Inf
-        
+        histogram.observe(5.0)  # Goes only in +Inf
+
         assert histogram.bucket_counts.get(0.1, 0) >= 1
         assert histogram.bucket_counts.get(0.5, 0) >= 1
         assert histogram.bucket_counts.get(1.0, 0) >= 1
@@ -191,10 +199,10 @@ class TestHistogram:
     def test_histogram_stats(self):
         """Test histogram statistics."""
         histogram = Histogram(name="test", buckets=(0.1, 0.5, 1.0))
-        
+
         for value in [0.1, 0.2, 0.3, 0.4, 0.5]:
             histogram.observe(value)
-        
+
         stats = histogram.get_stats()
         assert stats["count"] == 5
         assert stats["sum"] == 1.5
@@ -208,17 +216,17 @@ class TestHistogram:
     def test_histogram_thread_safety(self):
         """Test histogram is thread-safe."""
         histogram = Histogram(name="test")
-        
+
         def observe_values():
             for i in range(100):
                 histogram.observe(float(i) / 100)
-        
+
         threads = [threading.Thread(target=observe_values) for _ in range(10)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         assert histogram.count == 1000
 
 
@@ -254,7 +262,7 @@ class TestMetricsManager:
         """Test incrementing messages processed."""
         metrics.inc_messages_processed()
         metrics.inc_messages_processed()
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["messages_processed"] == 2
 
@@ -263,7 +271,7 @@ class TestMetricsManager:
         metrics.inc_messages_analyzed(severity="high")
         metrics.inc_messages_analyzed(severity="high")
         metrics.inc_messages_analyzed(severity="low")
-        
+
         json_data = metrics.export_json()
         analyzed = json_data["counters"]["messages_analyzed"]
         assert analyzed.get(("high",), 0) == 2
@@ -278,7 +286,7 @@ class TestMetricsManager:
         metrics.inc_alerts_sent(severity="critical", channel_type="crisis")
         metrics.inc_alerts_sent(severity="high", channel_type="crisis")
         metrics.inc_alerts_sent(severity="medium", channel_type="monitor")
-        
+
         json_data = metrics.export_json()
         alerts = json_data["counters"]["alerts_sent"]
         assert "critical_crisis" in alerts or alerts.get(("critical", "crisis"), 0) > 0
@@ -292,7 +300,7 @@ class TestMetricsManager:
         metrics.inc_ash_sessions()
         metrics.inc_ash_sessions()
         metrics.set_active_ash_sessions(5)
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["ash_sessions"] == 2
         assert json_data["gauges"]["active_ash_sessions"] == 5.0
@@ -306,7 +314,7 @@ class TestMetricsManager:
         metrics.observe_nlp_duration(0.125)
         metrics.observe_nlp_duration(0.250)
         metrics.observe_nlp_duration(0.500)
-        
+
         json_data = metrics.export_json()
         nlp_stats = json_data["histograms"]["nlp_duration"]
         assert nlp_stats["count"] == 3
@@ -316,7 +324,7 @@ class TestMetricsManager:
         """Test NLP error counting."""
         metrics.inc_nlp_errors()
         metrics.inc_nlp_errors(3)
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["nlp_errors"] == 4
 
@@ -329,7 +337,7 @@ class TestMetricsManager:
         metrics.inc_claude_requests()
         metrics.observe_claude_duration(1.5)
         metrics.inc_claude_errors()
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["claude_requests"] == 1
         assert json_data["counters"]["claude_errors"] == 1
@@ -347,7 +355,7 @@ class TestMetricsManager:
         metrics.inc_redis_operations("get")
         metrics.inc_redis_operations("set")
         metrics.observe_redis_duration(0.005)
-        
+
         json_data = metrics.export_json()
         redis_ops = json_data["counters"]["redis_operations"]
         # Keys are 2-tuples: (operation, status)
@@ -357,7 +365,7 @@ class TestMetricsManager:
     def test_redis_error_counting(self, metrics):
         """Test Redis error counting."""
         metrics.inc_redis_errors(2)
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["redis_errors"] == 2
 
@@ -369,7 +377,7 @@ class TestMetricsManager:
         """Test Discord metrics."""
         metrics.inc_discord_reconnects()
         metrics.set_connected_guilds(3)
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["discord_reconnects"] == 1
         assert json_data["gauges"]["connected_guilds"] == 3.0
@@ -381,7 +389,7 @@ class TestMetricsManager:
     def test_export_json_structure(self, metrics):
         """Test JSON export structure."""
         json_data = metrics.export_json()
-        
+
         assert "timestamp" in json_data
         assert "uptime_seconds" in json_data
         assert "counters" in json_data
@@ -391,22 +399,22 @@ class TestMetricsManager:
     def test_export_prometheus_format(self, metrics):
         """Test Prometheus export format."""
         metrics.inc_messages_processed(5)
-        
+
         prometheus = metrics.export_prometheus()
-        
+
         # Should contain HELP and TYPE comments
         assert "# HELP" in prometheus
         assert "# TYPE" in prometheus
-        
+
         # Should contain our metric
         assert "ash_messages_processed_total" in prometheus
 
     def test_export_prometheus_histogram(self, metrics):
         """Test Prometheus histogram export."""
         metrics.observe_nlp_duration(0.5)
-        
+
         prometheus = metrics.export_prometheus()
-        
+
         assert "ash_nlp_request_duration_seconds" in prometheus
         assert "_bucket" in prometheus
         assert "_sum" in prometheus
@@ -420,9 +428,9 @@ class TestMetricsManager:
         """Test reset clears all metrics."""
         metrics.inc_messages_processed(100)
         metrics.inc_alerts_sent(severity="high", channel_type="crisis")
-        
+
         metrics.reset_all()
-        
+
         json_data = metrics.export_json()
         assert json_data["counters"]["messages_processed"] == 0
 

@@ -11,29 +11,105 @@
 
 ## 🎯 Overview
 
-Ash-Bot is a crisis detection Discord bot that monitors community messages for signs of mental health crises and alerts the Crisis Response Team (CRT) when intervention may be needed.
+Ash-Bot is a crisis detection Discord bot that monitors community messages for signs of mental health crises and alerts the Crisis Response Team (CRT) when intervention may be needed. The bot leverages multi-model NLP analysis to provide accurate crisis detection while minimizing false positives.
+
+### Mission
+
+> **Protect our LGBTQIA+ community through early intervention and compassionate support.**
 
 ### Core Capabilities
 
 | Feature | Description |
 |---------|-------------|
 | **Message Monitoring** | Monitors whitelisted channels for crisis indicators |
-| **NLP Analysis** | Sends messages to [Ash-NLP](https://github.com/the-alphabet-cartel/ash-nlp) for semantic classification |
-| **Crisis Alerting** | Notifies CRT via Discord embeds with severity-based routing |
-| **Escalation Tracking** | Maintains user history to detect escalation patterns |
-| **Ash Personality** | AI-powered conversational support via Claude API |
+| **NLP Analysis** | Multi-model ensemble (BART, Sentiment, Irony, Emotions) via [Ash-NLP](https://github.com/the-alphabet-cartel/ash-nlp) |
+| **Crisis Alerting** | Severity-based routing with Discord embeds and CRT pinging |
+| **Escalation Tracking** | Redis-backed user history for pattern detection |
+| **Ash AI Support** | Claude-powered conversational crisis support |
+| **Production Hardening** | Circuit breakers, retry logic, health endpoints, and metrics |
 
-### Architecture
+---
+
+## 🏗️ Architecture
 
 ```
-Discord Message → Ash-Bot → Ash-NLP API → Crisis Assessment
-                     ↓              ↓
-                  Redis ←──────────┘
-                     ↓
-              Alert Dispatch → CRT Notification
-                     ↓
-              Ash Response (if HIGH/CRITICAL)
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              Ash-Bot v5.0                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Discord Gateway ──────► DiscordManager ──────► Message Processing      │
+│                               │                        │                │
+│                               ▼                        ▼                │
+│                     ChannelConfigManager        NLPClientManager        │
+│                     (monitored channels)       (circuit breaker)        │
+│                                                       │                 │
+│                                                       ▼                 │
+│                                               ┌───────────────┐         │
+│                                               │   Ash-NLP     │         │
+│                                               │  (External)   │         │
+│                                               └───────────────┘         │
+│                                                       │                 │
+│  ┌─────────────────────────────────────────────────────┘                │
+│  │                                                                      │
+│  ▼                                                                      │
+│  UserHistoryManager ◄────► RedisManager ◄────► ash-redis               │
+│  (escalation tracking)     (with retry)                                 │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    Alert Dispatching (Phase 3)                   │   │
+│  │  CooldownManager ─► EmbedBuilder ─► AlertDispatcher ─► Discord   │   │
+│  │                                            │                     │   │
+│  │                                   AlertButtons (Ack/Talk to Ash) │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    Ash AI Support (Phase 4)                      │   │
+│  │  AshPersonalityManager ─► ClaudeClientManager ─► AshSessionMgr   │   │
+│  │                           (circuit breaker)                      │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                 Production Hardening (Phase 5)                   │   │
+│  │  HealthManager ─► HealthServer (:30882) ─► /health, /metrics     │   │
+│  │  MetricsManager ─► Prometheus-format export                      │   │
+│  │  CircuitBreaker + RetryLogic for all external services           │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## ✨ Features
+
+### Phase 1: Discord Connectivity
+- Secure bot token management via Docker Secrets
+- Configurable channel monitoring
+- Clean Architecture compliance
+
+### Phase 2: NLP Integration & History
+- Ash-NLP API integration with circuit breaker
+- Redis-backed user message history
+- Severity-based storage (LOW+ only)
+
+### Phase 3: Alert Dispatching
+- Severity-based channel routing (MEDIUM → monitor, HIGH/CRITICAL → crisis)
+- CRT role pinging for HIGH/CRITICAL
+- Interactive embed buttons (Acknowledge, Talk to Ash)
+- User-based cooldown to prevent alert spam
+
+### Phase 4: Ash AI Personality
+- Claude API integration for conversational support
+- Severity-appropriate welcome messages
+- Session management with timeout cleanup
+- DM-based private conversations
+
+### Phase 5: Production Hardening
+- Circuit breakers on all external services
+- Retry logic with exponential backoff
+- HTTP health endpoints for Kubernetes
+- Prometheus-format metrics export
+- Comprehensive operational documentation
 
 ---
 
@@ -43,10 +119,11 @@ Discord Message → Ash-Bot → Ash-NLP API → Crisis Assessment
 
 - Docker Engine 24.0+
 - Docker Compose v2.20+
-- Discord Bot Token
-- Access to Ash-NLP API
+- Discord Bot Token ([setup guide](docs/discord_deployment_guide.md))
+- Access to Ash-NLP service
+- (Optional) Claude API key for Ash AI
 
-### Setup
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -54,172 +131,183 @@ Discord Message → Ash-Bot → Ash-NLP API → Crisis Assessment
    cd ash-bot
    ```
 
-2. **Create secrets files**
+2. **Create secrets**
    ```bash
-   # Create secrets directory (if not exists)
    mkdir -p secrets
    
-   # Add your Discord bot token
+   # Required: Discord bot token
    echo "your_discord_bot_token" > secrets/discord_bot_token
    
-   # Add Claude API key (for Ash personality)
+   # Optional: Claude API key (enables Ash AI)
    echo "your_claude_api_key" > secrets/claude_api_token
    
-   # Set permissions
+   # Optional: Redis password
+   echo "your_redis_password" > secrets/redis_token
+   
    chmod 600 secrets/*
    ```
 
-3. **Create environment file**
+3. **Configure environment**
    ```bash
    cp .env.template .env
-   # Edit .env as needed
+   # Edit .env with your channel IDs and settings
    ```
 
-4. **Build and start**
+4. **Start the bot**
    ```bash
-   docker compose build
    docker compose up -d
    ```
 
-5. **Verify it's running**
+5. **Verify health**
    ```bash
+   # Check container status
    docker ps
-   docker exec ash-bot python --version
+   
+   # Check health endpoint
+   curl http://localhost:30882/health
+   
+   # View logs
+   docker compose logs -f ash-bot
    ```
 
 ---
 
-## 🛠️ Development
+## ⚙️ Configuration
 
-### Development Workflow
+### Environment Variables
 
-All development and testing happens inside Docker containers - never on bare metal.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BOT_ENVIRONMENT` | `production` | Environment: production, testing |
+| `BOT_LOG_LEVEL` | `INFO` | Log level: DEBUG, INFO, WARNING, ERROR |
+| `BOT_LOG_FORMAT` | `json` | Log format: json, text |
+| `BOT_MONITORED_CHANNELS` | - | Comma-separated channel IDs to monitor |
+| `BOT_ALERT_CHANNEL_CRISIS` | - | Channel ID for HIGH/CRITICAL alerts |
+| `BOT_ALERT_CHANNEL_MONITOR` | - | Channel ID for MEDIUM alerts |
+| `BOT_CRT_ROLE_ID` | - | Role ID to ping for HIGH/CRITICAL |
+
+### JSON Configuration
+
+Configuration files are in `src/config/`:
+- `default.json` - Base configuration with defaults
+- `production.json` - Production environment overrides
+- `testing.json` - Testing environment overrides
+
+See [Configuration Reference](docs/configuration.md) for full documentation.
+
+---
+
+## 📊 Severity Levels & Alert Routing
+
+| Severity | Score Range | Storage | Alert Channel | CRT Ping | Ash AI |
+|----------|-------------|---------|---------------|----------|--------|
+| **CRITICAL** | ≥ 0.85 | ✅ | #crisis-response | ✅ | Auto-initiate |
+| **HIGH** | ≥ 0.70 | ✅ | #crisis-response | ✅ | "Talk to Ash" button |
+| **MEDIUM** | ≥ 0.50 | ✅ | #crisis-monitor | ❌ | ❌ |
+| **LOW** | ≥ 0.30 | ✅ | ❌ | ❌ | ❌ |
+| **SAFE** | < 0.30 | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## 📈 Monitoring
+
+### Health Endpoints
+
+| Endpoint | Purpose | Response |
+|----------|---------|----------|
+| `GET /health` | Liveness probe | Always 200 |
+| `GET /healthz` | Liveness (k8s alias) | Always 200 |
+| `GET /health/ready` | Readiness probe | 200/503 based on Discord |
+| `GET /readyz` | Readiness (k8s alias) | 200/503 |
+| `GET /health/detailed` | Full component status | JSON with all components |
+| `GET /metrics` | Prometheus metrics | Text format |
+
+### Key Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `messages_processed_total` | Counter | Total messages processed |
+| `messages_analyzed_total` | Counter | Messages by severity |
+| `alerts_sent_total` | Counter | Alerts by severity/channel |
+| `ash_sessions_total` | Counter | Total Ash AI sessions |
+| `ash_sessions_active` | Gauge | Currently active sessions |
+| `nlp_request_duration_seconds` | Histogram | NLP API latency |
+| `nlp_errors_total` | Counter | NLP API errors |
+
+### Docker Health Check
 
 ```bash
-# Build the container
-docker compose build
+# Check container health
+docker inspect ash-bot --format='{{.State.Health.Status}}'
 
-# Start the container (stays running)
+# View health check logs
+docker inspect ash-bot --format='{{json .State.Health}}'
+```
+
+---
+
+## 🔧 Operations
+
+### Common Commands
+
+```bash
+# Start services
 docker compose up -d
 
-# Run tests
-docker exec ash-bot python -m pytest tests/ -v
-
-# Run specific test file
-docker exec ash-bot python -m pytest tests/test_managers/test_config.py -v
-
-# Run main.py
-docker exec ash-bot python main.py
-
-# Interactive Python shell
-docker exec -it ash-bot python
-
-# Bash shell access
-docker exec -it ash-bot /bin/bash
+# Stop services
+docker compose down
 
 # View logs
 docker compose logs -f ash-bot
 
-# Stop containers
-docker compose down
-```
+# Restart bot only
+docker compose restart ash-bot
 
-### Source Code Mounting
-
-The `docker-compose.override.yml` mounts source code as volumes, so:
-- ✅ Python code changes are reflected immediately
-- ✅ No rebuild needed for code changes
-- ❌ **MUST rebuild** if `requirements.txt` or `Dockerfile` changes
-
-```bash
-# After changing requirements.txt or Dockerfile
-docker compose down
+# Rebuild after code changes
 docker compose build
 docker compose up -d
+
+# Enter container shell
+docker exec -it ash-bot /bin/bash
+
+# Run tests
+docker exec ash-bot python -m pytest tests/ -v
 ```
 
-### Project Structure
+### Troubleshooting
 
-```
-ash-bot/
-├── src/
-│   ├── __init__.py
-│   ├── config/              # JSON configuration files
-│   │   ├── default.json
-│   │   ├── production.json
-│   │   └── testing.json
-│   └── managers/            # Resource managers
-│       ├── __init__.py
-│       ├── config_manager.py
-│       ├── secrets_manager.py
-│       ├── discord/         # Discord-related managers
-│       ├── redis/           # Redis-related managers
-│       ├── nlp/             # NLP client managers
-│       └── ash/             # Ash personality managers
-├── tests/                   # Test suite
-├── docs/                    # Documentation
-├── secrets/                 # Docker secrets (gitignored)
-├── logs/                    # Log files (gitignored)
-├── main.py                  # Entry point
-├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.override.yml  # Local dev overrides (gitignored)
-├── requirements.txt
-├── pytest.ini
-└── .env                     # Environment variables (gitignored)
-```
+| Issue | Likely Cause | Solution |
+|-------|--------------|----------|
+| Bot not connecting | Invalid token | Check `secrets/discord_bot_token` |
+| No alerts sent | Channel IDs wrong | Verify `BOT_ALERT_CHANNEL_*` in `.env` |
+| NLP failures | Service down | Check `docker compose logs ash-nlp` |
+| Redis errors | Connection refused | Verify Redis is running |
 
-### Configuration
-
-Configuration uses a layered approach:
-
-1. **JSON Defaults** (`src/config/default.json`) - Base configuration
-2. **Environment Overrides** (`src/config/{environment}.json`) - Environment-specific
-3. **Environment Variables** (`.env`) - Runtime overrides
-
-```bash
-# Set environment
-BOT_ENVIRONMENT=testing  # or production
-
-# Override specific values
-BOT_LOG_LEVEL=DEBUG
-BOT_LOG_FORMAT=text
-```
-
-### Secrets Management
-
-Sensitive credentials use Docker Secrets:
-
-| Secret | Description |
-|--------|-------------|
-| `discord_bot_token` | Discord bot authentication token |
-| `claude_api_token` | Claude API key for Ash personality |
-| `discord_alert_token` | Webhook URL for system alerts |
-| `redis_token` | Redis password (if enabled) |
-
-See [secrets/README.md](secrets/README.md) for setup instructions.
-
----
-
-## 📊 Severity Levels
-
-| Severity | Store | Alert Channel | Ash Behavior |
-|----------|-------|---------------|--------------|
-| SAFE/NONE | ❌ | None | None |
-| LOW | ✅ | None | None |
-| MEDIUM | ✅ | #monitor-queue | Monitor silently |
-| HIGH | ✅ | #crisis-response | Opener + session |
-| CRITICAL | ✅ | #critical-response + DMs | Immediate intervention |
+See [Troubleshooting Guide](docs/operations/troubleshooting.md) for detailed solutions.
 
 ---
 
 ## 📚 Documentation
 
-- [Discord Deployment Guide](docs/discord_deployment_guide.md) - **Start here for new deployments**
-- [System Architecture](docs/architecture/system_architecture.md)
-- [Clean Architecture Charter](docs/standards/clean_architecture_charter.md)
-- [Development Roadmap](docs/v5.0/roadmap.md)
-- [Ash-NLP API Reference](docs/api/reference.md)
+### For Crisis Response Team
+
+| Document | Description |
+|----------|-------------|
+| [CRT Guide](docs/crt_guide.md) | **Start here!** Complete guide for Crisis Response Team members |
+
+### For Developers & Operators
+
+| Document | Description |
+|----------|-------------|
+| [Development Guide](docs/development.md) | Developer setup and coding standards |
+| [Discord Deployment Guide](docs/discord_deployment_guide.md) | Setting up Discord bot and permissions |
+| [System Architecture](docs/architecture/system_architecture.md) | Technical architecture details |
+| [Configuration Reference](docs/configuration.md) | All configuration options |
+| [Operations Runbook](docs/operations/runbook.md) | Day-to-day operations |
+| [Troubleshooting](docs/operations/troubleshooting.md) | Common issues and solutions |
+| [Deployment Guide](docs/operations/deployment.md) | Production deployment steps |
+| [Clean Architecture Charter](docs/standards/clean_architecture_charter.md) | Development standards |
+| [Ash-NLP API Reference](docs/api/reference.md) | NLP API documentation |
 
 ---
 
@@ -229,12 +317,27 @@ See [secrets/README.md](secrets/README.md) for setup instructions.
 # Run all tests
 docker exec ash-bot python -m pytest tests/ -v
 
+# Run integration tests
+docker exec ash-bot python -m pytest tests/integration/ -v
+
 # Run with coverage
-docker exec ash-bot python -m pytest tests/ -v --cov=src --cov-report=html
+docker exec ash-bot python -m pytest tests/ --cov=src --cov-report=html
 
 # Run specific test
-docker exec ash-bot python -m pytest tests/test_managers/test_config.py::test_specific -v
+docker exec ash-bot python -m pytest tests/test_alerting/test_embed_builder.py -v
 ```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please follow our development standards:
+
+1. Read the [Clean Architecture Charter](docs/standards/clean_architecture_charter.md)
+2. Use factory functions for all managers
+3. Include proper file version headers
+4. Write tests for new functionality
+5. Update documentation as needed
 
 ---
 
@@ -256,8 +359,9 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## 🙏 Acknowledgments
 
-- The Alphabet Cartel community for inspiration and support
+- The Alphabet Cartel community for inspiration and unwavering support
 - The Crisis Response Team for their dedication to community safety
+- All contributors who help make this project better
 
 ---
 

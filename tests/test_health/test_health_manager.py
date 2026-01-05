@@ -3,6 +3,14 @@
 Ash-Bot: Crisis Detection Discord Bot
 The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
 Test Suite for Health Manager
 ---
 FILE VERSION: v5.0-5-5.3-1

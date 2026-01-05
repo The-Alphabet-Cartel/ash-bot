@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.5-3
-LAST MODIFIED: 2026-01-04
+FILE VERSION: v5.0-6-6.4-1
+LAST MODIFIED: 2026-01-05
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -73,7 +73,7 @@ if TYPE_CHECKING:
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-5-5.5-3"
+__version__ = "v5.0-6-6.4-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -776,8 +776,13 @@ class DiscordManager:
 
     @property
     def is_connected(self) -> bool:
-        """Check if bot is connected to Discord."""
+        """Check if bot is connected to Discord gateway."""
         return self._connected and not self.bot.is_closed()
+
+    @property
+    def is_ready(self) -> bool:
+        """Check if bot is ready to process messages."""
+        return self._connected and self.bot.is_ready() and not self.bot.is_closed()
 
     @property
     def latency(self) -> float:

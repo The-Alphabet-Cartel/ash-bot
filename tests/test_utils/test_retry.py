@@ -3,6 +3,14 @@
 Ash-Bot: Crisis Detection Discord Bot
 The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
 Test Suite for Retry Utilities
 ---
 FILE VERSION: v5.0-5-5.1-1
@@ -41,7 +49,7 @@ class TestRetryConfig:
     def test_default_config(self):
         """Test default configuration values."""
         config = RetryConfig()
-        
+
         assert config.max_attempts == 3
         assert config.base_delay == 1.0
         assert config.max_delay == 60.0
@@ -60,7 +68,7 @@ class TestRetryConfig:
             exponential_base=3.0,
             jitter=False,
         )
-        
+
         assert config.max_attempts == 5
         assert config.base_delay == 0.5
         assert config.max_delay == 30.0
@@ -110,7 +118,7 @@ class TestCalculateDelay:
     def test_exponential_backoff(self):
         """Test exponential increase in delays."""
         config = RetryConfig(base_delay=1.0, exponential_base=2.0, jitter=False)
-        
+
         assert calculate_delay(0, config) == 1.0
         assert calculate_delay(1, config) == 2.0
         assert calculate_delay(2, config) == 4.0
@@ -124,7 +132,7 @@ class TestCalculateDelay:
             exponential_base=2.0,
             jitter=False,
         )
-        
+
         # 8.0 would exceed max_delay of 5.0
         assert calculate_delay(3, config) == 5.0
         assert calculate_delay(4, config) == 5.0
@@ -132,10 +140,10 @@ class TestCalculateDelay:
     def test_jitter_adds_variation(self):
         """Test jitter adds variation to delays."""
         config = RetryConfig(base_delay=10.0, jitter=True, jitter_factor=0.1)
-        
+
         # Get multiple delays and check they vary
         delays = [calculate_delay(0, config) for _ in range(100)]
-        
+
         # Should have some variation
         assert min(delays) < 10.0
         assert max(delays) > 10.0
@@ -155,7 +163,7 @@ class TestShouldRetry:
     def test_default_retries_all_exceptions(self):
         """Test default config retries all exceptions."""
         config = RetryConfig()
-        
+
         assert should_retry(ValueError("test"), config) is True
         assert should_retry(RuntimeError("test"), config) is True
         assert should_retry(Exception("test"), config) is True
@@ -163,7 +171,7 @@ class TestShouldRetry:
     def test_specific_retryable_exceptions(self):
         """Test only specified exceptions are retried."""
         config = RetryConfig(retryable_exceptions=(ValueError, TypeError))
-        
+
         assert should_retry(ValueError("test"), config) is True
         assert should_retry(TypeError("test"), config) is True
         assert should_retry(RuntimeError("test"), config) is False
@@ -171,7 +179,7 @@ class TestShouldRetry:
     def test_non_retryable_exceptions(self):
         """Test non-retryable exceptions are not retried."""
         config = RetryConfig(non_retryable_exceptions=(KeyboardInterrupt,))
-        
+
         assert should_retry(ValueError("test"), config) is True
         assert should_retry(KeyboardInterrupt(), config) is False
 
@@ -181,7 +189,7 @@ class TestShouldRetry:
             retryable_exceptions=(Exception,),
             non_retryable_exceptions=(ValueError,),
         )
-        
+
         # ValueError is both Exception and in non_retryable
         assert should_retry(ValueError("test"), config) is False
         assert should_retry(RuntimeError("test"), config) is True
@@ -199,19 +207,21 @@ class TestRetryAsync:
     async def test_success_no_retry(self):
         """Test successful call doesn't retry."""
         func = AsyncMock(return_value="success")
-        
+
         result = await retry_async(func)
-        
+
         assert result == "success"
         func.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_retry_on_failure(self):
         """Test function is retried on failure."""
-        func = AsyncMock(side_effect=[RuntimeError("fail1"), RuntimeError("fail2"), "success"])
-        
+        func = AsyncMock(
+            side_effect=[RuntimeError("fail1"), RuntimeError("fail2"), "success"]
+        )
+
         result = await retry_async(func, max_attempts=3, base_delay=0.01)
-        
+
         assert result == "success"
         assert func.call_count == 3
 
@@ -219,10 +229,10 @@ class TestRetryAsync:
     async def test_raises_after_max_attempts(self):
         """Test RetryError raised after max attempts."""
         func = AsyncMock(side_effect=RuntimeError("always fails"))
-        
+
         with pytest.raises(RetryError) as exc_info:
             await retry_async(func, max_attempts=3, base_delay=0.01)
-        
+
         error = exc_info.value
         assert error.attempts == 3
         assert isinstance(error.last_exception, RuntimeError)
@@ -232,9 +242,9 @@ class TestRetryAsync:
     async def test_passes_args_and_kwargs(self):
         """Test arguments are passed correctly."""
         func = AsyncMock(return_value="result")
-        
+
         await retry_async(func, args=("arg1",), kwargs={"key": "value"})
-        
+
         func.assert_called_once_with("arg1", key="value")
 
     @pytest.mark.asyncio
@@ -245,10 +255,10 @@ class TestRetryAsync:
             non_retryable_exceptions=(ValueError,),
         )
         func = AsyncMock(side_effect=ValueError("not retryable"))
-        
+
         with pytest.raises(ValueError):
             await retry_async(func, config=config)
-        
+
         # Should only be called once
         func.assert_called_once()
 
@@ -261,10 +271,10 @@ class TestRetryAsync:
             retryable_exceptions=(ConnectionError,),
         )
         func = AsyncMock(side_effect=RuntimeError("not retryable"))
-        
+
         with pytest.raises(RuntimeError):
             await retry_async(func, config=config)
-        
+
         func.assert_called_once()
 
     @pytest.mark.asyncio
@@ -277,9 +287,9 @@ class TestRetryAsync:
             on_retry=callback,
         )
         func = AsyncMock(side_effect=[RuntimeError("fail"), "success"])
-        
+
         await retry_async(func, config=config)
-        
+
         # Callback should be called once (before retry)
         callback.assert_called_once()
         call_args = callback.call_args[0]
@@ -291,9 +301,9 @@ class TestRetryAsync:
     async def test_sync_function_handling(self):
         """Test retry_async handles sync functions."""
         sync_func = MagicMock(return_value="sync_result")
-        
+
         result = await retry_async(sync_func)
-        
+
         assert result == "sync_result"
         sync_func.assert_called_once()
 
@@ -309,9 +319,9 @@ class TestRetrySync:
     def test_success_no_retry(self):
         """Test successful call doesn't retry."""
         func = MagicMock(return_value="success")
-        
+
         result = retry_sync(func)
-        
+
         assert result == "success"
         func.assert_called_once()
 
@@ -319,9 +329,9 @@ class TestRetrySync:
         """Test function is retried on failure."""
         func = MagicMock(side_effect=[RuntimeError("fail"), "success"])
         config = RetryConfig(max_attempts=3, base_delay=0.01)
-        
+
         result = retry_sync(func, config=config)
-        
+
         assert result == "success"
         assert func.call_count == 2
 
@@ -329,10 +339,10 @@ class TestRetrySync:
         """Test RetryError raised after max attempts."""
         func = MagicMock(side_effect=RuntimeError("always fails"))
         config = RetryConfig(max_attempts=3, base_delay=0.01)
-        
+
         with pytest.raises(RetryError) as exc_info:
             retry_sync(func, config=config)
-        
+
         error = exc_info.value
         assert error.attempts == 3
 
@@ -348,10 +358,11 @@ class TestWithRetryDecorator:
     @pytest.mark.asyncio
     async def test_decorator_success(self):
         """Test decorator on successful function."""
+
         @with_retry(max_attempts=3, base_delay=0.01)
         async def success_func():
             return "decorated success"
-        
+
         result = await success_func()
         assert result == "decorated success"
 
@@ -359,7 +370,7 @@ class TestWithRetryDecorator:
     async def test_decorator_retry(self):
         """Test decorator retries on failure."""
         call_count = 0
-        
+
         @with_retry(max_attempts=3, base_delay=0.01)
         async def flaky_func():
             nonlocal call_count
@@ -367,43 +378,46 @@ class TestWithRetryDecorator:
             if call_count < 3:
                 raise RuntimeError("not yet")
             return "finally success"
-        
+
         result = await flaky_func()
-        
+
         assert result == "finally success"
         assert call_count == 3
 
     @pytest.mark.asyncio
     async def test_decorator_preserves_function_name(self):
         """Test decorator preserves function metadata."""
+
         @with_retry()
         async def named_function():
             """Function docstring."""
             return "result"
-        
+
         assert named_function.__name__ == "named_function"
         assert named_function.__doc__ == "Function docstring."
 
     @pytest.mark.asyncio
     async def test_decorator_with_arguments(self):
         """Test decorated function receives arguments."""
+
         @with_retry(max_attempts=2, base_delay=0.01)
         async def func_with_args(a, b, key=None):
             return f"{a}-{b}-{key}"
-        
+
         result = await func_with_args("x", "y", key="z")
         assert result == "x-y-z"
 
     @pytest.mark.asyncio
     async def test_decorator_exhausts_retries(self):
         """Test decorator raises RetryError after max attempts."""
+
         @with_retry(max_attempts=3, base_delay=0.01)
         async def always_fails():
             raise RuntimeError("permanent failure")
-        
+
         with pytest.raises(RetryError) as exc_info:
             await always_fails()
-        
+
         assert exc_info.value.attempts == 3
 
 
@@ -423,7 +437,7 @@ class TestRetryError:
             attempts=3,
             last_exception=last_exc,
         )
-        
+
         error_str = str(error)
         assert "Operation failed" in error_str
         assert "3 attempts" in error_str
@@ -443,7 +457,7 @@ class TestRetryError:
             last_exception=exceptions[-1],
             all_exceptions=exceptions,
         )
-        
+
         assert len(error.all_exceptions) == 3
         assert error.last_exception == exceptions[-1]
 
@@ -460,11 +474,11 @@ class TestTimingBehavior:
     async def test_delay_between_retries(self):
         """Test actual delay happens between retries."""
         func = AsyncMock(side_effect=[RuntimeError("fail"), "success"])
-        
+
         start = time.monotonic()
         await retry_async(func, base_delay=0.1, max_attempts=2)
         elapsed = time.monotonic() - start
-        
+
         # Should have waited at least 0.1 seconds
         assert elapsed >= 0.09  # Allow small timing variance
 
@@ -472,11 +486,11 @@ class TestTimingBehavior:
     async def test_no_delay_on_success(self):
         """Test no delay when first attempt succeeds."""
         func = AsyncMock(return_value="success")
-        
+
         start = time.monotonic()
         await retry_async(func)
         elapsed = time.monotonic() - start
-        
+
         # Should be nearly instant
         assert elapsed < 0.1
 
@@ -493,10 +507,10 @@ class TestEdgeCases:
     async def test_single_attempt(self):
         """Test behavior with max_attempts=1 (no retries)."""
         func = AsyncMock(side_effect=RuntimeError("fail"))
-        
+
         with pytest.raises(RetryError) as exc_info:
             await retry_async(func, max_attempts=1)
-        
+
         assert exc_info.value.attempts == 1
         func.assert_called_once()
 
@@ -504,15 +518,15 @@ class TestEdgeCases:
     async def test_zero_delay(self):
         """Test behavior with zero delay."""
         call_times = []
-        
+
         async def track_time():
             call_times.append(time.monotonic())
             if len(call_times) < 3:
                 raise RuntimeError("fail")
             return "success"
-        
+
         await retry_async(track_time, base_delay=0, max_attempts=3)
-        
+
         # All calls should happen almost instantly
         total_time = call_times[-1] - call_times[0]
         assert total_time < 0.1
@@ -520,16 +534,17 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_callback_exception_ignored(self):
         """Test callback exceptions don't break retry."""
+
         def bad_callback(attempt, exc, delay):
             raise ValueError("callback error")
-        
+
         config = RetryConfig(
             max_attempts=2,
             base_delay=0.01,
             on_retry=bad_callback,
         )
         func = AsyncMock(side_effect=[RuntimeError("fail"), "success"])
-        
+
         # Should complete despite callback error
         result = await retry_async(func, config=config)
         assert result == "success"

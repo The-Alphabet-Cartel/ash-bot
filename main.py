@@ -14,8 +14,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-8.0-3
-LAST MODIFIED: 2026-01-04
+FILE VERSION: v5.0-6-6.4-1
+LAST MODIFIED: 2026-01-05
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-5-8.0-3"
+__version__ = "v5.0-6-6.4-1"
 
 
 # =============================================================================
@@ -508,6 +508,7 @@ async def main_async(args: argparse.Namespace) -> int:
                     nlp_client=nlp_client,
                     redis_manager=redis_manager,
                     ash_session_manager=ash_session_manager,
+                    ash_personality_manager=ash_personality_manager,
                 )
 
                 # Create and start health server (need routes first)

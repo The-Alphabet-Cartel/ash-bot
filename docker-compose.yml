@@ -1,8 +1,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Docker Compose Configuration
 # ============================================================================
-# FILE VERSION: v5.0.3
-# LAST MODIFIED: 2026-01-04
+# FILE VERSION: v5.0.4
+# LAST MODIFIED: 2026-01-05
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -86,6 +86,7 @@ services:
       - claude_api_token
       - discord_alert_token
       - discord_bot_token
+      - redis_token
 
     # Health check - uses HTTP endpoint from health server
     healthcheck:
@@ -142,19 +143,16 @@ services:
     volumes:
       - redis_data:/data
 
-    # Redis configuration
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
-      - --maxmemory
-      - 256mb
-      - --maxmemory-policy
-      - allkeys-lru
+    # Docker Secrets - mount redis password
+    secrets:
+      - redis_token
 
-    # Health check
+    # Redis configuration with password from secret
+    command: sh -c 'redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass "$(cat /run/secrets/redis_token)"'
+
+    # Health check (with auth)
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "sh", "-c", "redis-cli -a \"$(cat /run/secrets/redis_token)\" ping 2>/dev/null | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 3

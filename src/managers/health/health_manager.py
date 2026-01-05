@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Health Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.3-1
-LAST MODIFIED: 2026-01-04
+FILE VERSION: v5.0-6-6.4-1
+LAST MODIFIED: 2026-01-05
 PHASE: Phase 5 - Production Hardening
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -53,7 +53,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
 
 # Module version
-__version__ = "v5.0-5-5.3-1"
+__version__ = "v5.0-6-6.4-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     from src.managers.discord import DiscordManager
     from src.managers.nlp import NLPClientManager
     from src.managers.storage import RedisManager
-    from src.managers.ash import AshSessionManager
+    from src.managers.ash import AshSessionManager, AshPersonalityManager
     from src.managers.metrics import MetricsManager
 
 
@@ -208,6 +208,7 @@ class HealthManager:
         nlp_client: Optional["NLPClientManager"] = None,
         redis_manager: Optional["RedisManager"] = None,
         ash_session_manager: Optional["AshSessionManager"] = None,
+        ash_personality_manager: Optional["AshPersonalityManager"] = None,
         metrics_manager: Optional["MetricsManager"] = None,
         version: str = "5.0.0",
     ):
@@ -219,6 +220,7 @@ class HealthManager:
             nlp_client: NLP API client manager
             redis_manager: Redis connection manager
             ash_session_manager: Ash personality session manager
+            ash_personality_manager: Ash personality/Claude manager
             metrics_manager: Metrics collection manager
             version: Application version string
         """
@@ -226,6 +228,7 @@ class HealthManager:
         self._nlp = nlp_client
         self._redis = redis_manager
         self._ash = ash_session_manager
+        self._ash_personality = ash_personality_manager
         self._metrics = metrics_manager
         self._version = version
         self._start_time = time.time()
@@ -234,6 +237,12 @@ class HealthManager:
         self._check_timeout = 5.0  # seconds
 
         logger.info(f"✅ HealthManager v{__version__} initialized (version: {version})")
+        logger.debug(
+            f"HealthManager components: discord={discord_manager is not None}, "
+            f"nlp={nlp_client is not None}, redis={redis_manager is not None}, "
+            f"ash_session={ash_session_manager is not None}, "
+            f"ash_personality={ash_personality_manager is not None}"
+        )
 
     # =========================================================================
     # Properties
@@ -574,42 +583,63 @@ class HealthManager:
         """
         start_time = time.time()
 
-        if self._ash is None:
+        # Check if either Ash component is configured
+        if self._ash is None and self._ash_personality is None:
             return ComponentHealth(
                 name="ash",
                 status=ComponentStatus.UNKNOWN,
-                message="Ash session manager not configured",
+                message="Ash not configured",
                 last_check=datetime.utcnow(),
             )
 
         try:
-            # Get active session count
-            active_sessions = getattr(self._ash, "active_session_count", 0)
-            if callable(active_sessions):
-                active_sessions = active_sessions()
+            # Get active session count from session manager
+            active_sessions = 0
+            if self._ash:
+                active_sessions = getattr(self._ash, "active_session_count", 0)
+                if callable(active_sessions):
+                    active_sessions = active_sessions()
 
-            # Check if Claude client is available
-            has_claude = getattr(self._ash, "_claude_client", None) is not None
+            # Check if Claude client is available via personality manager
+            has_claude = False
+            if self._ash_personality:
+                claude_client = getattr(self._ash_personality, "_claude", None)
+                has_claude = claude_client is not None
+                logger.debug(
+                    f"Ash health: personality_manager={self._ash_personality is not None}, "
+                    f"claude_client={claude_client is not None}, has_claude={has_claude}"
+                )
+            else:
+                logger.debug("Ash health: _ash_personality is None")
 
             latency_ms = (time.time() - start_time) * 1000
 
-            if has_claude:
+            if has_claude and self._ash:
                 return ComponentHealth(
                     name="ash",
                     status=ComponentStatus.UP,
-                    message="Ash sessions available",
+                    message="Ash AI fully operational",
                     last_check=datetime.utcnow(),
                     latency_ms=latency_ms,
-                    details={"active_sessions": active_sessions},
+                    details={"active_sessions": active_sessions, "claude_available": True},
+                )
+            elif self._ash:
+                return ComponentHealth(
+                    name="ash",
+                    status=ComponentStatus.DEGRADED,
+                    message="Ash sessions available, Claude not configured",
+                    last_check=datetime.utcnow(),
+                    latency_ms=latency_ms,
+                    details={"active_sessions": active_sessions, "claude_available": False},
                 )
             else:
                 return ComponentHealth(
                     name="ash",
                     status=ComponentStatus.DEGRADED,
-                    message="Ash available without Claude client",
+                    message="Ash partially configured",
                     last_check=datetime.utcnow(),
                     latency_ms=latency_ms,
-                    details={"active_sessions": active_sessions},
+                    details={"claude_available": has_claude},
                 )
 
         except Exception as e:
@@ -704,6 +734,7 @@ def create_health_manager(
     nlp_client: Optional["NLPClientManager"] = None,
     redis_manager: Optional["RedisManager"] = None,
     ash_session_manager: Optional["AshSessionManager"] = None,
+    ash_personality_manager: Optional["AshPersonalityManager"] = None,
     metrics_manager: Optional["MetricsManager"] = None,
     version: str = "5.0.0",
 ) -> HealthManager:
@@ -718,6 +749,7 @@ def create_health_manager(
         nlp_client: NLP API client manager
         redis_manager: Redis connection manager
         ash_session_manager: Ash personality session manager
+        ash_personality_manager: Ash personality/Claude manager
         metrics_manager: Metrics collection manager
         version: Application version string
 
@@ -728,6 +760,7 @@ def create_health_manager(
         >>> health = create_health_manager(
         ...     discord_manager=discord_mgr,
         ...     nlp_client=nlp_client,
+        ...     ash_personality_manager=ash_personality,
         ...     version="5.0.0",
         ... )
     """
@@ -737,6 +770,7 @@ def create_health_manager(
         nlp_client=nlp_client,
         redis_manager=redis_manager,
         ash_session_manager=ash_session_manager,
+        ash_personality_manager=ash_personality_manager,
         metrics_manager=metrics_manager,
         version=version,
     )

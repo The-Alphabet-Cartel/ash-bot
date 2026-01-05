@@ -3,6 +3,14 @@
 Ash-Bot: Crisis Detection Discord Bot
 The Alphabet Cartel - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
+
+MISSION - NEVER TO BE VIOLATED:
+    Monitor  → Send messages to Ash-NLP for crisis classification
+    Alert    → Notify Crisis Response Team via embeds when crisis detected
+    Track    → Maintain user history for escalation pattern detection
+    Protect  → Safeguard our LGBTQIA+ community through early intervention
+
+============================================================================
 Test Suite for Circuit Breaker
 ---
 FILE VERSION: v5.0-5-5.1-1
@@ -74,7 +82,7 @@ class TestCircuitBreakerConfig:
     def test_default_config(self):
         """Test default configuration values."""
         config = CircuitBreakerConfig()
-        
+
         assert config.failure_threshold == 5
         assert config.success_threshold == 2
         assert config.timeout_seconds == 30.0
@@ -87,7 +95,7 @@ class TestCircuitBreakerConfig:
             success_threshold=3,
             timeout_seconds=60.0,
         )
-        
+
         assert config.failure_threshold == 10
         assert config.success_threshold == 3
         assert config.timeout_seconds == 60.0
@@ -132,7 +140,7 @@ class TestCircuitBreakerInit:
             failure_threshold=3,
             timeout_seconds=15.0,
         )
-        
+
         assert breaker.name == "factory_test"
         assert breaker.config.failure_threshold == 3
         assert breaker.config.timeout_seconds == 15.0
@@ -156,7 +164,7 @@ class TestClosedState:
     async def test_successful_call(self, default_breaker, successful_func):
         """Test successful call passes through."""
         result = await default_breaker.call(successful_func)
-        
+
         assert result == "success"
         successful_func.assert_called_once()
         assert default_breaker.is_closed
@@ -168,7 +176,7 @@ class TestClosedState:
         for _ in range(5):
             result = await default_breaker.call(successful_func)
             assert result == "success"
-        
+
         assert successful_func.call_count == 5
         assert default_breaker.is_closed
 
@@ -177,18 +185,20 @@ class TestClosedState:
         """Test single failure doesn't open circuit."""
         with pytest.raises(RuntimeError):
             await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_closed
         assert fast_breaker.failure_count == 1
 
     @pytest.mark.asyncio
-    async def test_failure_below_threshold_stays_closed(self, fast_breaker, failing_func):
+    async def test_failure_below_threshold_stays_closed(
+        self, fast_breaker, failing_func
+    ):
         """Test failures below threshold don't open circuit."""
         # Fast breaker has threshold of 3
         for _ in range(2):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_closed
         assert fast_breaker.failure_count == 2
 
@@ -197,17 +207,17 @@ class TestClosedState:
         """Test success resets failure count."""
         failing = AsyncMock(side_effect=RuntimeError("fail"))
         success = AsyncMock(return_value="ok")
-        
+
         # Two failures
         for _ in range(2):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing)
-        
+
         assert fast_breaker.failure_count == 2
-        
+
         # One success
         await fast_breaker.call(success)
-        
+
         assert fast_breaker.failure_count == 0
         assert fast_breaker.is_closed
 
@@ -227,7 +237,7 @@ class TestCircuitOpening:
         for i in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_open
         assert fast_breaker.failure_count == 3
 
@@ -238,13 +248,13 @@ class TestCircuitOpening:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_open
-        
+
         # Try another call - should raise CircuitOpenError
         with pytest.raises(CircuitOpenError) as exc_info:
             await fast_breaker.call(failing_func)
-        
+
         assert exc_info.value.breaker_name == "fast_breaker"
         # Function shouldn't have been called again (still 3 calls)
         assert failing_func.call_count == 3
@@ -256,10 +266,10 @@ class TestCircuitOpening:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         with pytest.raises(CircuitOpenError) as exc_info:
             await fast_breaker.call(failing_func)
-        
+
         error = exc_info.value
         assert error.breaker_name == "fast_breaker"
         assert error.time_until_retry is not None
@@ -275,18 +285,20 @@ class TestHalfOpenState:
     """Tests for circuit breaker in half-open state."""
 
     @pytest.mark.asyncio
-    async def test_transitions_to_half_open_after_timeout(self, fast_breaker, failing_func):
+    async def test_transitions_to_half_open_after_timeout(
+        self, fast_breaker, failing_func
+    ):
         """Test circuit transitions to half-open after timeout."""
         # Open the circuit
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_open
-        
+
         # Wait for timeout (100ms)
         await asyncio.sleep(0.15)
-        
+
         # State check should trigger transition
         assert fast_breaker.is_half_open
 
@@ -297,13 +309,13 @@ class TestHalfOpenState:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         # Wait for timeout
         await asyncio.sleep(0.15)
-        
+
         success = AsyncMock(return_value="ok")
         result = await fast_breaker.call(success)
-        
+
         assert result == "ok"
         success.assert_called_once()
 
@@ -314,16 +326,16 @@ class TestHalfOpenState:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         # Wait for timeout
         await asyncio.sleep(0.15)
-        
+
         success = AsyncMock(return_value="ok")
-        
+
         # Fast breaker needs 2 successes to close
         for _ in range(2):
             await fast_breaker.call(success)
-        
+
         assert fast_breaker.is_closed
 
     @pytest.mark.asyncio
@@ -333,16 +345,16 @@ class TestHalfOpenState:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         # Wait for timeout
         await asyncio.sleep(0.15)
-        
+
         assert fast_breaker.is_half_open
-        
+
         # Failure in half-open should reopen
         with pytest.raises(RuntimeError):
             await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_open
 
 
@@ -362,14 +374,14 @@ class TestExcludedExceptions:
             excluded_exceptions=(ValueError,),
         )
         breaker = CircuitBreaker("exclude_test", config)
-        
+
         # ValueError should not count
         failing = AsyncMock(side_effect=ValueError("not counted"))
-        
+
         for _ in range(5):
             with pytest.raises(ValueError):
                 await breaker.call(failing)
-        
+
         # Should still be closed
         assert breaker.is_closed
         assert breaker.failure_count == 0
@@ -382,14 +394,14 @@ class TestExcludedExceptions:
             excluded_exceptions=(ValueError,),
         )
         breaker = CircuitBreaker("exclude_test", config)
-        
+
         # RuntimeError should count
         failing = AsyncMock(side_effect=RuntimeError("counted"))
-        
+
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await breaker.call(failing)
-        
+
         assert breaker.is_open
 
 
@@ -408,20 +420,20 @@ class TestManualControl:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.is_open
-        
+
         await fast_breaker.reset()
-        
+
         assert fast_breaker.is_closed
 
     @pytest.mark.asyncio
     async def test_manual_trip(self, default_breaker):
         """Test manual trip to open state."""
         assert default_breaker.is_closed
-        
+
         await default_breaker.trip()
-        
+
         assert default_breaker.is_open
 
 
@@ -438,18 +450,18 @@ class TestMetrics:
         """Test metrics are tracked correctly."""
         success = AsyncMock(return_value="ok")
         failure = AsyncMock(side_effect=RuntimeError("fail"))
-        
+
         # 3 successes
         for _ in range(3):
             await fast_breaker.call(success)
-        
+
         # 2 failures (not enough to open)
         for _ in range(2):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failure)
-        
+
         metrics = fast_breaker.get_metrics()
-        
+
         assert metrics["name"] == "fast_breaker"
         assert metrics["state"] == "closed"
         assert metrics["total_calls"] == 5
@@ -467,7 +479,7 @@ class TestMetrics:
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(failing_func)
-        
+
         assert fast_breaker.time_until_retry is not None
         assert fast_breaker.time_until_retry > 0
 
@@ -484,9 +496,9 @@ class TestSyncFunctions:
     async def test_sync_function_success(self, default_breaker):
         """Test calling sync function through breaker."""
         sync_func = MagicMock(return_value="sync_result")
-        
+
         result = await default_breaker.call(sync_func)
-        
+
         assert result == "sync_result"
         sync_func.assert_called_once()
 
@@ -494,11 +506,11 @@ class TestSyncFunctions:
     async def test_sync_function_failure(self, fast_breaker):
         """Test sync function failures are tracked."""
         sync_func = MagicMock(side_effect=RuntimeError("sync fail"))
-        
+
         for _ in range(3):
             with pytest.raises(RuntimeError):
                 await fast_breaker.call(sync_func)
-        
+
         assert fast_breaker.is_open
 
 
@@ -514,39 +526,40 @@ class TestConcurrency:
     async def test_concurrent_calls(self, default_breaker):
         """Test concurrent calls are handled safely."""
         call_count = 0
-        
+
         async def increment():
             nonlocal call_count
             await asyncio.sleep(0.01)
             call_count += 1
             return call_count
-        
+
         # Make 10 concurrent calls
         tasks = [default_breaker.call(increment) for _ in range(10)]
         results = await asyncio.gather(*tasks)
-        
+
         assert len(results) == 10
         assert call_count == 10
 
     @pytest.mark.asyncio
     async def test_concurrent_failures(self, fast_breaker):
         """Test concurrent failures don't over-increment."""
+
         async def fail():
             await asyncio.sleep(0.01)
             raise RuntimeError("concurrent fail")
-        
+
         # Make concurrent failing calls
         tasks = [fast_breaker.call(fail) for _ in range(10)]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # All should be errors
         errors = [r for r in results if isinstance(r, Exception)]
         assert len(errors) == 10
-        
+
         # Some should be RuntimeError (before opening)
         # Some should be CircuitOpenError (after opening)
         runtime_errors = [e for e in errors if isinstance(e, RuntimeError)]
         circuit_errors = [e for e in errors if isinstance(e, CircuitOpenError)]
-        
+
         assert len(runtime_errors) >= 3  # At least threshold amount
         assert fast_breaker.is_open
