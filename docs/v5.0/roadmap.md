@@ -5,9 +5,9 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v5.0.11  
+**Document Version**: v5.0.12  
 **Last Updated**: 2026-01-05  
-**Status**: 🟢 Phase 8 Complete  
+**Status**: 🟡 Phase 9 In Progress (9.1 Complete)  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
 
 ---
@@ -351,13 +351,32 @@ Phase 8 Step Reports:
 
 ---
 
-## Phase 9: Documentation & Polish
+## Phase 9: CRT Workflow Enhancements
 
-**Status**: 🔲 Not Started  
-**Goal**: Final documentation, API references, deployment guides  
+**Status**: 🟡 In Progress (9.1 Complete)  
+**Goal**: Slash commands, session handoff, follow-up check-ins  
 **Depends On**: Phase 8 ✅
 
 See [Phase 9 Planning](phase9/planning.md) for details.
+
+### Step Progress
+
+| Step | Feature | Status |
+|------|---------|--------|
+| 9.1 | CRT Slash Commands | 🟢 Complete |
+| 9.2 | Session Handoff & Notes | 🔲 Ready |
+| 9.3 | Follow-Up Check-Ins | 🔲 Ready |
+
+### Step 9.1: CRT Slash Commands ✅
+
+See [Phase 9.1 Completion Report](phase9/phase9_1_complete.md) for details.
+
+**Key Accomplishments:**
+- 6 slash commands: `/ash status`, `/ash stats`, `/ash history`, `/ash config`, `/ash notes`, `/ash optout`
+- Permission system with CRT and Admin role levels
+- Rich embed responses with consistent formatting
+- 27+ unit tests
+- Full integration with existing managers
 
 ---
 

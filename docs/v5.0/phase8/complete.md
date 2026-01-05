@@ -94,14 +94,14 @@ Phase 8 implements comprehensive operational metrics and reporting capabilities 
 
 **Key Deliverables**:
 - Runtime PUID/PGID environment variable support
-- Entrypoint script for user modification at container start
+- Python entrypoint script using native `os.setuid()`/`os.setgid()`
 - Proper file permission handling for mounted volumes
 
 **Files Created**:
-- `docker-entrypoint.sh`
+- `docker-entrypoint.py`
 
 **Files Modified**:
-- `Dockerfile` (added gosu, entrypoint)
+- `Dockerfile` (added entrypoint)
 - `docker-compose.yml` (added PUID/PGID variables)
 - `.env.template` (documented PUID/PGID)
 - `docs/operations/deployment.md` (added User/Group Configuration section)
@@ -301,7 +301,7 @@ tests/test_reporting/
 tests/test_storage/
 └── test_data_retention.py              (v5.0-8-3.0-1)
 
-docker-entrypoint.sh                    (v5.0-entrypoint-1.0)
+docker-entrypoint.py                    (v5.0-entrypoint-1.1)
 ```
 
 ### Modified Files
@@ -312,7 +312,7 @@ src/managers/storage/__init__.py        (v5.0-8-3.0-1)
 src/config/default.json                 (v5.0.8)
 .env.template                           (v5.0.10)
 main.py                                 (v5.0-8-3.0-1)
-Dockerfile                              (v5.0.5)
+Dockerfile                              (v5.0.6)
 docker-compose.yml                      (v5.0.5)
 docs/operations/deployment.md           (v1.2.0)
 ```
@@ -325,7 +325,7 @@ docs/operations/deployment.md           (v1.2.0)
 2. **Background Tasks**: Simple minute-by-minute schedulers are reliable and low overhead
 3. **Graceful Degradation**: All managers handle missing Redis gracefully
 4. **Pattern-based Cleanup**: Redis SCAN with patterns is efficient for retention
-5. **PUID/PGID**: Runtime user modification with gosu is cleaner than build-time ARGs
+5. **PUID/PGID**: Python's native `os.setuid()`/`os.setgid()` is cleaner than external tools like gosu
 
 ---
 

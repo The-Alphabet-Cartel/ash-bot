@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.8",
+		"file_version": "v5.0.11",
 		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -494,6 +494,106 @@
 			"cleanup_hour": {
 				"type": "integer",
 				"range": [0, 23],
+				"required": true
+			}
+		}
+	},
+
+	"commands": {
+		"description": "Slash command configuration (Phase 9.1)",
+		"enabled": "${BOT_SLASH_COMMANDS_ENABLED}",
+		"allowed_roles": "${BOT_SLASH_COMMANDS_ALLOWED_ROLES}",
+		"admin_roles": "${BOT_SLASH_COMMANDS_ADMIN_ROLES}",
+		"defaults": {
+			"enabled": true,
+			"allowed_roles": "CRT,Admin,Moderator",
+			"admin_roles": "Admin"
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"allowed_roles": {
+				"type": "string",
+				"required": true
+			},
+			"admin_roles": {
+				"type": "string",
+				"required": true
+			}
+		}
+	},
+
+	"handoff": {
+		"description": "CRT session handoff configuration (Phase 9.2)",
+		"enabled": "${BOT_HANDOFF_ENABLED}",
+		"crt_roles": "${BOT_HANDOFF_CRT_ROLES}",
+		"notes_channel_id": "${BOT_CRT_NOTES_CHANNEL_ID}",
+		"context_enabled": "${BOT_HANDOFF_CONTEXT_ENABLED}",
+		"defaults": {
+			"enabled": true,
+			"crt_roles": "CRT,Crisis Response Team",
+			"notes_channel_id": null,
+			"context_enabled": true
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"crt_roles": {
+				"type": "string",
+				"required": true
+			},
+			"notes_channel_id": {
+				"type": "string",
+				"required": false
+			},
+			"context_enabled": {
+				"type": "boolean",
+				"required": true
+			}
+		}
+	},
+
+	"followup": {
+		"description": "Follow-up check-in configuration (Phase 9.3)",
+		"enabled": "${BOT_FOLLOWUP_ENABLED}",
+		"delay_hours": "${BOT_FOLLOWUP_DELAY_HOURS}",
+		"max_hours": "${BOT_FOLLOWUP_MAX_HOURS}",
+		"min_severity": "${BOT_FOLLOWUP_MIN_SEVERITY}",
+		"min_session_minutes": "${BOT_FOLLOWUP_MIN_SESSION_MINUTES}",
+		"defaults": {
+			"enabled": true,
+			"delay_hours": 24,
+			"max_hours": 48,
+			"min_severity": "medium",
+			"min_session_minutes": 5
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"delay_hours": {
+				"type": "integer",
+				"range": [1, 48],
+				"required": true
+			},
+			"max_hours": {
+				"type": "integer",
+				"range": [24, 72],
+				"required": true
+			},
+			"min_severity": {
+				"type": "string",
+				"allowed_values": ["low", "medium", "high", "critical"],
+				"required": true
+			},
+			"min_session_minutes": {
+				"type": "integer",
+				"range": [1, 30],
 				"required": true
 			}
 		}

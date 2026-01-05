@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-7-3.0-1
+FILE VERSION: v5.0-9-1.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 7 - Core Safety & User Preferences
+PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.1)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -74,7 +74,7 @@ if TYPE_CHECKING:
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-7-3.0-1"
+__version__ = "v5.0-9-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -438,6 +438,19 @@ class DiscordManager:
             )
         else:
             logger.warning("   ⚠️ Ash AI disabled or not configured")
+
+        # Phase 9.1: Register slash commands
+        if hasattr(self.bot, 'slash_command_manager') and self.bot.slash_command_manager:
+            try:
+                registered = await self.bot.slash_command_manager.register_commands()
+                if registered:
+                    logger.info("   📝 Slash commands registered")
+                else:
+                    logger.warning("   ⚠️ Slash commands registration failed or disabled")
+            except Exception as e:
+                logger.error(f"   ❌ Slash command registration error: {e}")
+        else:
+            logger.info("   ℹ️ Slash commands not configured")
 
         logger.info("=" * 60)
 

@@ -464,8 +464,8 @@ When running containers on NAS systems (Synology, TrueNAS, Unraid) or shared sto
 
 | File | Changes |
 |------|--------|
-| `docker-entrypoint.sh` | **NEW** - Runtime user/group modification script |
-| `Dockerfile` | Added `gosu`, entrypoint script, container labels |
+| `docker-entrypoint.py` | **NEW** - Runtime user/group modification script (Python) |
+| `Dockerfile` | Added entrypoint script, container labels |
 | `docker-compose.yml` | Added PUID/PGID environment variables |
 | `.env.template` | Added PUID/PGID documentation |
 | `docs/operations/deployment.md` | Added User/Group Configuration section |
@@ -473,10 +473,11 @@ When running containers on NAS systems (Synology, TrueNAS, Unraid) or shared sto
 ### How It Works
 
 1. Container starts as root (required for user modification)
-2. Entrypoint script reads `PUID` and `PGID` environment variables
-3. Internal `bot` user is modified to match specified IDs
+2. Python entrypoint script reads `PUID` and `PGID` environment variables
+3. Internal `bot` user is modified to match specified IDs using `usermod`/`groupmod`
 4. Permissions fixed on `/app/logs` and other directories
-5. `gosu` drops privileges to run application as modified user
+5. Python drops privileges using native `os.setgid()` then `os.setuid()`
+6. Application starts as the modified user
 
 ### Configuration
 

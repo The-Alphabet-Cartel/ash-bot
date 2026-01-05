@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-8-3.0-1
+FILE VERSION: v5.0-9-3.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 8 - Metrics & Reporting (Step 8.3)
+PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.3)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-8-3.0-1"
+__version__ = "v5.0-9-3.0-1"
 
 
 # =============================================================================
@@ -323,6 +323,12 @@ async def main_async(args: argparse.Namespace) -> int:
     # Phase 8: Import response metrics and reporting managers
     from src.managers.metrics import create_response_metrics_manager
     from src.managers.reporting import create_weekly_report_manager
+    # Phase 9: Import slash commands manager
+    from src.managers.commands import create_slash_command_manager
+    # Phase 9.2: Import session handoff and notes managers
+    from src.managers.session import create_handoff_manager, create_notes_manager
+    # Phase 9.3: Import follow-up manager
+    from src.managers.session import create_followup_manager
 
     # Initialize managers
     logger.info("🔧 Initializing managers...")
@@ -336,6 +342,10 @@ async def main_async(args: argparse.Namespace) -> int:
     response_metrics_manager = None
     weekly_report_manager = None
     data_retention_manager = None
+    slash_command_manager = None
+    notes_manager = None
+    handoff_manager = None
+    followup_manager = None
 
     try:
         # Set environment for config manager
@@ -494,6 +504,31 @@ async def main_async(args: argparse.Namespace) -> int:
                 )
                 user_preferences_manager = None
 
+        # Phase 9.2: Create notes and handoff managers
+        try:
+            if redis_manager:
+                notes_manager = create_notes_manager(
+                    config_manager=config_manager,
+                    redis_manager=redis_manager,
+                )
+                logger.info("✅ NotesManager initialized (Phase 9.2)")
+
+                handoff_manager = create_handoff_manager(
+                    config_manager=config_manager,
+                    notes_manager=notes_manager,
+                )
+                logger.info("✅ HandoffManager initialized (Phase 9.2)")
+            else:
+                logger.info("ℹ️ Session handoff/notes disabled (Redis not available)")
+
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Session managers initialization failed: {e}\n"
+                "   Bot will start without handoff/notes features"
+            )
+            notes_manager = None
+            handoff_manager = None
+
         # Phase 4: Now create Ash session manager with bot instance
         if claude_client and ash_personality_manager:
             try:
@@ -513,13 +548,69 @@ async def main_async(args: argparse.Namespace) -> int:
                     )
                     logger.info("✅ User opt-out integration configured (Phase 7)")
 
+                # Phase 9.2: Inject handoff and notes managers
+                if handoff_manager:
+                    ash_session_manager.set_handoff_manager(handoff_manager)
+                    logger.info("✅ HandoffManager integrated with AshSessionManager (Phase 9.2)")
+
+                if notes_manager:
+                    ash_session_manager.set_notes_manager(notes_manager)
+                    logger.info("✅ NotesManager integrated with AshSessionManager (Phase 9.2)")
+
                 # Inject into discord_manager
                 discord_manager.ash_session_manager = ash_session_manager
                 discord_manager.bot.ash_session_manager = ash_session_manager
                 logger.info("✅ AshSessionManager configured (Phase 4)")
+
             except Exception as e:
                 logger.warning(f"⚠️ AshSessionManager creation failed: {e}")
                 ash_session_manager = None
+
+        # Phase 9.3: Create follow-up manager
+        followup_enabled = config_manager.get("followup", "enabled", True)
+        if followup_enabled and redis_manager and user_preferences_manager:
+            try:
+                followup_manager = create_followup_manager(
+                    config_manager=config_manager,
+                    redis_manager=redis_manager,
+                    user_preferences_manager=user_preferences_manager,
+                )
+
+                # Inject bot for sending DMs
+                followup_manager.set_bot(discord_manager.bot)
+
+                # Inject Ash managers for mini-sessions on response
+                if ash_session_manager and ash_personality_manager:
+                    followup_manager.set_ash_managers(
+                        ash_session_manager=ash_session_manager,
+                        ash_personality_manager=ash_personality_manager,
+                    )
+
+                # Integrate with AshSessionManager for scheduling
+                if ash_session_manager:
+                    ash_session_manager.set_followup_manager(followup_manager)
+
+                # Attach to bot for response detection
+                discord_manager.bot.followup_manager = followup_manager
+
+                # Start the scheduler
+                await followup_manager.start()
+
+                logger.info("✅ FollowUpManager configured and started (Phase 9.3)")
+
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ FollowUpManager initialization failed: {e}\n"
+                    "   Bot will start without follow-up check-ins"
+                )
+                followup_manager = None
+        else:
+            if not followup_enabled:
+                logger.info("ℹ️ Follow-up check-ins disabled by configuration")
+            elif not redis_manager:
+                logger.info("ℹ️ Follow-up check-ins disabled (Redis not available)")
+            elif not user_preferences_manager:
+                logger.info("ℹ️ Follow-up check-ins disabled (UserPreferences not available)")
 
         # Phase 3: Now create alert_dispatcher with bot instance
         if cooldown_manager and embed_builder:
@@ -668,6 +759,42 @@ async def main_async(args: argparse.Namespace) -> int:
                 )
                 weekly_report_manager = None
 
+        # Phase 9.1: Create and register slash commands
+        slash_commands_enabled = config_manager.get("commands", "enabled", True)
+        if slash_commands_enabled:
+            try:
+                slash_command_manager = create_slash_command_manager(
+                    config_manager=config_manager,
+                    bot=discord_manager.bot,
+                    redis_manager=redis_manager,
+                    user_preferences_manager=user_preferences_manager,
+                    response_metrics_manager=response_metrics_manager,
+                )
+
+                # Set health manager if available
+                if health_enabled and 'health_manager' in dir():
+                    slash_command_manager.set_health_manager(health_manager)
+
+                # Phase 9.2: Set notes manager if available
+                if notes_manager:
+                    slash_command_manager.set_notes_manager(notes_manager)
+                    logger.info("✅ NotesManager integrated with SlashCommandManager (Phase 9.2)")
+
+                # Attach to bot for access during command handling
+                discord_manager.bot.slash_command_manager = slash_command_manager
+                discord_manager.bot.response_metrics_manager = response_metrics_manager
+                discord_manager.bot.notes_manager = notes_manager
+                discord_manager.bot.handoff_manager = handoff_manager
+
+                logger.info("✅ SlashCommandManager initialized (Phase 9.1)")
+
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ SlashCommandManager initialization failed: {e}\n"
+                    "   Bot will start without slash commands"
+                )
+                slash_command_manager = None
+
         # Setup signal handlers
         discord_manager.setup_signal_handlers()
 
@@ -678,6 +805,11 @@ async def main_async(args: argparse.Namespace) -> int:
         try:
             await discord_manager.connect()
         finally:
+            # Phase 9.3: Stop follow-up manager
+            if followup_manager:
+                await followup_manager.stop()
+                logger.info("🔌 FollowUpManager stopped")
+
             # Phase 8.3: Stop data retention manager
             if data_retention_manager:
                 await data_retention_manager.stop()

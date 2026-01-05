@@ -324,7 +324,7 @@ src/managers/storage/
 tests/test_storage/
 └── test_data_retention.py             (v5.0-8-3.0-1)
 
-docker-entrypoint.sh                   (v5.0-entrypoint-1.0)  # PUID/PGID support
+docker-entrypoint.py                   (v5.0-entrypoint-1.1)  # PUID/PGID support
 ```
 
 ### Modified Files
@@ -334,7 +334,7 @@ src/managers/storage/__init__.py       (v5.0-8-3.0-1)
 src/config/default.json                (v5.0.8)
 .env.template                          (v5.0.10)
 main.py                                (v5.0-8-3.0-1)
-Dockerfile                             (v5.0.5)
+Dockerfile                             (v5.0.6)
 docker-compose.yml                     (v5.0.5)
 docs/operations/deployment.md          (v1.2.0)
 ```
