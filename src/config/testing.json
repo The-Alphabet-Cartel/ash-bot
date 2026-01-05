@@ -1,0 +1,62 @@
+{
+	"_metadata": {
+		"file_version": "v5.0.1",
+		"last_modified": "2026-01-04",
+		"clean_architecture": "Compliant",
+		"description": "Ash-Bot v5.0 Testing Configuration Overrides",
+		"note": "Optimized for debugging and reproducible test runs",
+		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
+		"community": "The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org"
+	},
+
+	"logging": {
+		"description": "Testing logging - human readable for debugging",
+		"level": "DEBUG",
+		"format": "text",
+		"file": "/app/logs/ash-bot-tests.log",
+		"console": true,
+		"defaults": {
+			"level": "DEBUG",
+			"format": "text",
+			"file": "/app/logs/ash-bot-tests.log",
+			"console": true
+		}
+	},
+
+	"nlp": {
+		"description": "Testing NLP settings - faster timeouts",
+		"timeout_seconds": 2,
+		"retry_attempts": 1,
+		"defaults": {
+			"base_url": "http://ash-nlp:30880",
+			"timeout_seconds": 2,
+			"retry_attempts": 1,
+			"retry_delay_seconds": 0
+		}
+	},
+
+	"history": {
+		"description": "Testing history settings - shorter retention",
+		"ttl_days": 1,
+		"max_messages": 10,
+		"defaults": {
+			"ttl_days": 1,
+			"max_messages": 10,
+			"min_severity_to_store": "low"
+		}
+	},
+
+	"ash": {
+		"description": "Testing Ash settings - faster timeouts",
+		"session_timeout_seconds": 60,
+		"max_session_duration_seconds": 120,
+		"defaults": {
+			"enabled": true,
+			"min_severity_to_respond": "high",
+			"session_timeout_seconds": 60,
+			"max_session_duration_seconds": 120,
+			"model": "claude-sonnet-4-20250514",
+			"max_tokens": 200
+		}
+	}
+}

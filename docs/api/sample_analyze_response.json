@@ -1,0 +1,333 @@
+{
+	"crisis_detected": true,
+	"severity": "critical",
+	"confidence": 0.3213227902419128,
+	"crisis_score": 0.9697840973734856,
+	"requires_intervention": true,
+	"recommended_action": "immediate_outreach",
+	"signals": {
+		"bart": {
+			"label": "suicide ideation",
+			"score": 0.548,
+			"crisis_signal": 0.9
+		},
+		"sentiment": {
+			"label": "negative",
+			"score": 0.8269,
+			"crisis_signal": 0.8554
+		},
+		"irony": {
+			"label": "non_irony",
+			"score": 0.9664,
+			"crisis_signal": 0.9698
+		},
+		"emotions": {
+			"label": "neutral",
+			"score": 0.6647,
+			"crisis_signal": 0.0048
+		}
+	},
+	"processing_time_ms": 195.0740659958683,
+	"models_used": ["bart", "sentiment", "irony", "emotions"],
+	"is_degraded": false,
+	"request_id": "req_5236c9e9a17a",
+	"timestamp": "2026-01-02T03:28:07.527732",
+	"explanation": {
+		"verbosity": "standard",
+		"decision_summary": "CRITICAL: Significant crisis indicators detected with 38% confidence. Immediate attention required.",
+		"key_factors": [
+			"suicide ideation",
+			"negative",
+			"non irony",
+			"negative sentiment"
+		],
+		"recommended_action": {
+			"priority": "IMMEDIATE",
+			"action": "Immediate outreach to community member",
+			"escalation": "Human review recommended due to model disagreement",
+			"rationale": "Critical crisis indicators require immediate human intervention"
+		},
+		"plain_text": "DECISION SUMMARY:\nCRITICAL: Significant crisis indicators detected with 38% confidence. Immediate attention required.\n\nKEY FACTORS:\n• suicide ideation\n• negative\n• non irony\n• negative sentiment\n\nRECOMMENDED ACTION:\nPriority: IMMEDIATE\nAction: Immediate outreach to community member\nEscalation: Human review recommended due to model disagreement",
+		"confidence_summary": null,
+		"model_contributions": null,
+		"conflict_summary": null
+	},
+	"conflict_analysis": {
+		"has_conflicts": true,
+		"conflict_count": 2,
+		"conflicts": [
+			{
+				"conflict_type": "score_disagreement",
+				"severity": "high",
+				"description": "Significant score disagreement: irony (0.97) vs emotions (0.00)",
+				"involved_models": ["irony", "emotions"],
+				"details": {
+					"max_score": 0.9697840973734856,
+					"min_score": 0.0047778935346286765,
+					"score_range": 0.9650062038388569,
+					"threshold": 0.4,
+					"all_scores": {
+						"bart": 0.9,
+						"sentiment": 0.855433480348438,
+						"irony": 0.9697840973734856,
+						"emotions": 0.0047778935346286765
+					}
+				}
+			},
+			{
+				"conflict_type": "emotion_crisis_mismatch",
+				"severity": "medium",
+				"description": "High crisis score (0.59) but low crisis emotions (0.00) - possible false positive",
+				"involved_models": ["bart", "emotions"],
+				"details": {
+					"average_crisis_score": 0.5867371246276889,
+					"crisis_emotion_total": 0,
+					"detected_crisis_emotions": [],
+					"top_emotions": {
+						"neutral": 0.6647007465362549,
+						"confusion": 0.0739026665687561,
+						"realization": 0.07124939560890198,
+						"disapproval": 0.04479632526636124,
+						"approval": 0.028337597846984863
+					}
+				}
+			}
+		],
+		"highest_severity": "high",
+		"requires_review": true,
+		"summary": "2 conflicts detected: score_disagreement, emotion_crisis_mismatch",
+		"resolution_strategy": "conservative",
+		"original_score": 0.6825,
+		"resolved_score": 0.9698
+	},
+	"consensus": {
+		"algorithm": "weighted_voting",
+		"crisis_score": 0.8098,
+		"confidence": 0.3809,
+		"agreement_level": "weak_agreement",
+		"is_crisis": true,
+		"requires_review": false,
+		"has_conflict": false,
+		"individual_scores": {
+			"bart": 0.9,
+			"sentiment": 0.8554,
+			"irony": 0.9698,
+			"emotions": 0.0048
+		},
+		"vote_breakdown": {
+			"total_weight": 1,
+			"weighted_sum": 0.8098037740465952
+		}
+	},
+	"context_analysis": {
+		"escalation_detected": false,
+		"escalation_rate": "none",
+		"escalation_pattern": null,
+		"pattern_confidence": 0,
+		"trend": {
+			"direction": "stable",
+			"velocity": "none",
+			"score_delta": 0,
+			"time_span_hours": 0
+		},
+		"temporal_factors": {
+			"late_night_risk": true,
+			"rapid_posting": false,
+			"time_risk_modifier": 1.2,
+			"hour_of_day": 12,
+			"is_weekend": false
+		},
+		"trajectory": {
+			"start_score": 0.6442626427356435,
+			"end_score": 0.6442626427356435,
+			"peak_score": 0.6442626427356435,
+			"scores": [0.6442626427356435]
+		},
+		"intervention": {
+			"urgency": "high",
+			"recommended_point": null,
+			"intervention_delayed": false,
+			"reason": ""
+		},
+		"history_analyzed": {
+			"message_count": 0,
+			"time_span_hours": 0,
+			"oldest_timestamp": null,
+			"newest_timestamp": null
+		}
+	}
+}
+{
+  "crisis_detected": true,
+  "severity": "critical",
+  "confidence": 0.3213227902419128,
+  "crisis_score": 0.9697840973734856,
+  "requires_intervention": true,
+  "recommended_action": "immediate_outreach",
+  "signals": {
+    "bart": {
+      "label": "suicide ideation",
+      "score": 0.548,
+      "crisis_signal": 0.9
+    },
+    "sentiment": {
+      "label": "negative",
+      "score": 0.8269,
+      "crisis_signal": 0.8554
+    },
+    "irony": {
+      "label": "non_irony",
+      "score": 0.9664,
+      "crisis_signal": 0.9698
+    },
+    "emotions": {
+      "label": "neutral",
+      "score": 0.6647,
+      "crisis_signal": 0.0048
+    }
+  },
+  "processing_time_ms": 191.88989500980824,
+  "models_used": [
+    "bart",
+    "sentiment",
+    "irony",
+    "emotions"
+  ],
+  "is_degraded": false,
+  "request_id": "req_977d1ce14f49",
+  "timestamp": "2026-01-02T14:35:54.618687",
+  "explanation": {
+    "verbosity": "standard",
+    "decision_summary": "CRITICAL: Significant crisis indicators detected with 38% confidence. Immediate attention required.",
+    "key_factors": [
+      "suicide ideation",
+      "negative",
+      "non irony",
+      "negative sentiment"
+    ],
+    "recommended_action": {
+      "priority": "IMMEDIATE",
+      "action": "Immediate outreach to community member",
+      "escalation": "Human review recommended due to model disagreement",
+      "rationale": "Critical crisis indicators require immediate human intervention"
+    },
+    "plain_text": "DECISION SUMMARY:\nCRITICAL: Significant crisis indicators detected with 38% confidence. Immediate attention required.\n\nKEY FACTORS:\n• suicide ideation\n• negative\n• non irony\n• negative sentiment\n\nRECOMMENDED ACTION:\nPriority: IMMEDIATE\nAction: Immediate outreach to community member\nEscalation: Human review recommended due to model disagreement",
+    "confidence_summary": null,
+    "model_contributions": null,
+    "conflict_summary": null
+  },
+  "conflict_analysis": {
+    "has_conflicts": true,
+    "conflict_count": 2,
+    "conflicts": [
+      {
+        "conflict_type": "score_disagreement",
+        "severity": "high",
+        "description": "Significant score disagreement: irony (0.97) vs emotions (0.00)",
+        "involved_models": [
+          "irony",
+          "emotions"
+        ],
+        "details": {
+          "max_score": 0.9697840973734856,
+          "min_score": 0.0047778935346286765,
+          "score_range": 0.9650062038388569,
+          "threshold": 0.4,
+          "all_scores": {
+            "bart": 0.9,
+            "sentiment": 0.855433480348438,
+            "irony": 0.9697840973734856,
+            "emotions": 0.0047778935346286765
+          }
+        }
+      },
+      {
+        "conflict_type": "emotion_crisis_mismatch",
+        "severity": "medium",
+        "description": "High crisis score (0.59) but low crisis emotions (0.00) - possible false positive",
+        "involved_models": [
+          "bart",
+          "emotions"
+        ],
+        "details": {
+          "average_crisis_score": 0.5867371246276889,
+          "crisis_emotion_total": 0,
+          "detected_crisis_emotions": [],
+          "top_emotions": {
+            "neutral": 0.6647007465362549,
+            "confusion": 0.0739026665687561,
+            "realization": 0.07124939560890198,
+            "disapproval": 0.04479632526636124,
+            "approval": 0.028337597846984863
+          }
+        }
+      }
+    ],
+    "highest_severity": "high",
+    "requires_review": true,
+    "summary": "2 conflicts detected: score_disagreement, emotion_crisis_mismatch",
+    "resolution_strategy": "conservative",
+    "original_score": 0.6825,
+    "resolved_score": 0.9698
+  },
+  "consensus": {
+    "algorithm": "weighted_voting",
+    "crisis_score": 0.8098,
+    "confidence": 0.3809,
+    "agreement_level": "weak_agreement",
+    "is_crisis": true,
+    "requires_review": false,
+    "has_conflict": false,
+    "individual_scores": {
+      "bart": 0.9,
+      "sentiment": 0.8554,
+      "irony": 0.9698,
+      "emotions": 0.0048
+    },
+    "vote_breakdown": {
+      "total_weight": 1,
+      "weighted_sum": 0.8098037740465952
+    }
+  },
+  "context_analysis": {
+    "escalation_detected": false,
+    "escalation_rate": "none",
+    "escalation_pattern": null,
+    "pattern_confidence": 0,
+    "trend": {
+      "direction": "stable",
+      "velocity": "none",
+      "score_delta": 0,
+      "time_span_hours": 0
+    },
+    "temporal_factors": {
+      "late_night_risk": false,
+      "rapid_posting": false,
+      "time_risk_modifier": 1,
+      "hour_of_day": 12,
+      "is_weekend": false,
+      "user_timezone": null,
+      "local_hour": null
+    },
+    "trajectory": {
+      "start_score": 0.6442626427356435,
+      "end_score": 0.6442626427356435,
+      "peak_score": 0.6442626427356435,
+      "scores": [
+        0.6442626427356435
+      ]
+    },
+    "intervention": {
+      "urgency": "standard",
+      "recommended_point": null,
+      "intervention_delayed": false,
+      "reason": ""
+    },
+    "history_analyzed": {
+      "message_count": 0,
+      "time_span_hours": 0,
+      "oldest_timestamp": null,
+      "newest_timestamp": null
+    }
+  }
+}

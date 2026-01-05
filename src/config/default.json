@@ -1,0 +1,644 @@
+{
+	"_metadata": {
+		"file_version": "v5.0.11",
+		"last_modified": "2026-01-05",
+		"clean_architecture": "Compliant",
+		"description": "Ash-Bot v5.0 Default Configuration",
+		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
+		"community": "The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org"
+	},
+
+	"logging": {
+		"description": "Logging configuration for structured output",
+		"level": "${BOT_LOG_LEVEL}",
+		"format": "${BOT_LOG_FORMAT}",
+		"file": "${BOT_LOG_FILE}",
+		"console": "${BOT_LOG_CONSOLE}",
+		"defaults": {
+			"level": "INFO",
+			"format": "json",
+			"file": "/app/logs/ash-bot.log",
+			"console": true
+		},
+		"validation": {
+			"level": {
+				"type": "string",
+				"allowed_values": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+				"required": true
+			},
+			"format": {
+				"type": "string",
+				"allowed_values": ["json", "text"],
+				"required": true
+			},
+			"file": {
+				"type": "string",
+				"required": true
+			},
+			"console": {
+				"type": "boolean",
+				"required": false
+			}
+		}
+	},
+
+	"discord": {
+		"description": "Discord bot configuration",
+		"guild_id": "${BOT_DISCORD_GUILD_ID}",
+		"defaults": {
+			"guild_id": null
+		},
+		"validation": {
+			"guild_id": {
+				"type": "string",
+				"required": false
+			}
+		}
+	},
+
+	"channels": {
+		"description": "Channel configuration for monitoring and alerting",
+		"monitored_channels": "${BOT_MONITORED_CHANNELS}",
+		"alert_channel_monitor": "${BOT_ALERT_CHANNEL_MONITOR}",
+		"alert_channel_crisis": "${BOT_ALERT_CHANNEL_CRISIS}",
+		"alert_channel_critical": "${BOT_ALERT_CHANNEL_CRITICAL}",
+		"defaults": {
+			"monitored_channels": [],
+			"alert_channel_monitor": null,
+			"alert_channel_crisis": null,
+			"alert_channel_critical": null
+		},
+		"validation": {
+			"monitored_channels": {
+				"type": "list",
+				"required": false
+			},
+			"alert_channel_monitor": {
+				"type": "string",
+				"required": false
+			},
+			"alert_channel_crisis": {
+				"type": "string",
+				"required": false
+			},
+			"alert_channel_critical": {
+				"type": "string",
+				"required": false
+			}
+		}
+	},
+
+	"nlp": {
+		"description": "Ash-NLP API configuration",
+		"base_url": "${BOT_NLP_BASE_URL}",
+		"timeout_seconds": "${BOT_NLP_TIMEOUT}",
+		"retry_attempts": "${BOT_NLP_RETRIES}",
+		"retry_delay_seconds": "${BOT_NLP_RETRY_DELAY}",
+		"defaults": {
+			"base_url": "http://ash-nlp:30880",
+			"timeout_seconds": 5,
+			"retry_attempts": 2,
+			"retry_delay_seconds": 1
+		},
+		"validation": {
+			"base_url": {
+				"type": "string",
+				"required": true
+			},
+			"timeout_seconds": {
+				"type": "integer",
+				"range": [1, 30],
+				"required": true
+			},
+			"retry_attempts": {
+				"type": "integer",
+				"range": [0, 5],
+				"required": true
+			},
+			"retry_delay_seconds": {
+				"type": "integer",
+				"range": [0, 10],
+				"required": true
+			}
+		}
+	},
+
+	"redis": {
+		"description": "Redis connection configuration",
+		"host": "${BOT_REDIS_HOST}",
+		"port": "${BOT_REDIS_PORT}",
+		"db": "${BOT_REDIS_DB}",
+		"defaults": {
+			"host": "ash-redis",
+			"port": 6379,
+			"db": 0
+		},
+		"validation": {
+			"host": {
+				"type": "string",
+				"required": true
+			},
+			"port": {
+				"type": "integer",
+				"range": [1, 65535],
+				"required": true
+			},
+			"db": {
+				"type": "integer",
+				"range": [0, 15],
+				"required": true
+			}
+		}
+	},
+
+	"history": {
+		"description": "User history tracking configuration",
+		"ttl_days": "${BOT_HISTORY_TTL_DAYS}",
+		"max_messages": "${BOT_HISTORY_MAX_MESSAGES}",
+		"min_severity_to_store": "${BOT_HISTORY_MIN_SEVERITY}",
+		"defaults": {
+			"ttl_days": 14,
+			"max_messages": 100,
+			"min_severity_to_store": "low"
+		},
+		"validation": {
+			"ttl_days": {
+				"type": "integer",
+				"range": [1, 90],
+				"required": true
+			},
+			"max_messages": {
+				"type": "integer",
+				"range": [10, 500],
+				"required": true
+			},
+			"min_severity_to_store": {
+				"type": "string",
+				"allowed_values": ["safe", "low", "medium", "high", "critical"],
+				"required": true
+			}
+		}
+	},
+
+	"alerting": {
+		"description": "Alert system configuration",
+		"enabled": "${BOT_ALERTING_ENABLED}",
+		"min_severity_to_alert": "${BOT_ALERT_MIN_SEVERITY}",
+		"cooldown_seconds": "${BOT_ALERT_COOLDOWN}",
+		"crt_role_id": "${BOT_CRT_ROLE_ID}",
+		"defaults": {
+			"enabled": true,
+			"min_severity_to_alert": "medium",
+			"cooldown_seconds": 300,
+			"crt_role_id": null
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"min_severity_to_alert": {
+				"type": "string",
+				"allowed_values": ["low", "medium", "high", "critical"],
+				"required": true
+			},
+			"cooldown_seconds": {
+				"type": "integer",
+				"range": [0, 3600],
+				"required": true
+			},
+			"crt_role_id": {
+				"type": "string",
+				"required": false
+			}
+		}
+	},
+
+	"auto_initiate": {
+		"description": "Auto-initiation settings for unacknowledged alerts (Phase 7)",
+		"enabled": "${BOT_AUTO_INITIATE_ENABLED}",
+		"delay_minutes": "${BOT_AUTO_INITIATE_DELAY_MINUTES}",
+		"min_severity": "${BOT_AUTO_INITIATE_MIN_SEVERITY}",
+		"defaults": {
+			"enabled": true,
+			"delay_minutes": 3,
+			"min_severity": "medium"
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"delay_minutes": {
+				"type": "integer",
+				"range": [1, 60],
+				"required": true
+			},
+			"min_severity": {
+				"type": "string",
+				"allowed_values": ["low", "medium", "high", "critical"],
+				"required": true
+			}
+		}
+	},
+
+	"user_preferences": {
+		"description": "User preference settings including opt-out (Phase 7)",
+		"optout_enabled": "${BOT_USER_OPTOUT_ENABLED}",
+		"optout_ttl_days": "${BOT_USER_OPTOUT_TTL_DAYS}",
+		"defaults": {
+			"optout_enabled": true,
+			"optout_ttl_days": 30
+		},
+		"validation": {
+			"optout_enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"optout_ttl_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			}
+		}
+	},
+
+	"channel_sensitivity": {
+		"description": "Per-channel crisis detection sensitivity (Phase 7)",
+		"default_sensitivity": "${BOT_DEFAULT_CHANNEL_SENSITIVITY}",
+		"channel_overrides": {},
+		"defaults": {
+			"default_sensitivity": 1.0
+		},
+		"validation": {
+			"default_sensitivity": {
+				"type": "float",
+				"range": [0.3, 2.0],
+				"required": true
+			}
+		},
+		"notes": {
+			"sensitivity_ranges": {
+				"0.3-0.5": "Much less sensitive (Wreck Room, vent channels)",
+				"0.6-0.8": "Somewhat less sensitive (mental health discussion)",
+				"1.0": "Normal sensitivity (default for general channels)",
+				"1.2-1.5": "More sensitive (vulnerable population channels)",
+				"2.0": "Highly sensitive (extreme vigilance needed)"
+			},
+			"channel_overrides_example": {
+				"123456789": 0.5,
+				"987654321": 0.7
+			}
+		}
+	},
+
+	"ash": {
+		"description": "Ash AI personality configuration",
+		"enabled": "${BOT_ASH_ENABLED}",
+		"min_severity_to_respond": "${BOT_ASH_MIN_SEVERITY}",
+		"session_timeout_seconds": "${BOT_ASH_SESSION_TIMEOUT}",
+		"max_session_duration_seconds": "${BOT_ASH_MAX_SESSION}",
+		"model": "${BOT_ASH_MODEL}",
+		"max_tokens": "${BOT_ASH_MAX_TOKENS}",
+		"defaults": {
+			"enabled": true,
+			"min_severity_to_respond": "high",
+			"session_timeout_seconds": 300,
+			"max_session_duration_seconds": 600,
+			"model": "claude-sonnet-4-20250514",
+			"max_tokens": 500
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"min_severity_to_respond": {
+				"type": "string",
+				"allowed_values": ["medium", "high", "critical"],
+				"required": true
+			},
+			"session_timeout_seconds": {
+				"type": "integer",
+				"range": [60, 900],
+				"required": true
+			},
+			"max_session_duration_seconds": {
+				"type": "integer",
+				"range": [300, 1800],
+				"required": true
+			},
+			"model": {
+				"type": "string",
+				"required": true
+			},
+			"max_tokens": {
+				"type": "integer",
+				"range": [100, 2000],
+				"required": true
+			}
+		}
+	},
+
+	"health": {
+		"description": "Health check server configuration",
+		"enabled": "${BOT_HEALTH_ENABLED}",
+		"host": "${BOT_HEALTH_HOST}",
+		"port": "${BOT_HEALTH_PORT}",
+		"defaults": {
+			"enabled": true,
+			"host": "0.0.0.0",
+			"port": 30881
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"host": {
+				"type": "string",
+				"required": true
+			},
+			"port": {
+				"type": "integer",
+				"range": [1024, 65535],
+				"required": true
+			}
+		}
+	},
+
+	"metrics": {
+		"description": "Metrics collection configuration",
+		"enabled": "${BOT_METRICS_ENABLED}",
+		"export_interval_seconds": "${BOT_METRICS_INTERVAL}",
+		"defaults": {
+			"enabled": true,
+			"export_interval_seconds": 60
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"export_interval_seconds": {
+				"type": "integer",
+				"range": [10, 300],
+				"required": true
+			}
+		}
+	},
+
+	"response_metrics": {
+		"description": "Response time tracking for crisis alerts (Phase 8.1)",
+		"enabled": "${BOT_RESPONSE_METRICS_ENABLED}",
+		"retention_days": "${BOT_RESPONSE_METRICS_RETENTION_DAYS}",
+		"aggregate_retention_days": "${BOT_RESPONSE_METRICS_AGGREGATE_RETENTION_DAYS}",
+		"defaults": {
+			"enabled": true,
+			"retention_days": 90,
+			"aggregate_retention_days": 365
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"retention_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			},
+			"aggregate_retention_days": {
+				"type": "integer",
+				"range": [30, 730],
+				"required": true
+			}
+		}
+	},
+
+	"weekly_report": {
+		"description": "Weekly CRT report configuration (Phase 8.2)",
+		"enabled": "${BOT_WEEKLY_REPORT_ENABLED}",
+		"channel_id": "${BOT_WEEKLY_REPORT_CHANNEL_ID}",
+		"report_day": "${BOT_WEEKLY_REPORT_DAY}",
+		"report_hour": "${BOT_WEEKLY_REPORT_HOUR}",
+		"defaults": {
+			"enabled": true,
+			"channel_id": null,
+			"report_day": "monday",
+			"report_hour": 9
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"channel_id": {
+				"type": "string",
+				"required": false
+			},
+			"report_day": {
+				"type": "string",
+				"allowed_values": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+				"required": true
+			},
+			"report_hour": {
+				"type": "integer",
+				"range": [0, 23],
+				"required": true
+			}
+		}
+	},
+
+	"data_retention": {
+		"description": "Data retention and automated cleanup configuration (Phase 8.3)",
+		"enabled": "${BOT_RETENTION_ENABLED}",
+		"alert_metrics_days": "${BOT_RETENTION_ALERT_METRICS_DAYS}",
+		"aggregates_days": "${BOT_RETENTION_AGGREGATES_DAYS}",
+		"message_history_days": "${BOT_RETENTION_MESSAGE_HISTORY_DAYS}",
+		"session_data_days": "${BOT_RETENTION_SESSION_DATA_DAYS}",
+		"cleanup_hour": "${BOT_RETENTION_CLEANUP_HOUR}",
+		"defaults": {
+			"enabled": true,
+			"alert_metrics_days": 90,
+			"aggregates_days": 365,
+			"message_history_days": 7,
+			"session_data_days": 30,
+			"cleanup_hour": 3
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"alert_metrics_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			},
+			"aggregates_days": {
+				"type": "integer",
+				"range": [30, 730],
+				"required": true
+			},
+			"message_history_days": {
+				"type": "integer",
+				"range": [1, 30],
+				"required": true
+			},
+			"session_data_days": {
+				"type": "integer",
+				"range": [7, 90],
+				"required": true
+			},
+			"cleanup_hour": {
+				"type": "integer",
+				"range": [0, 23],
+				"required": true
+			}
+		}
+	},
+
+	"commands": {
+		"description": "Slash command configuration (Phase 9.1)",
+		"enabled": "${BOT_SLASH_COMMANDS_ENABLED}",
+		"allowed_roles": "${BOT_SLASH_COMMANDS_ALLOWED_ROLES}",
+		"admin_roles": "${BOT_SLASH_COMMANDS_ADMIN_ROLES}",
+		"defaults": {
+			"enabled": true,
+			"allowed_roles": "CRT,Admin,Moderator",
+			"admin_roles": "Admin"
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"allowed_roles": {
+				"type": "string",
+				"required": true
+			},
+			"admin_roles": {
+				"type": "string",
+				"required": true
+			}
+		}
+	},
+
+	"handoff": {
+		"description": "CRT session handoff configuration (Phase 9.2)",
+		"enabled": "${BOT_HANDOFF_ENABLED}",
+		"crt_roles": "${BOT_HANDOFF_CRT_ROLES}",
+		"notes_channel_id": "${BOT_CRT_NOTES_CHANNEL_ID}",
+		"context_enabled": "${BOT_HANDOFF_CONTEXT_ENABLED}",
+		"defaults": {
+			"enabled": true,
+			"crt_roles": "CRT,Crisis Response Team",
+			"notes_channel_id": null,
+			"context_enabled": true
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"crt_roles": {
+				"type": "string",
+				"required": true
+			},
+			"notes_channel_id": {
+				"type": "string",
+				"required": false
+			},
+			"context_enabled": {
+				"type": "boolean",
+				"required": true
+			}
+		}
+	},
+
+	"followup": {
+		"description": "Follow-up check-in configuration (Phase 9.3)",
+		"enabled": "${BOT_FOLLOWUP_ENABLED}",
+		"delay_hours": "${BOT_FOLLOWUP_DELAY_HOURS}",
+		"max_hours": "${BOT_FOLLOWUP_MAX_HOURS}",
+		"min_severity": "${BOT_FOLLOWUP_MIN_SEVERITY}",
+		"min_session_minutes": "${BOT_FOLLOWUP_MIN_SESSION_MINUTES}",
+		"defaults": {
+			"enabled": true,
+			"delay_hours": 24,
+			"max_hours": 48,
+			"min_severity": "medium",
+			"min_session_minutes": 5
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"delay_hours": {
+				"type": "integer",
+				"range": [1, 48],
+				"required": true
+			},
+			"max_hours": {
+				"type": "integer",
+				"range": [24, 72],
+				"required": true
+			},
+			"min_severity": {
+				"type": "string",
+				"allowed_values": ["low", "medium", "high", "critical"],
+				"required": true
+			},
+			"min_session_minutes": {
+				"type": "integer",
+				"range": [1, 30],
+				"required": true
+			}
+		}
+	},
+
+	"circuit_breaker": {
+		"description": "Circuit breaker configuration for external services",
+		"nlp_failure_threshold": "${BOT_CB_NLP_FAILURES}",
+		"nlp_success_threshold": "${BOT_CB_NLP_SUCCESSES}",
+		"nlp_timeout_seconds": "${BOT_CB_NLP_TIMEOUT}",
+		"redis_failure_threshold": "${BOT_CB_REDIS_FAILURES}",
+		"redis_timeout_seconds": "${BOT_CB_REDIS_TIMEOUT}",
+		"defaults": {
+			"nlp_failure_threshold": 5,
+			"nlp_success_threshold": 2,
+			"nlp_timeout_seconds": 30,
+			"redis_failure_threshold": 3,
+			"redis_timeout_seconds": 15
+		},
+		"validation": {
+			"nlp_failure_threshold": {
+				"type": "integer",
+				"range": [1, 20],
+				"required": true
+			},
+			"nlp_success_threshold": {
+				"type": "integer",
+				"range": [1, 10],
+				"required": true
+			},
+			"nlp_timeout_seconds": {
+				"type": "integer",
+				"range": [5, 120],
+				"required": true
+			},
+			"redis_failure_threshold": {
+				"type": "integer",
+				"range": [1, 20],
+				"required": true
+			},
+			"redis_timeout_seconds": {
+				"type": "integer",
+				"range": [5, 60],
+				"required": true
+			}
+		}
+	}
+}

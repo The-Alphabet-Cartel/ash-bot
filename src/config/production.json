@@ -1,0 +1,34 @@
+{
+	"_metadata": {
+		"file_version": "v5.0.1",
+		"last_modified": "2026-01-04",
+		"clean_architecture": "Compliant",
+		"description": "Ash-Bot v5.0 Production Configuration Overrides",
+		"note": "This file contains ONLY values that differ from default.json",
+		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
+		"community": "The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org"
+	},
+
+	"logging": {
+		"description": "Production logging - JSON format for log aggregation",
+		"level": "INFO",
+		"format": "json",
+		"console": true,
+		"defaults": {
+			"level": "INFO",
+			"format": "json",
+			"file": "/app/logs/ash-bot.log",
+			"console": true
+		}
+	},
+
+	"history": {
+		"description": "Production history settings - longer retention",
+		"ttl_days": 30,
+		"defaults": {
+			"ttl_days": 30,
+			"max_messages": 100,
+			"min_severity_to_store": "low"
+		}
+	}
+}
