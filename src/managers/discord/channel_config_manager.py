@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Channel Configuration Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.4-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 1 - Discord Connectivity
+FILE VERSION: v5.0-7-3.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -25,6 +25,7 @@ RESPONSIBILITIES:
 - Determine if channels should be monitored
 - Route alerts to appropriate channels by severity
 - Provide CRT role ID for pinging
+- Manage per-channel sensitivity settings (Phase 7)
 
 USAGE:
     from src.managers.discord import create_channel_config_manager
@@ -44,7 +45,7 @@ if TYPE_CHECKING:
     from src.managers.config_manager import ConfigManager
 
 # Module version
-__version__ = "v5.0-1-1.4-1"
+__version__ = "v5.0-7-3.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -68,6 +69,8 @@ class ChannelConfigManager:
         _alert_channels: Dict mapping severity to channel ID
         _crt_role_id: Crisis Response Team role ID
         _guild_id: Target guild ID (optional)
+        _channel_sensitivity: Dict mapping channel ID to sensitivity (Phase 7)
+        _default_sensitivity: Default sensitivity for channels (Phase 7)
 
     Example:
         >>> channel_config = create_channel_config_manager(config_manager)
@@ -98,6 +101,10 @@ class ChannelConfigManager:
         }
         self._crt_role_id: Optional[int] = None
         self._guild_id: Optional[int] = None
+
+        # Phase 7: Channel sensitivity settings
+        self._channel_sensitivity: dict[int, float] = {}
+        self._default_sensitivity: float = 1.0
 
         # Load configuration
         self._load_config()
@@ -147,11 +154,41 @@ class ChannelConfigManager:
         discord_config = self.config_manager.get_section("discord")
         self._guild_id = self._parse_single_id(discord_config.get("guild_id"))
 
+        # Phase 7: Load channel sensitivity configuration
+        sensitivity_config = self.config_manager.get_section("channel_sensitivity")
+        self._default_sensitivity = float(
+            sensitivity_config.get("default_sensitivity", 1.0)
+        )
+        # Validate default sensitivity range
+        if not 0.3 <= self._default_sensitivity <= 2.0:
+            logger.warning(
+                f"⚠️ Default sensitivity {self._default_sensitivity} out of range [0.3-2.0], "
+                f"using 1.0"
+            )
+            self._default_sensitivity = 1.0
+
+        # Load per-channel sensitivity from channel_sensitivity_overrides
+        sensitivity_overrides = sensitivity_config.get("channel_overrides", {})
+        self._channel_sensitivity = {}
+        for channel_id_str, sensitivity in sensitivity_overrides.items():
+            channel_id = self._parse_single_id(channel_id_str)
+            if channel_id:
+                sens_value = float(sensitivity)
+                if 0.3 <= sens_value <= 2.0:
+                    self._channel_sensitivity[channel_id] = sens_value
+                else:
+                    logger.warning(
+                        f"⚠️ Channel {channel_id} sensitivity {sens_value} out of range, "
+                        f"using default {self._default_sensitivity}"
+                    )
+
         # Log configuration
         logger.debug(f"  Monitored channels: {len(self._monitored_channels)}")
         logger.debug(f"  Alert channels: {self._alert_channels}")
         logger.debug(f"  CRT role ID: {self._crt_role_id}")
         logger.debug(f"  Guild ID: {self._guild_id}")
+        logger.debug(f"  Default sensitivity: {self._default_sensitivity}")
+        logger.debug(f"  Channel sensitivity overrides: {len(self._channel_sensitivity)}")
 
     def _parse_channel_ids(self, value) -> Set[int]:
         """
@@ -420,6 +457,100 @@ class ChannelConfigManager:
         return len(self._monitored_channels) > 0
 
     # =========================================================================
+    # Phase 7: Channel Sensitivity Methods
+    # =========================================================================
+
+    def get_channel_sensitivity(self, channel_id: int) -> float:
+        """
+        Get the sensitivity modifier for a channel.
+
+        Sensitivity affects how crisis scores are interpreted:
+        - 0.3 - 0.5: Much less sensitive (Wreck Room, vent channels)
+        - 0.6 - 0.8: Somewhat less sensitive (mental health discussion)
+        - 1.0: Normal (default for general channels)
+        - 1.2 - 1.5: More sensitive (vulnerable population channels)
+        - 2.0: Highly sensitive (extreme vigilance needed)
+
+        Args:
+            channel_id: Discord channel ID
+
+        Returns:
+            Sensitivity modifier (0.3-2.0)
+        """
+        return self._channel_sensitivity.get(channel_id, self._default_sensitivity)
+
+    def set_channel_sensitivity(
+        self,
+        channel_id: int,
+        sensitivity: float,
+    ) -> bool:
+        """
+        Set the sensitivity modifier for a channel (runtime only).
+
+        Note: This change is not persisted to configuration.
+
+        Args:
+            channel_id: Discord channel ID
+            sensitivity: Sensitivity modifier (0.3-2.0)
+
+        Returns:
+            True if set successfully, False if out of range
+        """
+        if not 0.3 <= sensitivity <= 2.0:
+            logger.warning(
+                f"⚠️ Cannot set sensitivity {sensitivity} for channel {channel_id}: "
+                f"out of range [0.3-2.0]"
+            )
+            return False
+
+        old_sensitivity = self._channel_sensitivity.get(channel_id, self._default_sensitivity)
+        self._channel_sensitivity[channel_id] = sensitivity
+
+        logger.info(
+            f"📊 Channel {channel_id} sensitivity updated: {old_sensitivity} → {sensitivity}"
+        )
+        return True
+
+    def remove_channel_sensitivity(self, channel_id: int) -> bool:
+        """
+        Remove custom sensitivity for a channel (revert to default).
+
+        Args:
+            channel_id: Discord channel ID
+
+        Returns:
+            True if removed, False if no custom sensitivity was set
+        """
+        if channel_id not in self._channel_sensitivity:
+            return False
+
+        old_sensitivity = self._channel_sensitivity.pop(channel_id)
+        logger.info(
+            f"📊 Channel {channel_id} sensitivity removed: {old_sensitivity} → "
+            f"{self._default_sensitivity} (default)"
+        )
+        return True
+
+    def get_all_channel_sensitivities(self) -> dict[int, float]:
+        """
+        Get all custom channel sensitivities.
+
+        Returns:
+            Dictionary mapping channel ID to sensitivity
+        """
+        return dict(self._channel_sensitivity)
+
+    @property
+    def default_sensitivity(self) -> float:
+        """Get the default channel sensitivity."""
+        return self._default_sensitivity
+
+    @property
+    def sensitivity_override_count(self) -> int:
+        """Get count of channels with custom sensitivity."""
+        return len(self._channel_sensitivity)
+
+    # =========================================================================
     # Utility Methods
     # =========================================================================
 
@@ -437,6 +568,9 @@ class ChannelConfigManager:
             },
             "crt_role_configured": self._crt_role_id is not None,
             "guild_restriction": self._guild_id is not None,
+            # Phase 7: Sensitivity status
+            "default_sensitivity": self._default_sensitivity,
+            "sensitivity_overrides": len(self._channel_sensitivity),
         }
 
     def __repr__(self) -> str:

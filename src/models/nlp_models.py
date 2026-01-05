@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 NLP Data Models for Ash-Bot Service
 ---
-FILE VERSION: v5.0-1-1.2-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 1 - Discord Connectivity
+FILE VERSION: v5.0-7-3.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional
 import logging
 
 # Module version
-__version__ = "v5.0-1-1.2-1"
+__version__ = "v5.0-7-3.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -58,6 +58,14 @@ class SeverityLevel:
 
     # Ordered list for comparison
     LEVELS = [SAFE, LOW, MEDIUM, HIGH, CRITICAL]
+
+    # Severity thresholds for score-to-severity mapping
+    # Used when re-evaluating severity after sensitivity modification
+    THRESHOLD_CRITICAL = 0.85  # 85%+ = CRITICAL
+    THRESHOLD_HIGH = 0.55      # 55%+ = HIGH
+    THRESHOLD_MEDIUM = 0.28    # 28%+ = MEDIUM
+    THRESHOLD_LOW = 0.16       # 16%+ = LOW
+    # Below LOW threshold = SAFE
 
     @classmethod
     def is_valid(cls, severity: str) -> bool:
@@ -86,6 +94,30 @@ class SeverityLevel:
     def requires_ash_response(cls, severity: str) -> bool:
         """Check if severity requires Ash AI response (HIGH+)."""
         return severity.lower() in (cls.HIGH, cls.CRITICAL)
+
+    @classmethod
+    def from_score(cls, score: float) -> str:
+        """
+        Determine severity level from crisis score.
+
+        Used when re-evaluating severity after sensitivity modification.
+
+        Args:
+            score: Crisis score (0.0-1.0)
+
+        Returns:
+            Severity level string
+        """
+        if score >= cls.THRESHOLD_CRITICAL:
+            return cls.CRITICAL
+        elif score >= cls.THRESHOLD_HIGH:
+            return cls.HIGH
+        elif score >= cls.THRESHOLD_MEDIUM:
+            return cls.MEDIUM
+        elif score >= cls.THRESHOLD_LOW:
+            return cls.LOW
+        else:
+            return cls.SAFE
 
 
 # =============================================================================
@@ -355,6 +387,92 @@ class CrisisAnalysisResult:
             consensus=data.get("consensus"),
             conflict_analysis=data.get("conflict_analysis"),
             context_analysis=data.get("context_analysis"),
+        )
+
+    def with_modified_score(
+        self,
+        modified_score: float,
+        sensitivity: float,
+        channel_name: Optional[str] = None,
+    ) -> "CrisisAnalysisResult":
+        """
+        Create a new result with modified crisis score and re-evaluated severity.
+
+        Used by Phase 7.3 Channel Context Awareness to apply per-channel
+        sensitivity modifiers. The original score is preserved in explanation.
+
+        Args:
+            modified_score: New crisis score after sensitivity applied (0.0-1.0)
+            sensitivity: The sensitivity modifier that was applied
+            channel_name: Optional channel name for logging context
+
+        Returns:
+            New CrisisAnalysisResult with modified score and severity
+
+        Example:
+            >>> original_result.crisis_score  # 0.72
+            >>> modified = original_result.with_modified_score(0.36, 0.5)
+            >>> modified.crisis_score  # 0.36
+            >>> modified.severity  # Recalculated based on new score
+        """
+        # Cap score at 1.0
+        capped_score = min(1.0, max(0.0, modified_score))
+
+        # Re-evaluate severity based on modified score
+        new_severity = SeverityLevel.from_score(capped_score)
+
+        # Preserve original values in explanation
+        modified_explanation = dict(self.explanation) if self.explanation else {}
+        modified_explanation["sensitivity_modification"] = {
+            "original_score": self.crisis_score,
+            "modified_score": capped_score,
+            "sensitivity_applied": sensitivity,
+            "original_severity": self.severity,
+            "modified_severity": new_severity,
+            "channel_name": channel_name,
+        }
+
+        # Re-evaluate requires_intervention based on new severity
+        new_requires_intervention = SeverityLevel.is_actionable(new_severity)
+
+        # Re-evaluate recommended_action based on new severity
+        if new_severity == SeverityLevel.SAFE:
+            new_action = "none"
+        elif new_severity == SeverityLevel.LOW:
+            new_action = "log"
+        elif new_severity == SeverityLevel.MEDIUM:
+            new_action = "monitor"
+        elif new_severity == SeverityLevel.HIGH:
+            new_action = "alert"
+        else:  # CRITICAL
+            new_action = "immediate"
+
+        # Log the modification
+        channel_info = f" (channel: {channel_name})" if channel_name else ""
+        logger.info(
+            f"📊 Sensitivity applied{channel_info}: "
+            f"{self.crisis_score:.3f} × {sensitivity} = {capped_score:.3f} "
+            f"(severity: {self.severity} → {new_severity})"
+        )
+
+        # Create new result with modified values
+        return CrisisAnalysisResult(
+            crisis_detected=capped_score >= SeverityLevel.THRESHOLD_LOW,
+            severity=new_severity,
+            confidence=self.confidence,
+            crisis_score=capped_score,
+            requires_intervention=new_requires_intervention,
+            recommended_action=new_action,
+            request_id=self.request_id,
+            timestamp=self.timestamp,
+            processing_time_ms=self.processing_time_ms,
+            models_used=self.models_used,
+            is_degraded=self.is_degraded,
+            signals=self.signals,
+            explanation=modified_explanation,
+            consensus=self.consensus,
+            conflict_analysis=self.conflict_analysis,
+            context_analysis=self.context_analysis,
         )
 
     @classmethod

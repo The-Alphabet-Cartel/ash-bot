@@ -1,7 +1,7 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.4",
-		"last_modified": "2026-01-04",
+		"file_version": "v5.0.5",
+		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
 		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
@@ -259,6 +259,35 @@
 				"type": "integer",
 				"range": [1, 365],
 				"required": true
+			}
+		}
+	},
+
+	"channel_sensitivity": {
+		"description": "Per-channel crisis detection sensitivity (Phase 7)",
+		"default_sensitivity": "${BOT_DEFAULT_CHANNEL_SENSITIVITY}",
+		"channel_overrides": {},
+		"defaults": {
+			"default_sensitivity": 1.0
+		},
+		"validation": {
+			"default_sensitivity": {
+				"type": "float",
+				"range": [0.3, 2.0],
+				"required": true
+			}
+		},
+		"notes": {
+			"sensitivity_ranges": {
+				"0.3-0.5": "Much less sensitive (Wreck Room, vent channels)",
+				"0.6-0.8": "Somewhat less sensitive (mental health discussion)",
+				"1.0": "Normal sensitivity (default for general channels)",
+				"1.2-1.5": "More sensitive (vulnerable population channels)",
+				"2.0": "Highly sensitive (extreme vigilance needed)"
+			},
+			"channel_overrides_example": {
+				"123456789": 0.5,
+				"987654321": 0.7
 			}
 		}
 	},

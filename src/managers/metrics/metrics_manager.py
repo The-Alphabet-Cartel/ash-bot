@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Metrics Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.5-3
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 5 - Production Hardening
+FILE VERSION: v5.0-7-3.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -38,6 +38,7 @@ METRICS COLLECTED:
 - redis_operations_total: Redis operations (by type)
 - redis_errors_total: Redis errors
 - discord_reconnects_total: Discord reconnection count
+- sensitivity_adjustments_total: Channel sensitivity adjustments (Phase 7)
 
 USAGE:
     from src.managers.metrics import create_metrics_manager
@@ -61,7 +62,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 # Module version
-__version__ = "v5.0-5-5.2-1"
+__version__ = "v5.0-7-3.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -391,6 +392,13 @@ class MetricsManager:
             help_text="Total Claude API errors",
         )
 
+        # Phase 7: Sensitivity adjustments
+        self._sensitivity_adjustments = LabeledCounter(
+            name="ash_sensitivity_adjustments_total",
+            help_text="Channel sensitivity adjustments applied",
+            label_names=("channel",),
+        )
+
         # =================================================================
         # Gauges
         # =================================================================
@@ -552,6 +560,30 @@ class MetricsManager:
         self._connected_guilds.set(float(count))
 
     # =========================================================================
+    # Phase 7: Channel Sensitivity Metrics
+    # =========================================================================
+
+    def inc_sensitivity_adjustments(
+        self,
+        channel_name: str,
+        sensitivity: float,
+        count: int = 1,
+    ) -> None:
+        """
+        Increment sensitivity adjustments counter.
+
+        Args:
+            channel_name: Name of channel where sensitivity was applied
+            sensitivity: The sensitivity value that was applied
+            count: Number to increment by
+        """
+        # Track by channel name
+        self._sensitivity_adjustments.labels(channel=channel_name).inc(count)
+        logger.debug(
+            f"📊 Sensitivity adjustment recorded: {channel_name} ({sensitivity})"
+        )
+
+    # =========================================================================
     # Export Methods
     # =========================================================================
 
@@ -670,6 +702,13 @@ class MetricsManager:
             label_str = f'{{operation="{labels[0]}",status="{labels[1]}"}}'
             lines.append(f"{self._redis_operations.name}{label_str} {value}")
 
+        # Phase 7: Sensitivity adjustments
+        lines.append(f"# HELP {self._sensitivity_adjustments.name} {self._sensitivity_adjustments.help_text}")
+        lines.append(f"# TYPE {self._sensitivity_adjustments.name} counter")
+        for labels, value in self._sensitivity_adjustments.get_all().items():
+            label_str = f'{{channel="{labels[0]}"}}'
+            lines.append(f"{self._sensitivity_adjustments.name}{label_str} {value}")
+
         # Histograms
         for histogram in [self._nlp_duration, self._claude_duration, self._redis_duration]:
             lines.append(f"# HELP {histogram.name} {histogram.help_text}")
@@ -714,6 +753,7 @@ class MetricsManager:
                 "discord_reconnects": self._discord_reconnects.get(),
                 "claude_requests": self._claude_requests.get(),
                 "claude_errors": self._claude_errors.get(),
+                "sensitivity_adjustments": dict(self._sensitivity_adjustments.get_all()),
             },
             "gauges": {
                 "active_ash_sessions": self._active_ash_sessions.get(),

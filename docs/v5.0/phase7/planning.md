@@ -9,7 +9,7 @@
 **Created**: 2026-01-05  
 **Last Updated**: 2026-01-05  
 **Phase**: 7 - Core Safety & User Preferences  
-**Status**: 🟡 In Progress (Steps 7.1 & 7.2 Complete)  
+**Status**: ✅ Complete (All Steps Finished)  
 **Estimated Time**: 10-14 hours  
 **Dependencies**: Phase 6 Complete ✅
 
@@ -685,14 +685,14 @@ When sensitivity affects a decision:
 
 ### 7.3.7: Acceptance Criteria
 
-- [ ] Per-channel sensitivity configurable
-- [ ] Default sensitivity applied when not specified
-- [ ] Modifier correctly adjusts crisis score
-- [ ] Score never exceeds 1.0 after modification
-- [ ] Logging shows original vs modified scores
-- [ ] Wreck Room can have reduced sensitivity
-- [ ] Feature doesn't break existing channels
-- [ ] Metrics track sensitivity adjustments
+- [x] Per-channel sensitivity configurable
+- [x] Default sensitivity applied when not specified
+- [x] Modifier correctly adjusts crisis score
+- [x] Score never exceeds 1.0 after modification
+- [x] Logging shows original vs modified scores
+- [x] Wreck Room can have reduced sensitivity
+- [x] Feature doesn't break existing channels
+- [x] Metrics track sensitivity adjustments
 
 ---
 
@@ -796,8 +796,8 @@ BOT_DEFAULT_CHANNEL_SENSITIVITY=1.0                       # Default sensitivity 
 |------|-----------|--------|--------|
 | 7.1: Auto-Initiate | 4-6 hours | ~3 hours | ✅ Complete |
 | 7.2: User Opt-Out | 2-3 hours | ~2.5 hours | ✅ Complete |
-| 7.3: Channel Sensitivity | 4-5 hours | - | ⏳ Pending |
-| **Total** | **10-14 hours** | **~5.5 hours** | **2/3 Complete** |
+| 7.3: Channel Sensitivity | 4-5 hours | ~2 hours | ✅ Complete |
+| **Total** | **10-14 hours** | **~7.5 hours** | **3/3 Complete** |
 
 ---
 
@@ -1098,10 +1098,138 @@ Take care of yourself, and know that you're not alone.
 
 ---
 
-### Step 7.3: Channel Context Awareness - PENDING
+### Step 7.3: Channel Context Awareness - COMPLETE ✅
 
-**Status**: Not Started  
-**Estimated Time**: 4-5 hours
+**Completed**: 2026-01-05  
+**Tests**: 41/41 passed ✅
+
+#### Files Created
+
+| File | Version | Purpose |
+|------|---------|--------|
+| `tests/test_discord/test_channel_sensitivity.py` | v5.0-7-3.0-1 | Unit tests (30 test cases) |
+| `tests/integration/test_channel_sensitivity_flow.py` | v5.0-7-3.0-1 | Integration tests (11 test cases) |
+
+#### Files Modified
+
+| File | Old Version | New Version | Changes |
+|------|-------------|-------------|--------|
+| `src/models/nlp_models.py` | v5.0-1-1.2-1 | v5.0-7-3.0-1 | Added `SeverityLevel.from_score()`, `CrisisAnalysisResult.with_modified_score()` |
+| `src/managers/discord/channel_config_manager.py` | v5.0-1-1.4-1 | v5.0-7-3.0-1 | Added sensitivity storage, `get_channel_sensitivity()`, `set_channel_sensitivity()` |
+| `src/managers/discord/discord_manager.py` | v5.0-7-2.0-1 | v5.0-7-3.0-1 | Apply sensitivity modifier in `_analyze_and_process()` |
+| `src/managers/metrics/metrics_manager.py` | v5.0-5-5.5-3 | v5.0-7-3.0-1 | Added `inc_sensitivity_adjustments()` for metrics tracking |
+| `src/config/default.json` | v5.0.4 | v5.0.5 | Added `channel_sensitivity` config section |
+| `.env.template` | v5.0.5 | v5.0.6 | Added `BOT_DEFAULT_CHANNEL_SENSITIVITY` variable |
+
+#### Implementation Details
+
+**SeverityLevel Enhancements**:
+- Added threshold constants: CRITICAL (0.85), HIGH (0.55), MEDIUM (0.28), LOW (0.16)
+- `from_score(score)` - Determine severity from crisis score
+
+**CrisisAnalysisResult.with_modified_score()**:
+- Creates new result with modified crisis score
+- Re-evaluates severity based on new score using thresholds
+- Updates `requires_intervention`, `recommended_action`, `crisis_detected`
+- Preserves original values in `explanation.sensitivity_modification`
+- Caps score at 1.0 and floors at 0.0
+
+**ChannelConfigManager Sensitivity Features**:
+- `get_channel_sensitivity(channel_id)` - Get sensitivity (default: 1.0)
+- `set_channel_sensitivity(channel_id, sensitivity)` - Runtime update
+- `remove_channel_sensitivity(channel_id)` - Revert to default
+- `get_all_channel_sensitivities()` - Get all overrides
+- Validates range [0.3, 2.0] with warnings for out-of-range values
+
+**DiscordManager Integration**:
+- After NLP analysis, checks channel sensitivity
+- If sensitivity != 1.0, applies modifier: `modified_score = score * sensitivity`
+- Creates new result with modified score via `with_modified_score()`
+- Tracks adjustments via `metrics.inc_sensitivity_adjustments()`
+
+**Configuration Added**:
+```json
+"channel_sensitivity": {
+    "description": "Per-channel crisis detection sensitivity (Phase 7)",
+    "default_sensitivity": 1.0,
+    "channel_overrides": {
+        "123456789": 0.5,
+        "987654321": 0.7
+    }
+}
+```
+
+**Environment Variables Added**:
+- `BOT_DEFAULT_CHANNEL_SENSITIVITY` - Default sensitivity (0.3-2.0)
+
+#### Sensitivity Ranges
+
+| Range | Effect | Use Case |
+|-------|--------|----------|
+| 0.3 - 0.5 | Much less sensitive | Wreck Room, dedicated vent channels |
+| 0.6 - 0.8 | Somewhat less sensitive | Mental health discussion channels |
+| 1.0 | Normal (default) | General channels |
+| 1.2 - 1.5 | More sensitive | Channels with vulnerable populations |
+| 2.0 | Highly sensitive | Extreme vigilance needed |
+
+#### Example: Wreck Room Flow
+
+```
+Original: User posts in #wreck-room
+    ↓
+NLP Analysis: score=0.72, severity=HIGH
+    ↓
+Channel sensitivity: 0.5 (wreck-room override)
+    ↓
+Modified: score=0.36 (0.72 × 0.5), severity=MEDIUM
+    ↓
+Result: Alert routes to monitor channel (not crisis channel)
+        No CRT ping (MEDIUM doesn't ping)
+        User can vent freely without triggering crisis response
+```
+
+#### Test Coverage Summary
+
+| Test Category | Tests | Status |
+|---------------|-------|--------|
+| SeverityLevel.from_score() | 5 | ✅ |
+| ChannelConfigManager sensitivity | 11 | ✅ |
+| CrisisAnalysisResult.with_modified_score() | 9 | ✅ |
+| Sensitivity scenarios | 5 | ✅ |
+| Edge cases | 4 | ✅ |
+| Default validation | 3 | ✅ |
+| Integration: Full flow | 5 | ✅ |
+| Integration: Alert routing | 2 | ✅ |
+| Integration: Explanation | 2 | ✅ |
+| Integration: Metrics | 2 | ✅ |
+| **Total** | **41** | ✅ |
+
+---
+
+## Phase 7 Complete 🎉
+
+All three steps of Phase 7 have been implemented:
+
+1. **Step 7.1: Auto-Initiate Contact** - Ash automatically reaches out when CRT doesn't respond within configurable timeout
+2. **Step 7.2: User Opt-Out** - Users can decline AI interaction via ❌ reaction while still receiving human support
+3. **Step 7.3: Channel Context Awareness** - Per-channel sensitivity modifiers to prevent over-alerting in expected-distress channels
+
+### Phase 7 Summary Statistics
+
+| Metric | Value |
+|--------|-------|
+| Total Tests Added | 127 |
+| New Files Created | 7 |
+| Files Modified | 15 |
+| Estimated Time | 10-14 hours |
+| Actual Time | ~7.5 hours |
+
+### Ready for Testing
+
+- [ ] Manual testing with live Discord bot
+- [ ] Verify Wreck Room sensitivity in production
+- [ ] Test auto-initiate with real CRT workflow
+- [ ] Confirm opt-out reaction handling
 
 ---
 

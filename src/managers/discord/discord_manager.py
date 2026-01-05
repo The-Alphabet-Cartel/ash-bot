@@ -13,7 +13,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-7-2.0-1
+FILE VERSION: v5.0-7-3.0-1
 LAST MODIFIED: 2026-01-05
 PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
@@ -74,7 +74,7 @@ if TYPE_CHECKING:
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-7-2.0-1"
+__version__ = "v5.0-7-3.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -805,6 +805,28 @@ class DiscordManager:
                 channel_id=str(message.channel.id),
                 message_history=message_history,
             )
+
+            # Phase 7.3: Apply channel sensitivity modifier
+            channel_sensitivity = self.channel_config.get_channel_sensitivity(
+                message.channel.id
+            )
+            if channel_sensitivity != 1.0:
+                # Calculate modified score
+                modified_score = result.crisis_score * channel_sensitivity
+
+                # Create new result with modified score
+                result = result.with_modified_score(
+                    modified_score=modified_score,
+                    sensitivity=channel_sensitivity,
+                    channel_name=message.channel.name,
+                )
+
+                # Phase 5: Track sensitivity adjustments in metrics
+                if self._metrics:
+                    self._metrics.inc_sensitivity_adjustments(
+                        message.channel.name,
+                        channel_sensitivity,
+                    )
 
             # Update stats
             self._messages_processed += 1
