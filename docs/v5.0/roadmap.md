@@ -5,9 +5,9 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v5.0.8  
-**Last Updated**: 2026-01-04  
-**Status**: 🟢 Phase 5 Complete  
+**Document Version**: v5.0.11  
+**Last Updated**: 2026-01-05  
+**Status**: 🟢 Phase 8 Complete  
 **Repository**: https://github.com/the-alphabet-cartel/ash-bot
 
 ---
@@ -23,8 +23,11 @@
 7. [Phase 4: Ash Personality](#phase-4-ash-personality)
 8. [Phase 5: Production Hardening](#phase-5-production-hardening)
 9. [Phase 6: Final Testing & Documentation](#phase-6-final-testing--documentation)
-10. [Post-Launch](#post-launch)
-11. [Change Log](#change-log)
+10. [Phase 7: Core Safety & User Preferences](#phase-7-core-safety--user-preferences)
+11. [Phase 8: Metrics & Reporting](#phase-8-metrics--reporting)
+12. [Phase 9: Documentation & Polish](#phase-9-documentation--polish)
+13. [Post-Launch](#post-launch)
+14. [Change Log](#change-log)
 
 ---
 
@@ -302,49 +305,59 @@ docs/operations/deployment.md
 
 ## Phase 6: Final Testing & Documentation
 
-**Status**: 🔲 Not Started  
+**Status**: 🟢 Complete  
 **Goal**: End-to-end testing, final documentation, deployment verification  
-**Estimated Time**: 2-3 days  
-**Depends On**: Phase 5 ✅
+**Completed**: 2026-01-04
 
-### Tasks
+See [Phase 6 Completion Report](phase6/complete.md) for details.
 
-#### Integration Testing
-- [ ] End-to-end message flow test
-- [ ] Alert dispatching test
-- [ ] Ash session lifecycle test
-- [ ] Error recovery scenarios test
-- [ ] Health endpoint verification
+---
 
-#### Load Testing
-- [ ] Message throughput testing
-- [ ] Concurrent session testing
-- [ ] Redis connection pooling verification
-- [ ] Memory usage profiling
+## Phase 7: Core Safety & User Preferences
 
-#### Documentation Updates
-- [ ] Update `README.md` with final setup
-- [ ] Create quick start guide
-- [ ] Document all configuration options
-- [ ] Add architecture diagrams
+**Status**: 🟢 Complete  
+**Goal**: Auto-initiation, user opt-out, channel sensitivity  
+**Completed**: 2026-01-05
 
-#### Deployment Verification
-- [ ] Build and test Docker image
-- [ ] Verify health checks work
-- [ ] Test secret mounting
-- [ ] Verify log output
+See [Phase 7 Completion Report](phase7/complete.md) for details.
 
-#### Slash Commands (Optional)
-- [ ] Implement `/userhistory` command
-- [ ] Role-based permission checking
-- [ ] Ephemeral response formatting
+**Key Accomplishments:**
+- Auto-initiate when CRT doesn't respond within 3 minutes
+- User opt-out via reaction
+- Per-channel sensitivity adjustments
+- 65+ new tests
 
-### Deliverables
-- [ ] All integration tests passing
-- [ ] Load test results documented
-- [ ] Documentation complete
-- [ ] Docker image verified
-- [ ] Ready for production deployment
+---
+
+## Phase 8: Metrics & Reporting
+
+**Status**: 🟢 Complete  
+**Goal**: Response time tracking, weekly reports, data retention  
+**Completed**: 2026-01-05
+
+See [Phase 8 Completion Report](phase8/complete.md) for details.
+
+Phase 8 Step Reports:
+- [Phase 8.1](phase8/phase8.1_complete.md) - Response Time Tracking
+- [Phase 8.2](phase8/phase8_2_complete.md) - Weekly CRT Report
+- [Phase 8.3](phase8/phase8_3_complete.md) - Data Retention Policy
+
+**Key Accomplishments:**
+- Alert response time metrics (acknowledge, Ash contact, human response)
+- Automated weekly reports with CRT statistics
+- Automated data retention and cleanup
+- PUID/PGID container support (LinuxServer.io style)
+- 127 new tests
+
+---
+
+## Phase 9: Documentation & Polish
+
+**Status**: 🔲 Not Started  
+**Goal**: Final documentation, API references, deployment guides  
+**Depends On**: Phase 8 ✅
+
+See [Phase 9 Planning](phase9/planning.md) for details.
 
 ---
 
@@ -379,6 +392,9 @@ docs/operations/deployment.md
 
 | Date | Version | Changes | Author |
 |------|---------|---------|--------|
+| 2026-01-05 | v5.0.11 | Phase 8 complete - Added PUID/PGID container support | Claude + PapaBearDoes |
+| 2026-01-05 | v5.0.10 | Phase 8 complete - Response metrics, weekly reports, data retention | Claude + PapaBearDoes |
+| 2026-01-05 | v5.0.9 | Phase 7 complete - Auto-initiate, user opt-out, channel sensitivity | Claude + PapaBearDoes |
 | 2026-01-04 | v5.0.8 | Phase 5 complete - Health, metrics, error recovery, documentation | Claude + PapaBearDoes |
 | 2026-01-04 | v5.0.7 | Phase 4 complete - Ash AI, Claude integration, 200+ total tests | Claude + PapaBearDoes |
 | 2026-01-04 | v5.0.6 | Phase 3 complete - Alert system, embeds, buttons, 130+ tests | Claude + PapaBearDoes |
@@ -399,10 +415,13 @@ docs/operations/deployment.md
 | Phase 2: Redis Integration | 🟢 Complete | 100% | 90+ |
 | Phase 3: Alert System | 🟢 Complete | 100% | 89 |
 | Phase 4: Ash Personality | 🟢 Complete | 100% | 69+ |
-| Phase 5: Production Hardening | 🟢 Complete | 100% | - |
-| Phase 6: Final Testing | 🔲 Not Started | 0% | - |
+| Phase 5: Production Hardening | 🟢 Complete | 100% | 40+ |
+| Phase 6: Final Testing | 🟢 Complete | 100% | 50+ |
+| Phase 7: Core Safety | 🟢 Complete | 100% | 65+ |
+| Phase 8: Metrics & Reporting | 🟢 Complete | 100% | 127 |
+| Phase 9: Documentation | 🔲 Not Started | 0% | - |
 
-**Total Tests**: 200+ (unit tests across Phases 1-4)
+**Total Tests**: 500+ (unit and integration tests across all phases)
 
 **Legend**:
 - 🔲 Not Started

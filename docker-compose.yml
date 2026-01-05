@@ -1,7 +1,7 @@
 # ============================================================================
 # Ash-Bot v5.0 Docker Compose Configuration
 # ============================================================================
-# FILE VERSION: v5.0.4
+# FILE VERSION: v5.0.5
 # LAST MODIFIED: 2026-01-05
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
@@ -9,16 +9,16 @@
 #
 # USAGE:
 #   # Start services (production)
-#   docker-compose up -d
+#   docker compose up -d
 #
 #   # Start services (development - uses override file automatically)
-#   docker-compose up -d
+#   docker compose up -d
 #
 #   # Build and start
-#   docker-compose up -d --build
+#   docker compose up -d --build
 #
 #   # View logs
-#   docker-compose logs -f ash-bot
+#   docker compose logs -f ash-bot
 #
 #   # Run tests inside container
 #   docker exec ash-bot python -m pytest tests/ -v
@@ -27,7 +27,15 @@
 #   docker exec ash-bot python main.py
 #
 #   # Stop services
-#   docker-compose down
+#   docker compose down
+#
+# USER/GROUP ID (LinuxServer.io Style):
+#   Set PUID and PGID environment variables to match your host user.
+#   This ensures files created by the container have correct ownership.
+#
+#   Example (find your IDs with 'id' command):
+#     PUID=1000
+#     PGID=1000
 #
 # SECRETS:
 #   Secrets are stored in ./secrets/ directory:
@@ -38,9 +46,28 @@
 #
 # REQUIREMENTS:
 #   - Docker Engine 24.0+
-#   - Docker Compose v5.0.0+
+#   - Docker Compose v2.0.0+ (use 'docker compose' not 'docker-compose')
 #
 # ============================================================================
+### Common Variables ###
+x-common: &common
+  networks:
+    - ash-network
+  restart: unless-stopped
+
+### Common Environmental Variables ###
+x-env: &env
+  TZ: America/Los_Angeles
+  PGID: 1001
+  PUID: 1001
+
+### Healthchecks ###
+x-health: &health
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 120s
+  start_interval: 30s
 
 services:
   # ===========================================================================
@@ -52,26 +79,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime
-      args:
-        APP_USER: bot
-        APP_UID: 1001
-        APP_GID: 1001
+    <<: *common
 
-    # Restart policy
-    restart: unless-stopped
-
-    # Network
-    networks:
-      - ash-network
+    # Resource limits (production)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
     # Environment variables
+    environment:
+      <<: *env
     env_file:
       - .env
-
-    environment:
-      - BOT_ENVIRONMENT=production
-      - TZ=America/Los_Angeles
 
     # Port mapping for health checks (Ash ecosystem: 30881)
     ports:
@@ -90,18 +111,8 @@ services:
 
     # Health check - uses HTTP endpoint from health server
     healthcheck:
+      <<: *health
       test: ["CMD", "curl", "-f", "http://localhost:30881/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
-
-    # Resource limits (production)
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: "0.5"
 
     # Logging configuration
     logging:
@@ -127,13 +138,14 @@ services:
   ash-redis:
     image: redis:7-alpine
     container_name: ash-redis
+    <<: *common
 
-    # Restart policy
-    restart: unless-stopped
-
-    # Network
-    networks:
-      - ash-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.25"
 
     # Port mapping (internal only in production, exposed in dev override)
     expose:
@@ -152,18 +164,14 @@ services:
 
     # Health check (with auth)
     healthcheck:
-      test: ["CMD", "sh", "-c", "redis-cli -a \"$(cat /run/secrets/redis_token)\" ping 2>/dev/null | grep -q PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: "0.25"
+      <<: *health
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          'redis-cli -a "$(cat /run/secrets/redis_token)" ping 2>/dev/null | grep -q PONG',
+        ]
 
     # Logging configuration
     logging:

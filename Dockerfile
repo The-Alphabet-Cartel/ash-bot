@@ -1,8 +1,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Production Dockerfile
 # ============================================================================
-# FILE VERSION: v5.0.4
-# LAST MODIFIED: 2026-01-04
+# FILE VERSION: v5.0.5
+# LAST MODIFIED: 2026-01-05
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -13,6 +13,10 @@
 #
 #   # Run with docker-compose (recommended)
 #   docker-compose up -d
+#
+# ENVIRONMENT VARIABLES (Runtime):
+#   PUID - User ID to run as (default: 1001)
+#   PGID - Group ID to run as (default: 1001)
 #
 # MULTI-STAGE BUILD:
 #   Stage 1 (builder): Install Python dependencies
@@ -51,10 +55,18 @@ RUN pip install --upgrade pip && \
 # =============================================================================
 FROM python:3.11-slim AS runtime
 
-# Build arguments for user creation
-ARG APP_USER=bot
-ARG APP_UID=1001
-ARG APP_GID=1001
+# Labels for container metadata
+LABEL maintainer="The Alphabet Cartel <tech@alphabetcartel.org>"
+LABEL org.opencontainers.image.title="Ash-Bot"
+LABEL org.opencontainers.image.description="Crisis Detection Discord Bot for The Alphabet Cartel"
+LABEL org.opencontainers.image.url="https://github.com/the-alphabet-cartel/ash-bot"
+LABEL org.opencontainers.image.source="https://github.com/the-alphabet-cartel/ash-bot"
+LABEL org.opencontainers.image.vendor="The Alphabet Cartel"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Default user/group IDs (can be overridden at runtime via PUID/PGID)
+ARG DEFAULT_UID=1001
+ARG DEFAULT_GID=1001
 
 # Set runtime environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -63,7 +75,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" \
     APP_HOME=/app \
     # Default environment
-    BOT_ENVIRONMENT=production
+    BOT_ENVIRONMENT=production \
+    # Default PUID/PGID (LinuxServer.io style)
+    PUID=${DEFAULT_UID} \
+    PGID=${DEFAULT_GID}
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -71,16 +86,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     # Timezone data
     tzdata \
+    # For privilege dropping in entrypoint
+    gosu \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    # Verify gosu works
+    && gosu nobody true
 
-# Create non-root user and group
-RUN groupadd --gid ${APP_GID} ${APP_USER} && \
-    useradd --uid ${APP_UID} --gid ${APP_GID} --shell /bin/bash --create-home ${APP_USER}
+# Create default non-root user and group
+# Note: These will be modified at runtime by entrypoint if PUID/PGID differ
+RUN groupadd --gid ${DEFAULT_GID} bot && \
+    useradd --uid ${DEFAULT_UID} --gid ${DEFAULT_GID} --shell /bin/bash --create-home bot
 
 # Create application directories
 RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/src ${APP_HOME}/config && \
-    chown -R ${APP_USER}:${APP_USER} ${APP_HOME}
+    chown -R bot:bot ${APP_HOME}
 
 # Set working directory
 WORKDIR ${APP_HOME}
@@ -88,16 +108,17 @@ WORKDIR ${APP_HOME}
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Copy application code
-COPY --chown=${APP_USER}:${APP_USER} src/ ${APP_HOME}/src/
-COPY --chown=${APP_USER}:${APP_USER} main.py ${APP_HOME}/
-COPY --chown=${APP_USER}:${APP_USER} pytest.ini ${APP_HOME}/
+COPY --chown=bot:bot src/ ${APP_HOME}/src/
+COPY --chown=bot:bot main.py ${APP_HOME}/
+COPY --chown=bot:bot pytest.ini ${APP_HOME}/
 
 # Copy test files (needed for running tests in container)
-COPY --chown=${APP_USER}:${APP_USER} tests/ ${APP_HOME}/tests/
-
-# Switch to non-root user
-USER ${APP_USER}
+COPY --chown=bot:bot tests/ ${APP_HOME}/tests/
 
 # Expose health check port (Ash ecosystem standard: 30881)
 EXPOSE 30881
@@ -105,6 +126,10 @@ EXPOSE 30881
 # Health check - use HTTP endpoint (Phase 5)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:30881/health || exit 1
+
+# Use entrypoint script for PUID/PGID handling
+# Container starts as root, entrypoint drops to specified user
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Default command - run the bot
 CMD ["python", "main.py"]

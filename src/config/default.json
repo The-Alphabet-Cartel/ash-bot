@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.7",
+		"file_version": "v5.0.8",
 		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -443,6 +443,55 @@
 				"required": true
 			},
 			"report_hour": {
+				"type": "integer",
+				"range": [0, 23],
+				"required": true
+			}
+		}
+	},
+
+	"data_retention": {
+		"description": "Data retention and automated cleanup configuration (Phase 8.3)",
+		"enabled": "${BOT_RETENTION_ENABLED}",
+		"alert_metrics_days": "${BOT_RETENTION_ALERT_METRICS_DAYS}",
+		"aggregates_days": "${BOT_RETENTION_AGGREGATES_DAYS}",
+		"message_history_days": "${BOT_RETENTION_MESSAGE_HISTORY_DAYS}",
+		"session_data_days": "${BOT_RETENTION_SESSION_DATA_DAYS}",
+		"cleanup_hour": "${BOT_RETENTION_CLEANUP_HOUR}",
+		"defaults": {
+			"enabled": true,
+			"alert_metrics_days": 90,
+			"aggregates_days": 365,
+			"message_history_days": 7,
+			"session_data_days": 30,
+			"cleanup_hour": 3
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"alert_metrics_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			},
+			"aggregates_days": {
+				"type": "integer",
+				"range": [30, 730],
+				"required": true
+			},
+			"message_history_days": {
+				"type": "integer",
+				"range": [1, 30],
+				"required": true
+			},
+			"session_data_days": {
+				"type": "integer",
+				"range": [7, 90],
+				"required": true
+			},
+			"cleanup_hour": {
 				"type": "integer",
 				"range": [0, 23],
 				"required": true

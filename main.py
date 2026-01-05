@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-8-2.0-1
+FILE VERSION: v5.0-8-3.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 8 - Metrics & Reporting
+PHASE: Phase 8 - Metrics & Reporting (Step 8.3)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-8-2.0-1"
+__version__ = "v5.0-8-3.0-1"
 
 
 # =============================================================================
@@ -302,6 +302,7 @@ async def main_async(args: argparse.Namespace) -> int:
     from src.managers.storage import (
         create_redis_manager,
         create_user_history_manager,
+        create_data_retention_manager,
     )
     from src.managers.alerting import (
         create_cooldown_manager,
@@ -334,6 +335,7 @@ async def main_async(args: argparse.Namespace) -> int:
     health_server = None
     response_metrics_manager = None
     weekly_report_manager = None
+    data_retention_manager = None
 
     try:
         # Set environment for config manager
@@ -623,6 +625,27 @@ async def main_async(args: argparse.Namespace) -> int:
                 logger.warning(f"⚠️ Health server startup failed: {e}")
                 health_server = None
 
+        # Phase 8.3: Create and start data retention manager
+        retention_enabled = config_manager.get("data_retention", "enabled", True)
+        if retention_enabled and redis_manager:
+            try:
+                data_retention_manager = create_data_retention_manager(
+                    config_manager=config_manager,
+                    redis_manager=redis_manager,
+                )
+
+                # Start the retention scheduler
+                await data_retention_manager.start()
+
+                logger.info("✅ DataRetentionManager initialized (Phase 8.3)")
+
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ DataRetentionManager initialization failed: {e}\n"
+                    "   Bot will start without automated data cleanup"
+                )
+                data_retention_manager = None
+
         # Phase 8.2: Create and start weekly report manager
         weekly_report_enabled = config_manager.get("weekly_report", "enabled", True)
         if weekly_report_enabled and response_metrics_manager:
@@ -655,6 +678,11 @@ async def main_async(args: argparse.Namespace) -> int:
         try:
             await discord_manager.connect()
         finally:
+            # Phase 8.3: Stop data retention manager
+            if data_retention_manager:
+                await data_retention_manager.stop()
+                logger.info("🔌 DataRetentionManager stopped")
+
             # Phase 8.2: Stop weekly report manager
             if weekly_report_manager:
                 await weekly_report_manager.stop()

@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Storage Manager Tests Package for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-2-1.0-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 2 - Redis History Storage
+FILE VERSION: v5.0-8-3.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 8 - Metrics & Reporting (Step 8.3)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -23,7 +23,9 @@ Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alp
 
 Test suite for storage managers:
 - test_redis_manager.py: RedisManager unit tests
+- test_redis_manager_phase5.py: RedisManager Phase 5 tests (retry logic, metrics)
 - test_user_history_manager.py: UserHistoryManager unit tests
+- test_data_retention.py: DataRetentionManager unit tests (Phase 8.3)
 
 USAGE:
     # Run all storage tests
@@ -31,6 +33,7 @@ USAGE:
 
     # Run specific test file
     pytest tests/test_storage/test_redis_manager.py -v
+    pytest tests/test_storage/test_data_retention.py -v
 """
 
-__version__ = "v5.0-2-1.0-1"
+__version__ = "v5.0-8-3.0-1"
