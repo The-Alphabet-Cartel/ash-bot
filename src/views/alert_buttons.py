@@ -12,19 +12,20 @@ MISSION - NEVER TO BE VIOLATED:
 
 ============================================================================
 Alert Button Views for Ash-Bot Service
----
-FILE VERSION: v5.0-7-1.0-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 7 - Core Safety & User Preferences
+----------------------------------------------------------------------------
+FILE VERSION: v5.0-8-1.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 8 - Metrics & Reporting
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
-Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
 ============================================================================
+
 RESPONSIBILITIES:
 - Provide interactive buttons on crisis alert embeds
 - Handle "Talk to Ash" button to initiate AI support sessions
 - Handle "Acknowledge" button to mark alerts as handled
 - Update embed appearance on acknowledgment
+- Record response metrics for acknowledgment and Ash contact (Phase 8)
 
 USAGE:
     from src.views import AlertButtonView
@@ -39,7 +40,7 @@ from typing import Optional
 import logging
 
 # Module version
-__version__ = "v5.0-7-1.0-1"
+__version__ = "v5.0-8-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -62,6 +63,7 @@ class AlertButtonView(View):
         user_id: Discord ID of the user in crisis
         message_id: ID of the original message
         severity: Crisis severity level
+        alert_id: Unique alert ID for metrics tracking (Phase 8)
         _acknowledged: Whether alert has been acknowledged
         _acknowledged_by: User who acknowledged (if any)
 
@@ -70,6 +72,7 @@ class AlertButtonView(View):
         ...     user_id=123456789,
         ...     message_id=987654321,
         ...     severity="high",
+        ...     alert_id="alert_abc123",
         ... )
         >>> await channel.send(embed=embed, view=view)
     """
@@ -80,6 +83,7 @@ class AlertButtonView(View):
         message_id: int,
         severity: str,
         timeout: float = 3600.0,  # 1 hour
+        alert_id: Optional[str] = None,  # Phase 8
     ):
         """
         Initialize AlertButtonView.
@@ -89,6 +93,7 @@ class AlertButtonView(View):
             message_id: Original message ID
             severity: Crisis severity level
             timeout: View timeout in seconds (default: 1 hour)
+            alert_id: Unique alert ID for metrics tracking (Phase 8)
 
         Note:
             After timeout, buttons will stop working but remain visible.
@@ -98,6 +103,7 @@ class AlertButtonView(View):
         self.user_id = user_id
         self.message_id = message_id
         self.severity = severity.lower()
+        self.alert_id = alert_id  # Phase 8
 
         # Tracking
         self._acknowledged = False
@@ -109,7 +115,8 @@ class AlertButtonView(View):
         self._add_buttons()
 
         logger.debug(
-            f"AlertButtonView created for user {user_id}, severity {severity}"
+            f"AlertButtonView created for user {user_id}, severity {severity}, "
+            f"alert_id {alert_id}"
         )
 
     def _add_buttons(self) -> None:
@@ -132,6 +139,94 @@ class AlertButtonView(View):
         )
         ack_button.callback = self._acknowledge_callback
         self.add_item(ack_button)
+
+    # =========================================================================
+    # Response Metrics Integration (Phase 8)
+    # =========================================================================
+
+    async def _record_acknowledgment_metrics(
+        self,
+        bot,
+        acknowledged_by: int,
+        alert_message_id: int,
+    ) -> None:
+        """
+        Record acknowledgment metrics.
+
+        Args:
+            bot: Discord bot instance
+            acknowledged_by: User ID who acknowledged
+            alert_message_id: Discord message ID of the alert
+        """
+        try:
+            # Check if response metrics manager is available
+            if not hasattr(bot, "response_metrics_manager"):
+                return
+
+            response_metrics = bot.response_metrics_manager
+            if response_metrics is None or not response_metrics.is_enabled:
+                return
+
+            # Use alert_id if available, otherwise use message ID lookup
+            if self.alert_id:
+                await response_metrics.record_acknowledged(
+                    alert_id=self.alert_id,
+                    acknowledged_by=acknowledged_by,
+                )
+            else:
+                await response_metrics.record_acknowledged_by_message_id(
+                    alert_message_id=alert_message_id,
+                    acknowledged_by=acknowledged_by,
+                )
+
+            logger.debug(f"📊 Acknowledgment metrics recorded for alert {self.alert_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to record acknowledgment metrics: {e}")
+
+    async def _record_ash_contact_metrics(
+        self,
+        bot,
+        initiated_by: int,
+        alert_message_id: int,
+        was_auto_initiated: bool = False,
+    ) -> None:
+        """
+        Record Ash contact metrics.
+
+        Args:
+            bot: Discord bot instance
+            initiated_by: User ID who initiated Ash
+            alert_message_id: Discord message ID of the alert
+            was_auto_initiated: Whether auto-initiated
+        """
+        try:
+            # Check if response metrics manager is available
+            if not hasattr(bot, "response_metrics_manager"):
+                return
+
+            response_metrics = bot.response_metrics_manager
+            if response_metrics is None or not response_metrics.is_enabled:
+                return
+
+            # Use alert_id if available, otherwise use message ID lookup
+            if self.alert_id:
+                await response_metrics.record_ash_contacted(
+                    alert_id=self.alert_id,
+                    initiated_by=initiated_by,
+                    was_auto_initiated=was_auto_initiated,
+                )
+            else:
+                await response_metrics.record_ash_contacted_by_message_id(
+                    alert_message_id=alert_message_id,
+                    initiated_by=initiated_by,
+                    was_auto_initiated=was_auto_initiated,
+                )
+
+            logger.debug(f"📊 Ash contact metrics recorded for alert {self.alert_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to record Ash contact metrics: {e}")
 
     # =========================================================================
     # Button Callbacks
@@ -231,6 +326,14 @@ class AlertButtonView(View):
             # Mark session as started from this alert
             self._ash_session_started = True
             self._ash_started_by = interaction.user.id
+
+            # Phase 8: Record Ash contact metrics
+            await self._record_ash_contact_metrics(
+                bot=bot,
+                initiated_by=interaction.user.id,
+                alert_message_id=interaction.message.id,
+                was_auto_initiated=False,
+            )
 
             # Get welcome message based on severity
             welcome_msg = personality_manager.get_welcome_message(
@@ -338,6 +441,13 @@ class AlertButtonView(View):
         logger.info(
             f"✅ Alert acknowledged by {interaction.user.display_name} "
             f"({interaction.user.id}) for user {self.user_id}"
+        )
+
+        # Phase 8: Record acknowledgment metrics
+        await self._record_acknowledgment_metrics(
+            bot=bot,
+            acknowledged_by=interaction.user.id,
+            alert_message_id=interaction.message.id,
         )
 
         # Update the embed
@@ -461,7 +571,8 @@ class AlertButtonView(View):
             f"user={self.user_id}, "
             f"severity={self.severity}, "
             f"status={status}, "
-            f"ash={ash_status})"
+            f"ash={ash_status}, "
+            f"alert_id={self.alert_id})"
         )
 
 
@@ -590,6 +701,17 @@ class PersistentAlertView(View):
                 )
                 return
 
+            # Phase 8: Record Ash contact metrics (using message ID lookup)
+            try:
+                if hasattr(bot, "response_metrics_manager") and bot.response_metrics_manager:
+                    await bot.response_metrics_manager.record_ash_contacted_by_message_id(
+                        alert_message_id=interaction.message.id,
+                        initiated_by=interaction.user.id,
+                        was_auto_initiated=False,
+                    )
+            except Exception as e:
+                logger.warning(f"[Persistent] Failed to record Ash contact metrics: {e}")
+
             # Send welcome
             welcome_msg = personality_manager.get_welcome_message(
                 severity=severity,
@@ -643,6 +765,18 @@ class PersistentAlertView(View):
         logger.info(
             f"✅ [Persistent] Alert acknowledged by {interaction.user.id}"
         )
+
+        bot = interaction.client
+
+        # Phase 8: Record acknowledgment metrics (using message ID lookup)
+        try:
+            if hasattr(bot, "response_metrics_manager") and bot.response_metrics_manager:
+                await bot.response_metrics_manager.record_acknowledged_by_message_id(
+                    alert_message_id=interaction.message.id,
+                    acknowledged_by=interaction.user.id,
+                )
+        except Exception as e:
+            logger.warning(f"[Persistent] Failed to record acknowledgment metrics: {e}")
 
         # Update the embed
         message = interaction.message

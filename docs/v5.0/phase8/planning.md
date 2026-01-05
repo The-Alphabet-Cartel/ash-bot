@@ -5,10 +5,11 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.1.0  
 **Created**: 2026-01-05  
+**Updated**: 2026-01-05  
 **Phase**: 8 - Metrics & Reporting  
-**Status**: 🔵 Planning  
+**Status**: 🟡 In Progress (8.1 Complete)  
 **Estimated Time**: 10-14 hours  
 **Dependencies**: Phase 7 Complete
 
@@ -63,16 +64,30 @@ Phase 8 focuses on operational metrics and reporting capabilities. These feature
 
 Before starting Phase 8, ensure:
 
-- [ ] Phase 7 complete (Core Safety & User Preferences)
-- [ ] Auto-initiate feature operational
-- [ ] Redis operational with authentication
-- [ ] All Phase 7 tests passing
+- [x] Phase 7 complete (Core Safety & User Preferences)
+- [x] Auto-initiate feature operational
+- [x] Redis operational with authentication
+- [x] All Phase 7 tests passing
+
+---
+
+## Progress Summary
+
+| Step | Feature | Status | Completed |
+|------|---------|--------|----------|
+| 8.1 | Response Time Tracking | ✅ Complete | 2026-01-05 |
+| 8.2 | Weekly CRT Report | 🔵 Not Started | - |
+| 8.3 | Data Retention Policy | 🔵 Not Started | - |
 
 ---
 
 ## Step 8.1: Response Time Tracking
 
 **Goal**: Track and store response time metrics for all crisis alerts.
+
+**Status**: ✅ **COMPLETE** (2026-01-05)
+
+**Completion Report**: See `docs/v5.0/phase8/phase8_1_complete.md`
 
 **Estimated Time**: 3-4 hours
 
@@ -265,13 +280,13 @@ BOT_METRICS_AGGREGATE_RETENTION_DAYS=365                  # Days to retain daily
 
 ### 8.1.6: Acceptance Criteria
 
-- [ ] Alert creation time recorded
-- [ ] Acknowledgment time recorded
-- [ ] Ash contact time recorded (manual and auto)
-- [ ] Time deltas calculated correctly
-- [ ] Daily aggregates computed
-- [ ] TTL applied to stored data
-- [ ] Feature can be disabled via config
+- [x] Alert creation time recorded
+- [x] Acknowledgment time recorded
+- [x] Ash contact time recorded (manual and auto)
+- [x] Time deltas calculated correctly
+- [x] Daily aggregates computed
+- [x] TTL applied to stored data
+- [x] Feature can be disabled via config
 
 ---
 

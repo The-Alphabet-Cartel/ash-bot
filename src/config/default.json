@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.5",
+		"file_version": "v5.0.6",
 		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -383,6 +383,34 @@
 			"export_interval_seconds": {
 				"type": "integer",
 				"range": [10, 300],
+				"required": true
+			}
+		}
+	},
+
+	"response_metrics": {
+		"description": "Response time tracking for crisis alerts (Phase 8)",
+		"enabled": "${BOT_RESPONSE_METRICS_ENABLED}",
+		"retention_days": "${BOT_RESPONSE_METRICS_RETENTION_DAYS}",
+		"aggregate_retention_days": "${BOT_RESPONSE_METRICS_AGGREGATE_RETENTION_DAYS}",
+		"defaults": {
+			"enabled": true,
+			"retention_days": 90,
+			"aggregate_retention_days": 365
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"retention_days": {
+				"type": "integer",
+				"range": [1, 365],
+				"required": true
+			},
+			"aggregate_retention_days": {
+				"type": "integer",
+				"range": [30, 730],
 				"required": true
 			}
 		}
