@@ -5,11 +5,11 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v2.1.0  
+**Document Version**: v2.3.0  
 **Created**: 2026-01-05  
-**Last Updated**: 2026-01-04  
+**Last Updated**: 2026-01-05  
 **Phase**: 7 - Core Safety & User Preferences  
-**Status**: 🟡 Pre-Implementation Review Complete  
+**Status**: 🟡 In Progress (Steps 7.1 & 7.2 Complete)  
 **Estimated Time**: 10-14 hours  
 **Dependencies**: Phase 6 Complete ✅
 
@@ -291,15 +291,15 @@ BOT_AUTO_INITIATE_MIN_SEVERITY=medium                     # Minimum severity: lo
 
 ### 7.1.6: Acceptance Criteria
 
-- [ ] Alerts are tracked when dispatched
-- [ ] Timer respects configured delay
-- [ ] Acknowledged alerts cancel timer
-- [ ] "Talk to Ash" button cancels timer
-- [ ] Expired timer triggers Ash DM
-- [ ] Alert embed updated after auto-initiation
-- [ ] Feature can be disabled via config
-- [ ] Severity filtering works correctly
-- [ ] Metrics track auto-initiations
+- [x] Alerts are tracked when dispatched
+- [x] Timer respects configured delay
+- [x] Acknowledged alerts cancel timer
+- [x] "Talk to Ash" button cancels timer
+- [x] Expired timer triggers Ash DM
+- [x] Alert embed updated after auto-initiation
+- [x] Feature can be disabled via config
+- [x] Severity filtering works correctly
+- [x] Metrics track auto-initiations
 
 ---
 
@@ -493,14 +493,14 @@ Take care of yourself, and know that you're not alone.
 
 ### 7.2.7: Acceptance Criteria
 
-- [ ] Welcome message includes opt-out instruction
-- [ ] ❌ reaction triggers opt-out flow
-- [ ] Opt-out stored in Redis with TTL
-- [ ] Opted-out users don't receive Ash DMs on future crises
-- [ ] CRT still receives alerts for opted-out users
-- [ ] Alert embed indicates "prefers human support"
-- [ ] Feature can be disabled via config
-- [ ] TTL is configurable
+- [x] Welcome message includes opt-out instruction
+- [x] ❌ reaction triggers opt-out flow
+- [x] Opt-out stored in Redis with TTL
+- [x] Opted-out users don't receive Ash DMs on future crises
+- [x] CRT still receives alerts for opted-out users
+- [x] Alert embed indicates "prefers human support"
+- [x] Feature can be disabled via config
+- [x] TTL is configurable
 
 ---
 
@@ -758,19 +758,19 @@ BOT_DEFAULT_CHANNEL_SENSITIVITY=1.0                       # Default sensitivity 
 
 ### Must Have (Critical)
 
-- [ ] Auto-initiate works with configurable delay
-- [ ] Acknowledged alerts cancel auto-initiate timer
-- [ ] Users can opt out of Ash via reaction
-- [ ] Opted-out users still trigger CRT alerts
+- [x] Auto-initiate works with configurable delay
+- [x] Acknowledged alerts cancel auto-initiate timer
+- [x] Users can opt out of Ash via reaction
+- [x] Opted-out users still trigger CRT alerts
 - [ ] Channel sensitivity modifies crisis scores
-- [ ] All features configurable via environment
+- [x] All features configurable via environment
 
 ### Should Have (Important)
 
-- [ ] Clear logging for debugging
-- [ ] Metrics for all new features
-- [ ] Alert embeds updated appropriately
-- [ ] Graceful degradation if Redis unavailable
+- [x] Clear logging for debugging
+- [x] Metrics for all new features
+- [x] Alert embeds updated appropriately
+- [x] Graceful degradation if Redis unavailable
 
 ### Nice to Have (Bonus)
 
@@ -792,12 +792,12 @@ BOT_DEFAULT_CHANNEL_SENSITIVITY=1.0                       # Default sensitivity 
 
 ## Timeline Estimate
 
-| Step | Duration | Notes |
-|------|----------|-------|
-| 7.1: Auto-Initiate | 4-6 hours | Core implementation + tests |
-| 7.2: User Opt-Out | 2-3 hours | Simpler implementation |
-| 7.3: Channel Sensitivity | 4-5 hours | Config changes + testing |
-| **Total** | **10-14 hours** | ~2 days |
+| Step | Estimated | Actual | Status |
+|------|-----------|--------|--------|
+| 7.1: Auto-Initiate | 4-6 hours | ~3 hours | ✅ Complete |
+| 7.2: User Opt-Out | 2-3 hours | ~2.5 hours | ✅ Complete |
+| 7.3: Channel Sensitivity | 4-5 hours | - | ⏳ Pending |
+| **Total** | **10-14 hours** | **~5.5 hours** | **2/3 Complete** |
 
 ---
 
@@ -920,7 +920,8 @@ Examples:
 | File | Version | Purpose |
 |------|---------|--------|
 | `src/managers/alerting/auto_initiate_manager.py` | v5.0-7-1.0-1 | Core auto-initiate logic, timer tracking, Redis persistence |
-| `tests/test_auto_initiate.py` | v5.0-7-1.0-1 | Unit tests (15 test cases) |
+| `tests/test_alerting/test_auto_initiate.py` | v5.0-7-1.0-1 | Unit tests (22 test cases) |
+| `tests/integration/test_auto_initiate_flow.py` | v5.0-7-1.0-1 | Integration tests (21 test cases) |
 
 #### Files Modified
 
@@ -930,8 +931,8 @@ Examples:
 | `src/managers/alerting/alert_dispatcher.py` | v5.0-3-5.0-1 | v5.0-7-1.0-1 | Track alerts, setter method |
 | `src/managers/alerting/embed_builder.py` | v5.0-3-3.0-1 | v5.0-7-1.0-1 | Auto-initiate indicator method |
 | `src/views/alert_buttons.py` | v5.0-4-6.0-1 | v5.0-7-1.0-1 | Cancel timer on button click |
-| `src/config/default.json` | v5.0.2 | v5.0.3 | Added auto_initiate section |
-| `.env.template` | v5.0.3 | v5.0.4 | Added env variables |
+| `src/config/default.json` | v5.0.2 | v5.0.4 | Added auto_initiate, user_preferences sections |
+| `.env.template` | v5.0.3 | v5.0.5 | Added auto-initiate and opt-out env variables |
 | `main.py` | v5.0-6-6.4-1 | v5.0-7-1.0-1 | Initialize and wire up AutoInitiateManager |
 
 #### Implementation Details
@@ -966,11 +967,141 @@ Examples:
 
 #### Testing Status
 
-- [x] Unit tests created (15 test cases)
-- [ ] Integration tests (to be run in container)
+- [x] Unit tests: 22/22 passed ✅
+- [x] Integration tests: 21/21 passed ✅
 - [ ] Manual testing with live bot
 
 ---
+
+### Step 7.2: User Opt-Out - COMPLETE ✅
+
+**Completed**: 2026-01-05  
+**Tests**: 43/43 passed ✅
+
+#### Files Created
+
+| File | Version | Purpose |
+|------|---------|--------|
+| `src/managers/user/__init__.py` | v5.0-7-2.0-1 | User package exports |
+| `src/managers/user/user_preferences_manager.py` | v5.0-7-2.0-1 | Opt-out management, Redis persistence, cache |
+| `tests/test_user/__init__.py` | - | Test package |
+| `tests/test_user/test_user_preferences.py` | v5.0-7-2.0-1 | Unit tests (30 test cases) |
+| `tests/integration/test_user_opt_out_flow.py` | v5.0-7-2.0-1 | Integration tests (13 test cases) |
+
+#### Files Modified
+
+| File | Old Version | New Version | Changes |
+|------|-------------|-------------|--------|
+| `src/managers/ash/ash_session_manager.py` | v5.0-7-1.0-1 | v5.0-7-2.0-1 | Opt-out check, UserOptedOutError, setter method |
+| `src/managers/alerting/embed_builder.py` | v5.0-7-1.0-1 | v5.0-7-2.0-1 | `update_embed_user_prefers_human()` method |
+| `src/managers/discord/discord_manager.py` | v5.0-6-6.4-1 | v5.0-7-2.0-1 | Reaction handler, opt-out tracking, intents |
+| `src/prompts/ash_system_prompt.py` | v5.0-4-2.0-1 | v5.0-7-2.0-1 | Opt-out instruction in welcome, OPT_OUT_ACKNOWLEDGMENT |
+| `src/prompts/__init__.py` | v5.0-4-2.0-1 | v5.0-7-2.0-1 | Export OPT_OUT_ACKNOWLEDGMENT |
+| `main.py` | v5.0-7-1.0-1 | v5.0-7-2.0-1 | Initialize UserPreferencesManager, inject into AshSessionManager and DiscordManager |
+
+#### Implementation Details
+
+**UserPreferencesManager Features**:
+- `is_opted_out(user_id)` - Check opt-out status
+- `set_opt_out(user_id)` - Record opt-out with TTL
+- `clear_opt_out(user_id)` - Remove opt-out (re-enable Ash)
+- `get_preference(user_id)` - Get full preference record
+- In-memory cache for performance
+- Redis persistence with configurable TTL
+- Statistics tracking (hits, misses, totals)
+
+**UserPreference Dataclass**:
+- `user_id`: Discord user ID
+- `opted_out`: Boolean opt-out status
+- `opted_out_at`: Timestamp when opted out
+- `expires_at`: TTL expiration timestamp
+- `is_expired()`: Check if opt-out has expired
+- `days_until_expiry()`: Days remaining
+
+**AshSessionManager Integration**:
+- `set_user_preferences_manager()` - Dependency injection
+- `is_user_opted_out()` - Check before session creation
+- `start_session()` raises `UserOptedOutError` if opted out
+- `check_opt_out=False` parameter to bypass check when needed
+
+**Configuration Added**:
+```json
+"user_preferences": {
+    "optout_enabled": true,
+    "optout_ttl_days": 30
+}
+```
+
+**Environment Variables Added**:
+- `BOT_USER_OPTOUT_ENABLED`
+- `BOT_USER_OPTOUT_TTL_DAYS`
+
+**UI Components Added**:
+
+*Welcome Message Opt-Out Instruction*:
+```
+_React with ❌ if you'd prefer to wait for a human from our 
+Crisis Response Team instead - that's completely okay!_
+```
+
+*Opt-Out Acknowledgment Message*:
+```
+I completely understand 💜
+
+I've noted your preference for human support. Our Crisis Response Team 
+has been notified and someone will reach out to you soon.
+
+Take care of yourself, and know that you're not alone.
+```
+
+**DiscordManager Reaction Handler**:
+- Added `dm_reactions` and `reactions` intents
+- `on_reaction_add` event handler detects ❌ on Ash welcome DMs
+- `track_ash_welcome_message()` - Registers welcome message for tracking
+- `_handle_opt_out_reaction()` - Processes opt-out flow:
+  1. Records preference in Redis via UserPreferencesManager
+  2. Ends active Ash session if exists
+  3. Sends acknowledgment message
+  4. Removes message from tracking
+
+#### Testing Status
+
+- [x] Unit tests: 30/30 passed ✅
+- [x] Integration tests: 13/13 passed ✅
+- [x] UI components implemented and exported ✅
+- [ ] Manual testing with live bot
+
+#### Test Coverage Summary
+
+| Test Category | Tests | Status |
+|---------------|-------|--------|
+| UserPreference dataclass | 9 | ✅ |
+| UserPreferencesManager | 9 | ✅ |
+| Cache behavior | 2 | ✅ |
+| Redis persistence | 3 | ✅ |
+| Statistics | 4 | ✅ |
+| TTL expiration | 3 | ✅ |
+| Integration: Opted-out skips Ash | 4 | ✅ |
+| Integration: CRT still alerted | 1 | ✅ |
+| Integration: Embed indicator | 2 | ✅ |
+| Integration: TTL expiry | 2 | ✅ |
+| Integration: Re-opt-out | 1 | ✅ |
+| Integration: Bypass check | 1 | ✅ |
+| Integration: Stats | 2 | ✅ |
+| **Total** | **43** | ✅ |
+
+#### Remaining for Live Deployment
+
+1. Manual testing of reaction handler with live Discord bot
+2. Verify welcome message displays correctly in DM
+3. Verify ❌ reaction triggers opt-out flow end-to-end
+
+---
+
+### Step 7.3: Channel Context Awareness - PENDING
+
+**Status**: Not Started  
+**Estimated Time**: 4-5 hours
 
 ---
 

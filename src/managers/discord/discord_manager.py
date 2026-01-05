@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Discord Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-6-6.4-1
+FILE VERSION: v5.0-7-2.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 5 - Production Hardening
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -69,11 +69,12 @@ if TYPE_CHECKING:
     from src.managers.ash.ash_session_manager import AshSessionManager
     from src.managers.ash.ash_personality_manager import AshPersonalityManager
     from src.managers.metrics.metrics_manager import MetricsManager
+    from src.managers.user.user_preferences_manager import UserPreferencesManager
 
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-6-6.4-1"
+__version__ = "v5.0-7-2.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -151,6 +152,13 @@ class DiscordManager:
         self.ash_personality_manager = ash_personality_manager
         self._metrics = metrics_manager
 
+        # Phase 7: User preferences (opt-out)
+        self._user_preferences: Optional["UserPreferencesManager"] = None
+
+        # Phase 7: Track Ash welcome message IDs for opt-out reactions
+        # Maps message_id -> user_id who received the welcome
+        self._ash_welcome_messages: dict[int, int] = {}
+
         # State tracking
         self._connected = False
         self._shutdown_event = asyncio.Event()
@@ -215,6 +223,10 @@ class DiscordManager:
         # Phase 4: Required for DM messages
         intents.dm_messages = True
 
+        # Phase 7: Required for reaction events (opt-out)
+        intents.dm_reactions = True
+        intents.reactions = True
+
         logger.debug("Discord intents configured")
         return intents
 
@@ -261,6 +273,15 @@ class DiscordManager:
             """Handle leaving a guild."""
             logger.info(f"📍 Left guild: {guild.name} (ID: {guild.id})")
             self._update_guild_metric()
+
+        # Phase 7: Handle reaction events for opt-out
+        @self.bot.event
+        async def on_reaction_add(
+            reaction: discord.Reaction,
+            user: discord.User | discord.Member,
+        ):
+            """Handle reaction added to a message."""
+            await self._on_reaction_add(reaction, user)
 
         logger.debug("Event handlers registered")
 
@@ -608,6 +629,136 @@ class DiscordManager:
                 logger.error(f"❌ Session cleanup error: {e}")
 
         logger.info("🧹 Ash session cleanup task stopped")
+
+    # =========================================================================
+    # Phase 7: User Opt-Out Handling
+    # =========================================================================
+
+    def set_user_preferences_manager(
+        self,
+        user_preferences: "UserPreferencesManager",
+    ) -> None:
+        """
+        Set the user preferences manager for opt-out handling.
+
+        This is injected after construction since DiscordManager
+        is created before UserPreferencesManager in main.py.
+
+        Args:
+            user_preferences: UserPreferencesManager instance
+        """
+        self._user_preferences = user_preferences
+        logger.info("👤 User preferences manager set (Phase 7)")
+
+    def track_ash_welcome_message(
+        self,
+        message_id: int,
+        user_id: int,
+    ) -> None:
+        """
+        Track an Ash welcome message for opt-out reaction handling.
+
+        Called when Ash sends a welcome DM so we can detect
+        if the user reacts with ❌ to opt out.
+
+        Args:
+            message_id: Discord message ID of the welcome message
+            user_id: Discord user ID who received the welcome
+        """
+        self._ash_welcome_messages[message_id] = user_id
+        logger.debug(f"📝 Tracking welcome message {message_id} for user {user_id}")
+
+    async def _on_reaction_add(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User | discord.Member,
+    ) -> None:
+        """
+        Handle reaction added to a message.
+
+        Phase 7: Detect ❌ reactions on Ash welcome messages
+        to trigger opt-out flow.
+
+        Args:
+            reaction: The reaction that was added
+            user: The user who added the reaction
+        """
+        # Ignore bot reactions
+        if user.bot:
+            return
+
+        # Check if this is an opt-out reaction (❌)
+        if str(reaction.emoji) != "❌":
+            return
+
+        # Check if this is a tracked Ash welcome message
+        message_id = reaction.message.id
+        if message_id not in self._ash_welcome_messages:
+            return
+
+        # Verify the reacting user is the one who received the welcome
+        expected_user_id = self._ash_welcome_messages[message_id]
+        if user.id != expected_user_id:
+            return
+
+        # Process opt-out
+        await self._handle_opt_out_reaction(reaction, user)
+
+    async def _handle_opt_out_reaction(
+        self,
+        reaction: discord.Reaction,
+        user: discord.User | discord.Member,
+    ) -> None:
+        """
+        Handle user opting out of Ash AI interaction.
+
+        Flow:
+        1. Record opt-out preference in Redis
+        2. End any active Ash session
+        3. Send acknowledgment message
+        4. Remove message from tracking
+
+        Args:
+            reaction: The ❌ reaction
+            user: The user who opted out
+        """
+        logger.info(f"❌ User {user.display_name} ({user.id}) opting out of Ash AI")
+
+        # Import here to avoid circular imports
+        from src.prompts import OPT_OUT_ACKNOWLEDGMENT
+
+        try:
+            # Record opt-out if preferences manager is available
+            if self._user_preferences:
+                await self._user_preferences.set_opt_out(user.id)
+                logger.info(f"💾 Opt-out preference recorded for user {user.id}")
+            else:
+                logger.warning("⚠️ Cannot record opt-out: UserPreferencesManager not set")
+
+            # End any active Ash session
+            if self.ash_session_manager:
+                session = self.ash_session_manager.get_session(user.id)
+                if session:
+                    await self.ash_session_manager.end_session(
+                        user_id=user.id,
+                        reason="opted_out",
+                        send_closing=False,  # We'll send our own message
+                    )
+                    logger.info(f"🚫 Ended Ash session for opted-out user {user.id}")
+
+            # Send acknowledgment message
+            channel = reaction.message.channel
+            await channel.send(OPT_OUT_ACKNOWLEDGMENT)
+
+            # Remove from tracking
+            message_id = reaction.message.id
+            if message_id in self._ash_welcome_messages:
+                del self._ash_welcome_messages[message_id]
+
+            logger.info(f"✅ Opt-out complete for user {user.display_name}")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to process opt-out for user {user.id}: {e}", exc_info=True)
 
     # =========================================================================
     # Message Analysis

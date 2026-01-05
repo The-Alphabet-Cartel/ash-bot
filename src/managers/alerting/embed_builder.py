@@ -13,7 +13,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Embed Builder for Ash-Bot Service
 ---
-FILE VERSION: v5.0-7-1.0-1
+FILE VERSION: v5.0-7-2.0-1
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-7-1.0-1"
+__version__ = "v5.0-7-2.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)

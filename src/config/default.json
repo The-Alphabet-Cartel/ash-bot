@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.3",
+		"file_version": "v5.0.4",
 		"last_modified": "2026-01-04",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -237,6 +237,27 @@
 			"min_severity": {
 				"type": "string",
 				"allowed_values": ["low", "medium", "high", "critical"],
+				"required": true
+			}
+		}
+	},
+
+	"user_preferences": {
+		"description": "User preference settings including opt-out (Phase 7)",
+		"optout_enabled": "${BOT_USER_OPTOUT_ENABLED}",
+		"optout_ttl_days": "${BOT_USER_OPTOUT_TTL_DAYS}",
+		"defaults": {
+			"optout_enabled": true,
+			"optout_ttl_days": 30
+		},
+		"validation": {
+			"optout_enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"optout_ttl_days": {
+				"type": "integer",
+				"range": [1, 365],
 				"required": true
 			}
 		}

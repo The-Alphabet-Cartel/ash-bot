@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Ash AI Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-5.0-1
+FILE VERSION: v5.0-7-2.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -54,7 +54,7 @@ USAGE:
 """
 
 # Module version
-__version__ = "v5.0-4-5.0-1"
+__version__ = "v5.0-7-2.0-1"
 
 # =============================================================================
 # Claude Client Manager
@@ -77,6 +77,7 @@ from .ash_session_manager import (
     create_ash_session_manager,
     SessionExistsError,
     SessionNotFoundError,
+    UserOptedOutError,
 )
 
 # =============================================================================
@@ -105,6 +106,7 @@ __all__ = [
     "create_ash_session_manager",
     "SessionExistsError",
     "SessionNotFoundError",
+    "UserOptedOutError",
     # Personality Manager
     "AshPersonalityManager",
     "create_ash_personality_manager",

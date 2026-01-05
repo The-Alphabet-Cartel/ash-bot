@@ -14,7 +14,7 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-7-1.0-1
+FILE VERSION: v5.0-7-2.0-1
 LAST MODIFIED: 2026-01-04
 PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-7-1.0-1"
+__version__ = "v5.0-7-2.0-1"
 
 
 # =============================================================================
@@ -314,6 +314,7 @@ async def main_async(args: argparse.Namespace) -> int:
         create_ash_session_manager,
         create_ash_personality_manager,
     )
+    from src.managers.user import create_user_preferences_manager
     # Phase 5: Import health and metrics managers
     from src.managers.metrics import create_metrics_manager
     from src.managers.health import create_health_manager
@@ -469,6 +470,23 @@ async def main_async(args: argparse.Namespace) -> int:
             metrics_manager=metrics_manager,
         )
 
+        # Phase 7: Create user preferences manager
+        user_preferences_manager = None
+        user_optout_enabled = config_manager.get("user_preferences", "optout_enabled", True)
+        if user_optout_enabled and redis_manager:
+            try:
+                user_preferences_manager = create_user_preferences_manager(
+                    config_manager=config_manager,
+                    redis_manager=redis_manager,
+                )
+                logger.info("✅ UserPreferencesManager initialized (Phase 7)")
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ UserPreferencesManager initialization failed: {e}\n"
+                    "   Bot will start without user opt-out feature"
+                )
+                user_preferences_manager = None
+
         # Phase 4: Now create Ash session manager with bot instance
         if claude_client and ash_personality_manager:
             try:
@@ -476,6 +494,18 @@ async def main_async(args: argparse.Namespace) -> int:
                     config_manager=config_manager,
                     bot=discord_manager.bot,
                 )
+
+                # Phase 7: Inject user preferences manager for opt-out support
+                if user_preferences_manager:
+                    ash_session_manager.set_user_preferences_manager(
+                        user_preferences_manager
+                    )
+                    # Also inject into discord_manager for reaction handling
+                    discord_manager.set_user_preferences_manager(
+                        user_preferences_manager
+                    )
+                    logger.info("✅ User opt-out integration configured (Phase 7)")
+
                 # Inject into discord_manager
                 discord_manager.ash_session_manager = ash_session_manager
                 discord_manager.bot.ash_session_manager = ash_session_manager

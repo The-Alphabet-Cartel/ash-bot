@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Ash System Prompt Definition for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-2.0-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+FILE VERSION: v5.0-7-2.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -32,7 +32,7 @@ IMPORTANT:
 """
 
 # Module version
-__version__ = "v5.0-4-2.0-1"
+__version__ = "v5.0-7-2.0-1"
 
 
 # =============================================================================
@@ -181,8 +181,18 @@ def get_welcome_message(severity: str, username: str = None) -> str:
 
     Returns:
         Welcome message text
+
+    Note:
+        All welcome messages include opt-out instruction (Phase 7).
+        Users can react with ❌ to opt out of Ash AI interaction.
     """
     name_part = f", {username}" if username else ""
+
+    # Opt-out instruction appended to all messages
+    opt_out_instruction = (
+        "\n\n_React with ❌ if you'd prefer to wait for a human from our "
+        "Crisis Response Team instead - that's completely okay!_"
+    )
 
     if severity == "critical":
         return (
@@ -190,6 +200,7 @@ def get_welcome_message(severity: str, username: str = None) -> str:
             "I can tell things might be really hard right now. "
             "I'm here to listen, no judgment, no pressure. "
             "Would you like to tell me what's going on?"
+            f"{opt_out_instruction}"
         )
     elif severity == "high":
         return (
@@ -197,6 +208,7 @@ def get_welcome_message(severity: str, username: str = None) -> str:
             "Someone on our Crisis Response Team thought you might want "
             "someone to talk to. I'm here if you'd like to chat. "
             "How are you doing?"
+            f"{opt_out_instruction}"
         )
     else:
         # Medium or other
@@ -204,6 +216,7 @@ def get_welcome_message(severity: str, username: str = None) -> str:
             f"Hey{name_part}, I'm Ash. 💙\n\n"
             "I'm here if you'd like to talk. "
             "How are you feeling right now?"
+            f"{opt_out_instruction}"
         )
 
 
@@ -273,6 +286,18 @@ CRT_ARRIVAL_MESSAGE = (
 
 
 # =============================================================================
+# Opt-Out Acknowledgment Message (Phase 7)
+# =============================================================================
+
+OPT_OUT_ACKNOWLEDGMENT = (
+    "I completely understand 💜\n\n"
+    "I've noted your preference for human support. Our Crisis Response Team "
+    "has been notified and someone will reach out to you soon.\n\n"
+    "Take care of yourself, and know that you're not alone."
+)
+
+
+# =============================================================================
 # Export public interface
 # =============================================================================
 
@@ -283,6 +308,7 @@ __all__ = [
     "CLOSING_MESSAGES",
     "HANDOFF_MESSAGE",
     "CRT_ARRIVAL_MESSAGE",
+    "OPT_OUT_ACKNOWLEDGMENT",
     "get_welcome_message",
     "get_closing_message",
 ]

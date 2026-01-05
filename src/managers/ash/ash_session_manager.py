@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Ash Session Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-4.0-1
+FILE VERSION: v5.0-7-2.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -60,9 +60,10 @@ import discord
 if TYPE_CHECKING:
     from discord.ext import commands
     from src.managers.config_manager import ConfigManager
+    from src.managers.user.user_preferences_manager import UserPreferencesManager
 
 # Module version
-__version__ = "v5.0-4-4.0-1"
+__version__ = "v5.0-7-2.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -81,6 +82,12 @@ class SessionExistsError(Exception):
 
 class SessionNotFoundError(Exception):
     """Raised when session is not found."""
+
+    pass
+
+
+class UserOptedOutError(Exception):
+    """Raised when user has opted out of Ash AI interaction."""
 
     pass
 
@@ -243,10 +250,48 @@ class AshSessionManager:
         self._total_sessions_created = 0
         self._total_sessions_ended = 0
 
+        # User preferences (set via setter for dependency injection)
+        self._user_preferences: Optional["UserPreferencesManager"] = None
+
         self._logger.info(
             f"🤖 AshSessionManager initialized "
             f"(timeout: {self._session_timeout}s, max: {self._max_duration}s)"
         )
+
+    # =========================================================================
+    # User Preferences Integration (Phase 7)
+    # =========================================================================
+
+    def set_user_preferences_manager(
+        self,
+        user_preferences: "UserPreferencesManager",
+    ) -> None:
+        """
+        Set the user preferences manager.
+
+        Required for opt-out functionality. Must be called after
+        both managers are created.
+
+        Args:
+            user_preferences: UserPreferencesManager instance
+        """
+        self._user_preferences = user_preferences
+        self._logger.debug("UserPreferencesManager injected into AshSessionManager")
+
+    async def is_user_opted_out(self, user_id: int) -> bool:
+        """
+        Check if a user has opted out of Ash AI interaction.
+
+        Args:
+            user_id: Discord user ID
+
+        Returns:
+            True if user has opted out, False otherwise
+        """
+        if not self._user_preferences:
+            return False
+
+        return await self._user_preferences.is_opted_out(user_id)
 
     # =========================================================================
     # Session Lifecycle
@@ -257,6 +302,7 @@ class AshSessionManager:
         user: discord.User,
         trigger_severity: str,
         trigger_message: Optional[str] = None,
+        check_opt_out: bool = True,
     ) -> AshSession:
         """
         Start a new Ash session with a user.
@@ -267,13 +313,24 @@ class AshSessionManager:
             user: Discord user to start session with
             trigger_severity: Original crisis severity
             trigger_message: Optional context message (not stored)
+            check_opt_out: Whether to check user's opt-out preference (default: True)
 
         Returns:
             Created AshSession
 
         Raises:
             SessionExistsError: If user already has an active session
+            UserOptedOutError: If user has opted out of Ash AI interaction
         """
+        # Check for user opt-out (Phase 7)
+        if check_opt_out and await self.is_user_opted_out(user.id):
+            self._logger.info(
+                f"📵 Skipping Ash session for user {user.id} (opted out)"
+            )
+            raise UserOptedOutError(
+                f"User {user.id} has opted out of Ash AI interaction"
+            )
+
         # Check for existing active session
         existing = self.get_session(user.id)
         if existing:
@@ -561,4 +618,5 @@ __all__ = [
     "create_ash_session_manager",
     "SessionExistsError",
     "SessionNotFoundError",
+    "UserOptedOutError",
 ]
