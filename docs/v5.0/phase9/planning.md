@@ -5,12 +5,12 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v1.0.0  
+**Document Version**: v1.1.0  
 **Created**: 2026-01-05  
 **Phase**: 9 - CRT Workflow Enhancements  
-**Status**: 🔵 Planning  
+**Status**: 🟡 In Progress (9.1 Complete)  
 **Estimated Time**: 16-22 hours  
-**Dependencies**: Phase 8 Complete
+**Dependencies**: Phase 8 Complete ✅
 
 ---
 
@@ -67,6 +67,16 @@ Before starting Phase 9, ensure:
 - [x] Response time tracking operational
 - [x] Weekly reports generating correctly
 - [x] All Phase 8 tests passing
+
+---
+
+## Phase 9 Progress
+
+| Step | Feature | Status | Actual Time |
+|------|---------|--------|-------------|
+| 9.1 | CRT Slash Commands | ✅ Complete | ~4 hours |
+| 9.2 | Session Handoff & Notes | 🔵 Ready | - |
+| 9.3 | Follow-Up Check-Ins | 🔵 Ready | - |
 
 ---
 
@@ -400,15 +410,17 @@ BOT_SLASH_COMMANDS_ADMIN_ROLES=Admin                      # Roles with admin acc
 
 ### 9.1.6: Acceptance Criteria
 
-- [ ] All commands register with Discord
-- [ ] Permission checking works correctly
-- [ ] `/ash status` shows health info
-- [ ] `/ash stats` shows metrics
-- [ ] `/ash history` shows user history (privacy-respecting)
-- [ ] `/ash config` shows configuration (admin only)
-- [ ] `/ash notes` adds session notes
-- [ ] `/ash optout` manages opt-out status
-- [ ] Feature can be disabled via config
+- [x] All commands register with Discord
+- [x] Permission checking works correctly
+- [x] `/ash status` shows health info
+- [x] `/ash stats` shows metrics
+- [x] `/ash history` shows user history (privacy-respecting)
+- [x] `/ash config` shows configuration (admin only)
+- [x] `/ash notes` adds session notes
+- [x] `/ash optout` manages opt-out status
+- [x] Feature can be disabled via config
+
+**Step 9.1 Status: ✅ COMPLETE** - See `docs/v5.0/phase9/phase9_1_complete.md`
 
 ---
 

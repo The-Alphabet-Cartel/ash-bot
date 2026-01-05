@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Managers Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-5-5.4-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 5 - Production Hardening
+FILE VERSION: v5.0-9-1.0-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.1)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -38,6 +38,7 @@ MANAGERS:
 - AshPersonalityManager: Ash personality and responses (Phase 4)
 - MetricsManager: Operational metrics collection (Phase 5)
 - HealthManager: Component health monitoring (Phase 5)
+- SlashCommandManager: CRT slash commands (Phase 9)
 
 USAGE:
     from src.managers import (
@@ -65,10 +66,11 @@ USAGE:
     )
     from src.managers.metrics import create_metrics_manager
     from src.managers.health import create_health_manager
+    from src.managers.commands import create_slash_command_manager
 """
 
 # Module version
-__version__ = "v5.0-5-5.4-1"
+__version__ = "v5.0-9-1.0-1"
 
 # =============================================================================
 # Configuration Manager
@@ -183,6 +185,15 @@ from .health import (
 )
 
 # =============================================================================
+# Commands Manager (Phase 9)
+# =============================================================================
+
+from .commands import (
+    SlashCommandManager,
+    create_slash_command_manager,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -246,4 +257,7 @@ __all__ = [
     "ComponentHealth",
     "SystemHealth",
     "create_health_manager",
+    # Commands (Phase 9)
+    "SlashCommandManager",
+    "create_slash_command_manager",
 ]

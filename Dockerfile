@@ -1,7 +1,7 @@
 # ============================================================================
 # Ash-Bot v5.0 Production Dockerfile
 # ============================================================================
-# FILE VERSION: v5.0.5
+# FILE VERSION: v5.0.6
 # LAST MODIFIED: 2026-01-05
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
@@ -86,12 +86,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     # Timezone data
     tzdata \
-    # For privilege dropping in entrypoint
-    gosu \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    # Verify gosu works
-    && gosu nobody true
+    && apt-get clean
 
 # Create default non-root user and group
 # Note: These will be modified at runtime by entrypoint if PUID/PGID differ
@@ -108,9 +104,9 @@ WORKDIR ${APP_HOME}
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Copy entrypoint script (Python - no bash scripting per project standards)
+COPY docker-entrypoint.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.py
 
 # Copy application code
 COPY --chown=bot:bot src/ ${APP_HOME}/src/
@@ -127,9 +123,9 @@ EXPOSE 30881
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:30881/health || exit 1
 
-# Use entrypoint script for PUID/PGID handling
+# Use Python entrypoint script for PUID/PGID handling
 # Container starts as root, entrypoint drops to specified user
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["python", "/usr/local/bin/docker-entrypoint.py"]
 
 # Default command - run the bot
 CMD ["python", "main.py"]

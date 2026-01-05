@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.8",
+		"file_version": "v5.0.9",
 		"last_modified": "2026-01-05",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -494,6 +494,32 @@
 			"cleanup_hour": {
 				"type": "integer",
 				"range": [0, 23],
+				"required": true
+			}
+		}
+	},
+
+	"commands": {
+		"description": "Slash command configuration (Phase 9.1)",
+		"enabled": "${BOT_SLASH_COMMANDS_ENABLED}",
+		"allowed_roles": "${BOT_SLASH_COMMANDS_ALLOWED_ROLES}",
+		"admin_roles": "${BOT_SLASH_COMMANDS_ADMIN_ROLES}",
+		"defaults": {
+			"enabled": true,
+			"allowed_roles": "CRT,Admin,Moderator",
+			"admin_roles": "Admin"
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"allowed_roles": {
+				"type": "string",
+				"required": true
+			},
+			"admin_roles": {
+				"type": "string",
 				"required": true
 			}
 		}

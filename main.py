@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-8-3.0-1
+FILE VERSION: v5.0-9-1.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 8 - Metrics & Reporting (Step 8.3)
+PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.1)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-8-3.0-1"
+__version__ = "v5.0-9-1.0-1"
 
 
 # =============================================================================
@@ -323,6 +323,8 @@ async def main_async(args: argparse.Namespace) -> int:
     # Phase 8: Import response metrics and reporting managers
     from src.managers.metrics import create_response_metrics_manager
     from src.managers.reporting import create_weekly_report_manager
+    # Phase 9: Import slash commands manager
+    from src.managers.commands import create_slash_command_manager
 
     # Initialize managers
     logger.info("🔧 Initializing managers...")
@@ -336,6 +338,7 @@ async def main_async(args: argparse.Namespace) -> int:
     response_metrics_manager = None
     weekly_report_manager = None
     data_retention_manager = None
+    slash_command_manager = None
 
     try:
         # Set environment for config manager
@@ -667,6 +670,35 @@ async def main_async(args: argparse.Namespace) -> int:
                     "   Bot will start without weekly reports"
                 )
                 weekly_report_manager = None
+
+        # Phase 9.1: Create and register slash commands
+        slash_commands_enabled = config_manager.get("commands", "enabled", True)
+        if slash_commands_enabled:
+            try:
+                slash_command_manager = create_slash_command_manager(
+                    config_manager=config_manager,
+                    bot=discord_manager.bot,
+                    redis_manager=redis_manager,
+                    user_preferences_manager=user_preferences_manager,
+                    response_metrics_manager=response_metrics_manager,
+                )
+
+                # Set health manager if available
+                if health_enabled and 'health_manager' in dir():
+                    slash_command_manager.set_health_manager(health_manager)
+
+                # Attach to bot for access during command handling
+                discord_manager.bot.slash_command_manager = slash_command_manager
+                discord_manager.bot.response_metrics_manager = response_metrics_manager
+
+                logger.info("✅ SlashCommandManager initialized (Phase 9.1)")
+
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ SlashCommandManager initialization failed: {e}\n"
+                    "   Bot will start without slash commands"
+                )
+                slash_command_manager = None
 
         # Setup signal handlers
         discord_manager.setup_signal_handlers()
