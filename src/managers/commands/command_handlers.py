@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Command Handlers for Ash-Bot Slash Commands
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-9-1.0-1
+FILE VERSION: v5.0-9-2.0-1
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.1)
+PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.2)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 ============================================================================
@@ -50,9 +50,10 @@ if TYPE_CHECKING:
     from src.managers.user.user_preferences_manager import UserPreferencesManager
     from src.managers.metrics.response_metrics_manager import ResponseMetricsManager
     from src.managers.health.health_manager import HealthManager
+    from src.managers.session.notes_manager import NotesManager
 
 # Module version
-__version__ = "v5.0-9-1.0-1"
+__version__ = "v5.0-9-2.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -98,6 +99,7 @@ class CommandHandlers:
         _preferences: UserPreferencesManager instance
         _metrics: ResponseMetricsManager instance
         _health_manager: HealthManager instance (set after init)
+        _notes_manager: NotesManager instance (set after init, Phase 9.2)
     
     Example:
         >>> handlers = CommandHandlers(config, redis, prefs, metrics)
@@ -125,6 +127,7 @@ class CommandHandlers:
         self._preferences = user_preferences_manager
         self._metrics = response_metrics_manager
         self._health_manager: Optional["HealthManager"] = None
+        self._notes_manager: Optional["NotesManager"] = None
         
         logger.info("✅ CommandHandlers initialized")
     
@@ -137,6 +140,18 @@ class CommandHandlers:
         """
         self._health_manager = health_manager
         logger.debug("Health manager set on CommandHandlers")
+    
+    def set_notes_manager(self, notes_manager: "NotesManager") -> None:
+        """
+        Set the notes manager for session documentation.
+        
+        Phase 9.2: Required for enhanced notes functionality.
+        
+        Args:
+            notes_manager: NotesManager instance
+        """
+        self._notes_manager = notes_manager
+        logger.debug("Notes manager set on CommandHandlers")
     
     # =========================================================================
     # Status Command
@@ -686,6 +701,8 @@ class CommandHandlers:
         """
         Add a note to a session.
         
+        Phase 9.2: Uses NotesManager if available for enhanced functionality.
+        
         Args:
             session_id: Session ID to add note to
             note_text: Note content
@@ -695,10 +712,23 @@ class CommandHandlers:
         Returns:
             Tuple of (success, message)
         """
+        # Phase 9.2: Use NotesManager if available
+        if self._notes_manager:
+            success, message, note = await self._notes_manager.add_note(
+                session_id=session_id,
+                author_id=author_id,
+                author_name=author_name,
+                note_text=note_text,
+            )
+            return success, message
+        
+        # Fallback to direct Redis storage
         if not self._redis:
             return False, "Session notes are not available (Redis not connected)."
         
         try:
+            import json
+            
             # Store note in Redis
             note_key = f"ash:session:notes:{session_id}"
             note_data = {
@@ -709,8 +739,8 @@ class CommandHandlers:
                 "created_at": datetime.utcnow().isoformat(),
             }
             
-            # Append to list of notes
-            await self._redis.rpush(note_key, note_data)
+            # Append to list of notes (as JSON string)
+            await self._redis.rpush(note_key, json.dumps(note_data))
             
             # Set TTL (30 days for session notes)
             session_days = self._config.get("data_retention", "session_data_days", 30)

@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Slash Command Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-9-1.0-1
+FILE VERSION: v5.0-9-2.0-2
 LAST MODIFIED: 2026-01-05
-PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.1)
+PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.2)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 ============================================================================
@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from src.managers.user.user_preferences_manager import UserPreferencesManager
     from src.managers.metrics.response_metrics_manager import ResponseMetricsManager
     from src.managers.health.health_manager import HealthManager
+    from src.managers.session.notes_manager import NotesManager
 
 from src.managers.commands.command_handlers import (
     CommandHandlers,
@@ -68,7 +69,7 @@ from src.managers.commands.command_handlers import (
 )
 
 # Module version
-__version__ = "v5.0-9-1.0-1"
+__version__ = "v5.0-9-2.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -201,6 +202,18 @@ class SlashCommandManager:
         self._handlers.set_health_manager(health_manager)
         logger.debug("Health manager set on SlashCommandManager")
     
+    def set_notes_manager(self, notes_manager: "NotesManager") -> None:
+        """
+        Set the notes manager for session documentation.
+        
+        Phase 9.2: Required for enhanced notes functionality.
+        
+        Args:
+            notes_manager: NotesManager instance
+        """
+        self._handlers.set_notes_manager(notes_manager)
+        logger.debug("Notes manager set on SlashCommandManager")
+    
     # =========================================================================
     # Permission Checking
     # =========================================================================
@@ -280,8 +293,21 @@ class SlashCommandManager:
             self._register_notes_command(ash_group)
             self._register_optout_command(ash_group)
             
+            # Debug: Log registered commands in group
+            group_commands = list(ash_group.commands)
+            logger.info(f"📋 Commands registered in /ash group: {len(group_commands)}")
+            for cmd in group_commands:
+                logger.debug(f"   - /ash {cmd.name}: {cmd.description}")
+            
+            # Clear existing commands first (in case of re-registration)
+            self._bot.tree.clear_commands(guild=None)
+            
             # Add group to command tree
             self._bot.tree.add_command(ash_group)
+            
+            # Debug: Log commands in tree
+            tree_commands = self._bot.tree.get_commands()
+            logger.info(f"📋 Commands in tree before sync: {len(tree_commands)}")
             
             # Sync commands with Discord
             # Note: This syncs globally. For testing, use guild-specific sync
@@ -289,6 +315,10 @@ class SlashCommandManager:
             if guild_id:
                 # Sync to specific guild (faster for development)
                 guild = discord.Object(id=int(guild_id))
+                # Also clear guild-specific commands first
+                self._bot.tree.clear_commands(guild=guild)
+                # Copy global commands to guild
+                self._bot.tree.copy_global_to(guild=guild)
                 synced = await self._bot.tree.sync(guild=guild)
                 logger.info(f"✅ Synced {len(synced)} commands to guild {guild_id}")
             else:
