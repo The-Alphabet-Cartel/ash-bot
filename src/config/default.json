@@ -1,6 +1,6 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.2",
+		"file_version": "v5.0.3",
 		"last_modified": "2026-01-04",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
@@ -210,6 +210,34 @@
 			"crt_role_id": {
 				"type": "string",
 				"required": false
+			}
+		}
+	},
+
+	"auto_initiate": {
+		"description": "Auto-initiation settings for unacknowledged alerts (Phase 7)",
+		"enabled": "${BOT_AUTO_INITIATE_ENABLED}",
+		"delay_minutes": "${BOT_AUTO_INITIATE_DELAY_MINUTES}",
+		"min_severity": "${BOT_AUTO_INITIATE_MIN_SEVERITY}",
+		"defaults": {
+			"enabled": true,
+			"delay_minutes": 3,
+			"min_severity": "medium"
+		},
+		"validation": {
+			"enabled": {
+				"type": "boolean",
+				"required": true
+			},
+			"delay_minutes": {
+				"type": "integer",
+				"range": [1, 60],
+				"required": true
+			},
+			"min_severity": {
+				"type": "string",
+				"allowed_values": ["low", "medium", "high", "critical"],
+				"required": true
 			}
 		}
 	},

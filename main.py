@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-6-6.4-1
-LAST MODIFIED: 2026-01-05
-PHASE: Phase 5 - Production Hardening
+FILE VERSION: v5.0-7-1.0-1
+LAST MODIFIED: 2026-01-04
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,7 +48,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-6-6.4-1"
+__version__ = "v5.0-7-1.0-1"
 
 
 # =============================================================================
@@ -307,6 +307,7 @@ async def main_async(args: argparse.Namespace) -> int:
         create_cooldown_manager,
         create_embed_builder,
         create_alert_dispatcher,
+        create_auto_initiate_manager,
     )
     from src.managers.ash import (
         create_claude_client_manager,
@@ -499,6 +500,42 @@ async def main_async(args: argparse.Namespace) -> int:
             except Exception as e:
                 logger.warning(f"⚠️ Failed to create AlertDispatcher: {e}")
 
+        # Phase 7: Create auto-initiate manager
+        auto_initiate_manager = None
+        auto_initiate_enabled = config_manager.get("auto_initiate", "enabled", True)
+        if auto_initiate_enabled and alert_dispatcher:
+            try:
+                auto_initiate_manager = create_auto_initiate_manager(
+                    config_manager=config_manager,
+                    redis_manager=redis_manager,
+                    bot=discord_manager.bot,
+                )
+
+                # Inject Ash managers if available
+                if ash_session_manager and ash_personality_manager:
+                    auto_initiate_manager.set_ash_managers(
+                        ash_session_manager=ash_session_manager,
+                        ash_personality_manager=ash_personality_manager,
+                    )
+
+                # Set on alert_dispatcher for integration
+                alert_dispatcher.set_auto_initiate_manager(auto_initiate_manager)
+
+                # Attach to bot instance for button access
+                discord_manager.bot.auto_initiate_manager = auto_initiate_manager
+
+                # Start the background check loop
+                await auto_initiate_manager.start()
+
+                logger.info("✅ AutoInitiateManager configured and started (Phase 7)")
+
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ AutoInitiateManager initialization failed: {e}\n"
+                    "   Bot will start without auto-initiate feature"
+                )
+                auto_initiate_manager = None
+
         # Phase 5: Create health manager and server
         health_enabled = config_manager.get("health", "enabled", True)
         if health_enabled:
@@ -546,6 +583,11 @@ async def main_async(args: argparse.Namespace) -> int:
         try:
             await discord_manager.connect()
         finally:
+            # Phase 7: Stop auto-initiate manager
+            if auto_initiate_manager:
+                await auto_initiate_manager.stop()
+                logger.info("🔌 AutoInitiateManager stopped")
+
             # Phase 5: Stop health server
             if health_server:
                 await health_server.stop()

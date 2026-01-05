@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Alerting Package for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-1.0-1
+FILE VERSION: v5.0-7-1.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -26,12 +26,14 @@ MANAGERS:
 - CooldownManager: Prevents alert spam per user
 - EmbedBuilder: Creates Discord embeds for alerts
 - AlertDispatcher: Routes alerts to appropriate channels
+- AutoInitiateManager: Automatic Ash outreach for unacknowledged alerts
 
 USAGE:
     from src.managers.alerting import (
         create_cooldown_manager,
         create_embed_builder,
         create_alert_dispatcher,
+        create_auto_initiate_manager,
     )
 
     cooldown = create_cooldown_manager(config_manager)
@@ -40,7 +42,7 @@ USAGE:
 """
 
 # Module version
-__version__ = "v5.0-3-1.0-1"
+__version__ = "v5.0-7-1.0-1"
 
 # =============================================================================
 # Cooldown Manager
@@ -70,6 +72,16 @@ from .alert_dispatcher import (
 )
 
 # =============================================================================
+# Auto-Initiate Manager (Phase 7)
+# =============================================================================
+
+from .auto_initiate_manager import (
+    AutoInitiateManager,
+    create_auto_initiate_manager,
+    PendingAlert,
+)
+
+# =============================================================================
 # Public API
 # =============================================================================
 
@@ -84,4 +96,8 @@ __all__ = [
     # Alert Dispatcher
     "AlertDispatcher",
     "create_alert_dispatcher",
+    # Auto-Initiate (Phase 7)
+    "AutoInitiateManager",
+    "create_auto_initiate_manager",
+    "PendingAlert",
 ]

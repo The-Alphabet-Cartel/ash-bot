@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Alert Button Views for Ash-Bot Service
 ---
-FILE VERSION: v5.0-4-6.0-1
+FILE VERSION: v5.0-7-1.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 4 - Ash AI Integration
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -39,7 +39,7 @@ from typing import Optional
 import logging
 
 # Module version
-__version__ = "v5.0-4-6.0-1"
+__version__ = "v5.0-7-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -157,6 +157,9 @@ class AlertButtonView(View):
 
         # Get bot instance
         bot = interaction.client
+
+        # Phase 7: Cancel auto-initiate timer
+        await self._cancel_auto_initiate(bot, interaction.message.id)
 
         # Check if Ash managers are available
         if not hasattr(bot, "ash_session_manager") or not bot.ash_session_manager:
@@ -324,6 +327,10 @@ class AlertButtonView(View):
             )
             return
 
+        # Phase 7: Cancel auto-initiate timer
+        bot = interaction.client
+        await self._cancel_auto_initiate(bot, interaction.message.id)
+
         # Mark as acknowledged
         self._acknowledged = True
         self._acknowledged_by = interaction.user.id
@@ -366,6 +373,43 @@ class AlertButtonView(View):
                 "✅ Alert acknowledged. Thank you for responding.",
                 ephemeral=True,
             )
+
+    # =========================================================================
+    # Auto-Initiate Integration (Phase 7)
+    # =========================================================================
+
+    async def _cancel_auto_initiate(
+        self,
+        bot,
+        alert_message_id: int,
+    ) -> None:
+        """
+        Cancel auto-initiate timer for this alert.
+
+        Called when CRT acknowledges or initiates Ash session.
+
+        Args:
+            bot: Discord bot instance
+            alert_message_id: ID of the alert message
+        """
+        try:
+            # Check if auto-initiate manager is available
+            if not hasattr(bot, "auto_initiate_manager"):
+                return
+
+            auto_initiate = bot.auto_initiate_manager
+            if auto_initiate and auto_initiate.is_enabled:
+                cancelled = await auto_initiate.cancel_alert(
+                    alert_message_id=alert_message_id,
+                    reason="button_clicked",
+                )
+                if cancelled:
+                    logger.debug(
+                        f"Auto-initiate timer cancelled for alert {alert_message_id}"
+                    )
+
+        except Exception as e:
+            logger.warning(f"Failed to cancel auto-initiate timer: {e}")
 
     # =========================================================================
     # Timeout Handler

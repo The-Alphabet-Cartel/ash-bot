@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Embed Builder for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-3.0-1
+FILE VERSION: v5.0-7-1.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
     from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-3-3.0-1"
+__version__ = "v5.0-7-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -408,6 +408,79 @@ class EmbedBuilder:
             color=color or discord.Color.blue(),
             timestamp=datetime.now(timezone.utc),
         )
+
+    def update_embed_auto_initiated(
+        self,
+        embed: discord.Embed,
+        delay_minutes: int = 3,
+    ) -> discord.Embed:
+        """
+        Update an embed to show auto-initiation occurred.
+
+        Called when Ash automatically reaches out to a user because
+        no CRT member acknowledged the alert within the timeout.
+
+        Args:
+            embed: Original embed to update
+            delay_minutes: How long the system waited
+
+        Returns:
+            Updated embed with auto-initiate indicator
+        """
+        # Change color to purple (auto-action indicator)
+        embed.color = discord.Color.purple()
+
+        # Add field showing auto-initiation
+        embed.add_field(
+            name="⏰ Auto-Initiated",
+            value=(
+                f"Ash reached out automatically after {delay_minutes} "
+                f"minutes (no staff response)"
+            ),
+            inline=False,
+        )
+
+        # Update footer
+        original_footer = embed.footer.text if embed.footer else ""
+        embed.set_footer(
+            text=f"⏰ Auto-initiated | {original_footer}"
+        )
+
+        return embed
+
+    def update_embed_user_prefers_human(
+        self,
+        embed: discord.Embed,
+    ) -> discord.Embed:
+        """
+        Update an embed to show user prefers human support.
+
+        Called when a user opts out of Ash AI interaction.
+
+        Args:
+            embed: Original embed to update
+
+        Returns:
+            Updated embed with human preference indicator
+        """
+        # Add field showing preference
+        embed.add_field(
+            name="👤 User Preference",
+            value="User prefers human support (opted out of AI)",
+            inline=False,
+        )
+
+        # Update footer
+        original_footer = embed.footer.text if embed.footer else ""
+        embed.set_footer(
+            text=f"👤 Prefers human | {original_footer}"
+        )
+
+        return embed
+
+    # =========================================================================
+    # Simple Info Embeds
+    # =========================================================================
 
     def build_error_embed(
         self,

@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Alert Dispatcher for Ash-Bot Service
 ---
-FILE VERSION: v5.0-3-5.0-1
+FILE VERSION: v5.0-7-1.0-1
 LAST MODIFIED: 2026-01-04
-PHASE: Phase 3 - Alert Dispatching
+PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -51,12 +51,13 @@ if TYPE_CHECKING:
     from src.managers.discord.channel_config_manager import ChannelConfigManager
     from src.managers.alerting.embed_builder import EmbedBuilder
     from src.managers.alerting.cooldown_manager import CooldownManager
+    from src.managers.alerting.auto_initiate_manager import AutoInitiateManager
     from src.models.nlp_models import CrisisAnalysisResult
 
 from src.views.alert_buttons import AlertButtonView
 
 # Module version
-__version__ = "v5.0-3-5.0-1"
+__version__ = "v5.0-7-1.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -112,6 +113,7 @@ class AlertDispatcher:
         embed_builder: "EmbedBuilder",
         cooldown_manager: "CooldownManager",
         bot: commands.Bot,
+        auto_initiate_manager: Optional["AutoInitiateManager"] = None,
     ):
         """
         Initialize AlertDispatcher.
@@ -122,6 +124,7 @@ class AlertDispatcher:
             embed_builder: Embed builder instance
             cooldown_manager: Cooldown tracking instance
             bot: Discord bot instance
+            auto_initiate_manager: Optional auto-initiate manager (Phase 7)
 
         Note:
             Use create_alert_dispatcher() factory function.
@@ -131,6 +134,7 @@ class AlertDispatcher:
         self._embed_builder = embed_builder
         self._cooldown = cooldown_manager
         self._bot = bot
+        self._auto_initiate = auto_initiate_manager
 
         # Load configuration
         self._enabled = self._config.get("alerting", "enabled", True)
@@ -146,7 +150,8 @@ class AlertDispatcher:
 
         logger.info(
             f"✅ AlertDispatcher initialized "
-            f"(enabled={self._enabled}, min_severity={self._min_severity})"
+            f"(enabled={self._enabled}, min_severity={self._min_severity}, "
+            f"auto_initiate={'enabled' if auto_initiate_manager else 'disabled'})"
         )
 
     # =========================================================================
@@ -304,6 +309,15 @@ class AlertDispatcher:
                 f"ping_crt: {content is not None})"
             )
 
+            # Phase 7: Track alert for auto-initiate
+            if self._auto_initiate and self._auto_initiate.is_enabled:
+                await self._auto_initiate.track_alert(
+                    alert_message=alert_message,
+                    user_id=message.author.id,
+                    severity=severity,
+                    original_message=message,
+                )
+
             return alert_message
 
         except discord.Forbidden:
@@ -404,6 +418,35 @@ class AlertDispatcher:
         except discord.HTTPException as e:
             logger.error(f"❌ Failed to send escalation alert: {e}")
             return None
+
+    # =========================================================================
+    # Properties
+    # =========================================================================
+
+    # =========================================================================
+    # Auto-Initiate Integration (Phase 7)
+    # =========================================================================
+
+    def set_auto_initiate_manager(
+        self,
+        auto_initiate_manager: "AutoInitiateManager",
+    ) -> None:
+        """
+        Set the auto-initiate manager after initialization.
+
+        This allows setting the manager after the dispatcher is created
+        to avoid circular dependency issues during startup.
+
+        Args:
+            auto_initiate_manager: AutoInitiateManager instance
+        """
+        self._auto_initiate = auto_initiate_manager
+        logger.debug("AutoInitiateManager set on AlertDispatcher")
+
+    @property
+    def auto_initiate_manager(self) -> Optional["AutoInitiateManager"]:
+        """Get the auto-initiate manager (if set)."""
+        return self._auto_initiate
 
     # =========================================================================
     # Properties

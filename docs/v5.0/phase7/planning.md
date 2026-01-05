@@ -5,10 +5,11 @@
 **The Alphabet Cartel** - https://discord.gg/alphabetcartel | alphabetcartel.org
 ============================================================================
 
-**Document Version**: v2.0.0  
+**Document Version**: v2.1.0  
 **Created**: 2026-01-05  
+**Last Updated**: 2026-01-04  
 **Phase**: 7 - Core Safety & User Preferences  
-**Status**: 🔵 Planning  
+**Status**: 🟡 Pre-Implementation Review Complete  
 **Estimated Time**: 10-14 hours  
 **Dependencies**: Phase 6 Complete ✅
 
@@ -25,6 +26,8 @@
 7. [Configuration Summary](#configuration-summary)
 8. [Acceptance Criteria](#acceptance-criteria)
 9. [Risk Assessment](#risk-assessment)
+10. [Pre-Implementation Review](#pre-implementation-review)
+11. [Implementation Notes](#implementation-notes)
 
 ---
 
@@ -798,9 +801,176 @@ BOT_DEFAULT_CHANNEL_SENSITIVITY=1.0                       # Default sensitivity 
 
 ---
 
-## Notes
+## Pre-Implementation Review
 
-*(Space for implementation notes)*
+**Review Date**: 2026-01-04  
+**Reviewed By**: Claude + Bubba  
+**Status**: ✅ Complete
+
+### Current File Versions
+
+Files reviewed and their current versions before Phase 7 modifications:
+
+| File | Current Version | Phase | Notes |
+|------|-----------------|-------|-------|
+| `main.py` | v5.0-6-6.4-1 | Phase 6 | Entry point, manager initialization |
+| `src/managers/alerting/alert_dispatcher.py` | v5.0-3-5.0-1 | Phase 3 | Will track pending alerts |
+| `src/managers/alerting/embed_builder.py` | v5.0-3-3.0-1 | Phase 3 | Will add auto-initiate/opt-out indicators |
+| `src/managers/alerting/cooldown_manager.py` | Phase 3 | Phase 3 | No changes expected |
+| `src/managers/ash/ash_session_manager.py` | v5.0-4-4.0-1 | Phase 4 | Will check opt-out before sessions |
+| `src/managers/ash/ash_personality_manager.py` | Phase 4 | Phase 4 | May update welcome messages |
+| `src/managers/discord/channel_config_manager.py` | v5.0-1-1.4-1 | Phase 1 | Will add sensitivity config |
+| `src/views/alert_buttons.py` | v5.0-4-6.0-1 | Phase 4 | Will cancel auto-initiate timers |
+| `src/config/default.json` | v5.0.2 | Phase 5 | Will add new config sections |
+| `.env.template` | v5.0.3 | Phase 5 | Will add new environment variables |
+
+### Codebase Observations
+
+#### Architecture Alignment ✅
+
+1. **Factory Functions**: All existing managers use `create_*()` factory pattern - we will continue this
+2. **Dependency Injection**: Managers accept dependencies via constructor - new managers will follow
+3. **Config Pattern**: JSON + environment variable override pattern is well-established
+4. **Error Handling**: Graceful degradation pattern in place (e.g., Redis failure doesn't crash bot)
+
+#### Integration Points Identified
+
+**Step 7.1 (Auto-Initiate)**:
+- `AlertDispatcher.dispatch_alert()` returns the alert message - we can track this
+- `AlertButtonView` callbacks need to call `AutoInitiateManager.cancel_alert()`
+- Background task pattern already used in `AshSessionManager.cleanup_expired_sessions()`
+- Redis available for persistent pending alert storage (survives restarts)
+
+**Step 7.2 (User Opt-Out)**:
+- `AshSessionManager.start_session()` is the gatekeeper - add opt-out check here
+- Redis key pattern: `ash:optout:{user_id}` aligns with existing `ash:history:{user_id}`
+- Welcome message in `AshPersonalityManager.get_welcome_message()` needs opt-out instruction
+- Reaction handling will require new event listener in `DiscordManager`
+
+**Step 7.3 (Channel Sensitivity)**:
+- `ChannelConfigManager` already handles channel-specific config - extend it
+- `NLPClientManager.analyze_message()` is where score modification should occur
+- Current monitored channels stored as Set[int] - may need Dict[int, ChannelConfig]
+
+### Implementation Considerations
+
+#### New Directory Structure
+
+```
+src/managers/
+├── user/                           # NEW - Step 7.2
+│   ├── __init__.py
+│   └── user_preferences_manager.py
+└── alerting/
+    └── auto_initiate_manager.py    # NEW - Step 7.1
+```
+
+#### Version Numbering for Phase 7
+
+All Phase 7 files will use version format: `v5.0-7-{step}.{substep}-{increment}`
+
+Examples:
+- Step 7.1 new file: `v5.0-7-1.0-1`
+- Step 7.1 first edit to existing file: `v5.0-7-1.0-1`
+- Step 7.2 modifications: `v5.0-7-2.0-1`
+- Step 7.3 modifications: `v5.0-7-3.0-1`
+
+#### Potential Challenges
+
+| Challenge | Mitigation |
+|-----------|------------|
+| Auto-initiate timer persistence across bot restarts | Store pending alerts in Redis with expiration |
+| Race condition: staff clicks button as timer expires | Use atomic Redis operations, graceful handling |
+| Reaction listener conflicts with existing handlers | Use dedicated cog or filtered event handler |
+| Channel sensitivity breaking existing tests | Ensure default sensitivity (1.0) maintains current behavior |
+
+#### Testing Strategy
+
+1. **Unit Tests**: Each new manager gets comprehensive unit tests
+2. **Integration Tests**: Add to existing `tests/integration/` structure
+3. **Backward Compatibility**: Existing tests must pass without modification
+4. **New Test Files**:
+   - `tests/test_auto_initiate.py`
+   - `tests/test_user_preferences.py`
+   - `tests/integration/test_auto_initiate.py`
+   - `tests/integration/test_user_preferences.py`
+
+### Dependencies Verified
+
+- [x] Phase 6 complete (confirmed via `docs/v5.0/phase6/complete.md`)
+- [x] Redis operational (authentication configured in docker-compose.yml)
+- [x] Claude API integration working (Phase 4 complete)
+- [x] Alert system functional (Phase 3 complete)
+- [x] Health checks passing (Phase 5 complete)
+
+### Ready for Implementation
+
+✅ **Pre-implementation review complete. Ready to begin Step 7.1: Auto-Initiate Contact.**
+
+---
+
+## Implementation Notes
+
+### Step 7.1: Auto-Initiate Contact - COMPLETE ✅
+
+**Completed**: 2026-01-04
+
+#### Files Created
+
+| File | Version | Purpose |
+|------|---------|--------|
+| `src/managers/alerting/auto_initiate_manager.py` | v5.0-7-1.0-1 | Core auto-initiate logic, timer tracking, Redis persistence |
+| `tests/test_auto_initiate.py` | v5.0-7-1.0-1 | Unit tests (15 test cases) |
+
+#### Files Modified
+
+| File | Old Version | New Version | Changes |
+|------|-------------|-------------|--------|
+| `src/managers/alerting/__init__.py` | v5.0-3-1.0-1 | v5.0-7-1.0-1 | Export AutoInitiateManager |
+| `src/managers/alerting/alert_dispatcher.py` | v5.0-3-5.0-1 | v5.0-7-1.0-1 | Track alerts, setter method |
+| `src/managers/alerting/embed_builder.py` | v5.0-3-3.0-1 | v5.0-7-1.0-1 | Auto-initiate indicator method |
+| `src/views/alert_buttons.py` | v5.0-4-6.0-1 | v5.0-7-1.0-1 | Cancel timer on button click |
+| `src/config/default.json` | v5.0.2 | v5.0.3 | Added auto_initiate section |
+| `.env.template` | v5.0.3 | v5.0.4 | Added env variables |
+| `main.py` | v5.0-6-6.4-1 | v5.0-7-1.0-1 | Initialize and wire up AutoInitiateManager |
+
+#### Implementation Details
+
+**AutoInitiateManager Features**:
+- Background check loop (runs every 30 seconds)
+- Tracks pending alerts with expiration timestamps
+- Severity threshold filtering (configurable minimum)
+- Redis persistence for bot restart survival
+- Graceful degradation when Redis unavailable
+- Statistics tracking for monitoring
+
+**Integration Points**:
+- `AlertDispatcher.dispatch_alert()` → calls `track_alert()`
+- `AlertButtonView._acknowledge_callback()` → calls `cancel_alert()`  
+- `AlertButtonView._talk_to_ash_callback()` → calls `cancel_alert()`
+- `main.py` → initializes, injects dependencies, starts/stops lifecycle
+
+**Configuration Added**:
+```json
+"auto_initiate": {
+    "enabled": true,
+    "delay_minutes": 3,
+    "min_severity": "medium"
+}
+```
+
+**Environment Variables Added**:
+- `BOT_AUTO_INITIATE_ENABLED`
+- `BOT_AUTO_INITIATE_DELAY_MINUTES`  
+- `BOT_AUTO_INITIATE_MIN_SEVERITY`
+
+#### Testing Status
+
+- [x] Unit tests created (15 test cases)
+- [ ] Integration tests (to be run in container)
+- [ ] Manual testing with live bot
+
+---
 
 ---
 
