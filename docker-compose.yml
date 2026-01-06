@@ -147,10 +147,6 @@ services:
           memory: 512M
           cpus: "0.25"
 
-    # Port mapping (internal only in production, exposed in dev override)
-    expose:
-      - "6379"
-
     # Volume mounts
     volumes:
       - redis_data:/data
