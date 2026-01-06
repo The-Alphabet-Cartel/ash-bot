@@ -94,13 +94,16 @@ services:
     env_file:
       - .env
 
+    # Volume Mounts
+    volumes:
+      # Logs
+      - ./logs:/app/logs
+      # Testing (Development only)
+      - ./tests:/app/tests
+
     # Port mapping for health checks (Ash ecosystem: 30881)
     ports:
       - "30881:30881"
-
-    # Volume mounts
-    volumes:
-      - ./logs:/app/logs
 
     # Docker Secrets
     secrets:
@@ -123,9 +126,9 @@ services:
 
     # Labels for organization
     labels:
-      - "com.alphabetcartel.service=ash-bot"
-      - "com.alphabetcartel.version=5.0.0"
-      - "com.alphabetcartel.description=Crisis Detection Discord Bot"
+      - "org.alphabetcartel.service=ash-bot"
+      - "org.alphabetcartel.version=5.0.0"
+      - "org.alphabetcartel.description=Crisis Detection Discord Bot"
 
     # Dependencies
     depends_on:
@@ -178,8 +181,8 @@ services:
 
     # Labels
     labels:
-      - "com.alphabetcartel.service=ash-redis"
-      - "com.alphabetcartel.description=Redis cache for Ash-Bot"
+      - "org.alphabetcartel.service=ash-redis"
+      - "org.alphabetcartel.description=Redis cache for Ash-Bot"
 
 # =============================================================================
 # Volumes
