@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Redis Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-5-5.5-1
-LAST MODIFIED: 2026-01-04
-PHASE: Phase 5 - Production Hardening
+FILE VERSION: v5.0-9-3.1-1
+LAST MODIFIED: 2026-01-05
+PHASE: Phase 9 - CRT Workflow Enhancements
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -23,17 +23,22 @@ Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alp
 
 RESPONSIBILITIES:
 - Establish and manage authenticated Redis connection
-- Provide async Redis operations for sorted sets
+- Provide async Redis operations for sorted sets and strings
 - Handle connection pooling and health checking
 - Graceful error handling with reconnection support
 - Auto-retry with exponential backoff (Phase 5)
 - Metrics collection integration (Phase 5)
+- Key pattern scanning for scheduled tasks (Phase 9)
 
 REDIS DATA STRUCTURES:
 - Sorted Sets: Used for time-ordered message history
   - Key: ash:history:{guild_id}:{user_id}
   - Score: Unix timestamp (for ordering)
   - Member: JSON string with message data
+- Strings: Used for scheduled follow-ups, user preferences
+  - Key: ash:followup:scheduled:{id}
+  - Key: ash:preferences:{user_id}
+  - Value: JSON string
 """
 
 import asyncio
@@ -49,7 +54,7 @@ if TYPE_CHECKING:
     from src.managers.metrics.metrics_manager import MetricsManager
 
 # Module version
-__version__ = "v5.0-5-5.5-1"
+__version__ = "v5.0-9-3.1-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -645,6 +650,147 @@ class RedisManager:
         except Exception as e:
             logger.error(f"❌ EXISTS failed for {key}: {e}")
             return False
+
+    # =========================================================================
+    # String Operations (for plain key-value storage)
+    # =========================================================================
+
+    async def get(self, key: str) -> Optional[str]:
+        """
+        Get string value for key.
+
+        Args:
+            key: Redis key
+
+        Returns:
+            String value, or None if key doesn't exist or on error
+        """
+        if not self._ensure_connected_safe():
+            return None
+
+        try:
+            result = await self._with_retry(
+                self._client.get,
+                "get",
+                key,
+            )
+            logger.debug(f"GET {key}: {'found' if result else 'not found'}")
+            return result
+        except Exception as e:
+            logger.error(f"❌ GET failed for {key}: {e}")
+            return None
+
+    async def set(
+        self,
+        key: str,
+        value: str,
+        ttl: Optional[int] = None,
+    ) -> bool:
+        """
+        Set string value for key with optional TTL.
+
+        Args:
+            key: Redis key
+            value: String value to store
+            ttl: Optional TTL in seconds
+
+        Returns:
+            True if set successfully, False on failure
+        """
+        if not self._ensure_connected_safe():
+            return False
+
+        try:
+            if ttl:
+                result = await self._with_retry(
+                    self._client.setex,
+                    "setex",
+                    key,
+                    ttl,
+                    value,
+                )
+            else:
+                result = await self._with_retry(
+                    self._client.set,
+                    "set",
+                    key,
+                    value,
+                )
+            logger.debug(f"SET {key}: ttl={ttl}, result={result}")
+            return bool(result)
+        except Exception as e:
+            logger.error(f"❌ SET failed for {key}: {e}")
+            return False
+
+    async def keys(self, pattern: str) -> List[str]:
+        """
+        Find all keys matching pattern.
+
+        WARNING: Use with caution in production - can be slow with many keys.
+        Consider using scan_iter() for large datasets.
+
+        Args:
+            pattern: Redis glob-style pattern (e.g., "ash:followup:*")
+
+        Returns:
+            List of matching key names, empty list on failure
+        """
+        if not self._ensure_connected_safe():
+            return []
+
+        try:
+            result = await self._with_retry(
+                self._client.keys,
+                "keys",
+                pattern,
+            )
+            logger.debug(f"KEYS {pattern}: found {len(result)} keys")
+            return result if result else []
+        except Exception as e:
+            logger.error(f"❌ KEYS failed for {pattern}: {e}")
+            return []
+
+    async def scan_iter(
+        self,
+        pattern: str,
+        count: int = 100,
+    ) -> List[str]:
+        """
+        Iterate over keys matching pattern using SCAN (safer than KEYS).
+
+        Uses cursor-based iteration which is more efficient and
+        doesn't block the server.
+
+        Args:
+            pattern: Redis glob-style pattern (e.g., "ash:followup:*")
+            count: Hint for how many keys to return per iteration
+
+        Returns:
+            List of matching key names, empty list on failure
+        """
+        if not self._ensure_connected_safe():
+            return []
+
+        try:
+            keys = []
+            cursor = 0
+
+            while True:
+                cursor, partial_keys = await self._client.scan(
+                    cursor=cursor,
+                    match=pattern,
+                    count=count,
+                )
+                keys.extend(partial_keys)
+
+                if cursor == 0:
+                    break
+
+            logger.debug(f"SCAN {pattern}: found {len(keys)} keys")
+            return keys
+        except Exception as e:
+            logger.error(f"❌ SCAN failed for {pattern}: {e}")
+            return []
 
     # =========================================================================
     # Utility Methods
