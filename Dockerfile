@@ -113,9 +113,6 @@ COPY --chown=bot:bot src/ ${APP_HOME}/src/
 COPY --chown=bot:bot main.py ${APP_HOME}/
 COPY --chown=bot:bot pytest.ini ${APP_HOME}/
 
-# Copy test files (needed for running tests in container)
-COPY --chown=bot:bot tests/ ${APP_HOME}/tests/
-
 # Expose health check port (Ash ecosystem standard: 30881)
 EXPOSE 30881
 
