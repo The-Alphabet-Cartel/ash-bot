@@ -8,10 +8,10 @@
 # =============================================================================
 # Development Directories
 # =============================================================================
-/docs/.obsidian
-/docs/standards
-/docs/v*
-/tests/
+docs/.obsidian
+docs/standards
+docs/v*
+tests/
 
 # =============================================================================
 # Secrets - CRITICAL: Never commit secrets!
