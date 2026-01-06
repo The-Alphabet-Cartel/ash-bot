@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Slash Command Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-9-2.0-2
-LAST MODIFIED: 2026-01-05
+FILE VERSION: v5.0-9-2.0-5
+LAST MODIFIED: 2026-01-06
 PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.2)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -48,6 +48,7 @@ USAGE:
     await slash_commands.register_commands()
 """
 
+import json
 import logging
 from typing import Optional, List, TYPE_CHECKING
 
@@ -69,7 +70,7 @@ from src.managers.commands.command_handlers import (
 )
 
 # Module version
-__version__ = "v5.0-9-2.0-1"
+__version__ = "v5.0-9-2.0-5"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -114,8 +115,8 @@ class SlashCommandManager:
         _redis: RedisManager for data access
         _preferences: UserPreferencesManager for opt-out
         _metrics: ResponseMetricsManager for statistics
-        _allowed_roles: Parsed allowed role names
-        _admin_roles: Parsed admin role names
+        _allowed_role_ids: Parsed allowed role IDs
+        _admin_role_ids: Parsed admin role IDs
         _is_enabled: Whether slash commands are enabled
         _commands_registered: Whether commands have been registered
     
@@ -162,11 +163,11 @@ class SlashCommandManager:
         
         # Parse configuration
         self._is_enabled = config_manager.get("commands", "enabled", True)
-        self._allowed_roles = self._parse_roles(
-            config_manager.get("commands", "allowed_roles", "CRT,Admin,Moderator")
+        self._allowed_role_ids = self._parse_role_ids(
+            config_manager.get("commands", "allowed_role_ids", "")
         )
-        self._admin_roles = self._parse_roles(
-            config_manager.get("commands", "admin_roles", "Admin")
+        self._admin_role_ids = self._parse_role_ids(
+            config_manager.get("commands", "admin_role_ids", "")
         )
         
         # Track registration state
@@ -174,22 +175,56 @@ class SlashCommandManager:
         
         logger.info("✅ SlashCommandManager initialized")
         logger.debug(f"   Enabled: {self._is_enabled}")
-        logger.debug(f"   Allowed roles: {self._allowed_roles}")
-        logger.debug(f"   Admin roles: {self._admin_roles}")
+        logger.debug(f"   Allowed role IDs: {self._allowed_role_ids}")
+        logger.debug(f"   Admin role IDs: {self._admin_role_ids}")
     
-    def _parse_roles(self, roles_str: str) -> List[str]:
+    def _parse_role_ids(self, role_ids_value) -> List[str]:
         """
-        Parse comma-separated role string into list.
+        Parse role IDs from various formats into list.
+        
+        Supports:
+        - List of strings: ["123", "456"]
+        - JSON string: '["123", "456"]'
+        - Legacy comma-separated: "123,456"
+        - Single value: "123"
+        - Empty/None: []
         
         Args:
-            roles_str: Comma-separated role names
+            role_ids_value: Role IDs in any supported format
             
         Returns:
-            List of role names
+            List of role IDs as strings
         """
-        if not roles_str:
+        if not role_ids_value:
             return []
-        return [role.strip() for role in roles_str.split(",") if role.strip()]
+        
+        # If already a list, process each element
+        if isinstance(role_ids_value, (list, tuple)):
+            result = []
+            for item in role_ids_value:
+                if item:
+                    result.append(str(item).strip())
+            return result
+        
+        # Convert to string if needed
+        if not isinstance(role_ids_value, str):
+            return [str(role_ids_value).strip()]
+        
+        role_ids_str = role_ids_value.strip()
+        if not role_ids_str:
+            return []
+        
+        # Try JSON parsing first
+        if role_ids_str.startswith('['):
+            try:
+                parsed = json.loads(role_ids_str)
+                if isinstance(parsed, list):
+                    return [str(item).strip() for item in parsed if item]
+            except json.JSONDecodeError:
+                pass
+        
+        # Fall back to comma-separated (legacy support)
+        return [role_id.strip() for role_id in role_ids_str.split(",") if role_id.strip()]
     
     def set_health_manager(self, health_manager: "HealthManager") -> None:
         """
@@ -226,6 +261,9 @@ class SlashCommandManager:
         """
         Check if member has required permission level.
         
+        Uses role IDs for reliable permission checking (role names can change,
+        but IDs are immutable).
+        
         Args:
             member: Discord member to check
             required_level: Required permission level ('crt' or 'admin')
@@ -237,18 +275,26 @@ class SlashCommandManager:
         if member.guild.owner_id == member.id:
             return True
         
-        # Get required roles for this level
+        # Get required role IDs for this level
         if required_level == "admin":
-            required_roles = self._admin_roles
+            required_role_ids = self._admin_role_ids
         else:
-            # CRT level includes both CRT and admin roles
-            required_roles = self._allowed_roles
+            # CRT level includes both CRT and admin role IDs
+            required_role_ids = self._allowed_role_ids
         
-        # Check if member has any required role
-        member_role_names = [role.name for role in member.roles]
+        # If no role IDs configured, deny access (fail-safe)
+        if not required_role_ids:
+            logger.warning(
+                f"No role IDs configured for permission level '{required_level}'. "
+                "Configure BOT_SLASH_COMMANDS_ALLOWED_ROLE_IDS or BOT_SLASH_COMMANDS_ADMIN_ROLE_IDS."
+            )
+            return False
         
-        for role_name in required_roles:
-            if role_name in member_role_names:
+        # Check if member has any required role by ID
+        member_role_ids = [str(role.id) for role in member.roles]
+        
+        for role_id in required_role_ids:
+            if role_id in member_role_ids:
                 return True
         
         return False
@@ -765,14 +811,14 @@ class SlashCommandManager:
         return self._commands_registered
     
     @property
-    def allowed_roles(self) -> List[str]:
-        """Get list of allowed role names."""
-        return self._allowed_roles.copy()
+    def allowed_role_ids(self) -> List[str]:
+        """Get list of allowed role IDs."""
+        return self._allowed_role_ids.copy()
     
     @property
-    def admin_roles(self) -> List[str]:
-        """Get list of admin role names."""
-        return self._admin_roles.copy()
+    def admin_role_ids(self) -> List[str]:
+        """Get list of admin role IDs."""
+        return self._admin_role_ids.copy()
     
     def __repr__(self) -> str:
         """String representation for debugging."""

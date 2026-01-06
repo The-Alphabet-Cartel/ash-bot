@@ -1,7 +1,7 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.11",
-		"last_modified": "2026-01-05",
+		"file_version": "v5.0.13",
+		"last_modified": "2026-01-06",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
 		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
@@ -59,30 +59,30 @@
 	"channels": {
 		"description": "Channel configuration for monitoring and alerting",
 		"monitored_channels": "${BOT_MONITORED_CHANNELS}",
-		"alert_channel_monitor": "${BOT_ALERT_CHANNEL_MONITOR}",
-		"alert_channel_crisis": "${BOT_ALERT_CHANNEL_CRISIS}",
-		"alert_channel_critical": "${BOT_ALERT_CHANNEL_CRITICAL}",
+		"alert_channel_monitor_ids": "${BOT_ALERT_CHANNEL_MONITOR_IDS}",
+		"alert_channel_crisis_ids": "${BOT_ALERT_CHANNEL_CRISIS_IDS}",
+		"alert_channel_critical_ids": "${BOT_ALERT_CHANNEL_CRITICAL_IDS}",
 		"defaults": {
 			"monitored_channels": [],
-			"alert_channel_monitor": null,
-			"alert_channel_crisis": null,
-			"alert_channel_critical": null
+			"alert_channel_monitor_ids": [],
+			"alert_channel_crisis_ids": [],
+			"alert_channel_critical_ids": []
 		},
 		"validation": {
 			"monitored_channels": {
 				"type": "list",
 				"required": false
 			},
-			"alert_channel_monitor": {
-				"type": "string",
+			"alert_channel_monitor_ids": {
+				"type": "list",
 				"required": false
 			},
-			"alert_channel_crisis": {
-				"type": "string",
+			"alert_channel_crisis_ids": {
+				"type": "list",
 				"required": false
 			},
-			"alert_channel_critical": {
-				"type": "string",
+			"alert_channel_critical_ids": {
+				"type": "list",
 				"required": false
 			}
 		}
@@ -185,12 +185,12 @@
 		"enabled": "${BOT_ALERTING_ENABLED}",
 		"min_severity_to_alert": "${BOT_ALERT_MIN_SEVERITY}",
 		"cooldown_seconds": "${BOT_ALERT_COOLDOWN}",
-		"crt_role_id": "${BOT_CRT_ROLE_ID}",
+		"crt_role_ids": "${BOT_CRT_ROLE_IDS}",
 		"defaults": {
 			"enabled": true,
 			"min_severity_to_alert": "medium",
 			"cooldown_seconds": 300,
-			"crt_role_id": null
+			"crt_role_ids": []
 		},
 		"validation": {
 			"enabled": {
@@ -207,8 +207,8 @@
 				"range": [0, 3600],
 				"required": true
 			},
-			"crt_role_id": {
-				"type": "string",
+			"crt_role_ids": {
+				"type": "list",
 				"required": false
 			}
 		}
@@ -419,12 +419,12 @@
 	"weekly_report": {
 		"description": "Weekly CRT report configuration (Phase 8.2)",
 		"enabled": "${BOT_WEEKLY_REPORT_ENABLED}",
-		"channel_id": "${BOT_WEEKLY_REPORT_CHANNEL_ID}",
+		"channel_ids": "${BOT_WEEKLY_REPORT_CHANNEL_IDS}",
 		"report_day": "${BOT_WEEKLY_REPORT_DAY}",
 		"report_hour": "${BOT_WEEKLY_REPORT_HOUR}",
 		"defaults": {
 			"enabled": true,
-			"channel_id": null,
+			"channel_ids": [],
 			"report_day": "monday",
 			"report_hour": 9
 		},
@@ -433,8 +433,8 @@
 				"type": "boolean",
 				"required": true
 			},
-			"channel_id": {
-				"type": "string",
+			"channel_ids": {
+				"type": "list",
 				"required": false
 			},
 			"report_day": {
@@ -502,25 +502,25 @@
 	"commands": {
 		"description": "Slash command configuration (Phase 9.1)",
 		"enabled": "${BOT_SLASH_COMMANDS_ENABLED}",
-		"allowed_roles": "${BOT_SLASH_COMMANDS_ALLOWED_ROLES}",
-		"admin_roles": "${BOT_SLASH_COMMANDS_ADMIN_ROLES}",
+		"allowed_role_ids": "${BOT_SLASH_COMMANDS_ALLOWED_ROLE_IDS}",
+		"admin_role_ids": "${BOT_SLASH_COMMANDS_ADMIN_ROLE_IDS}",
 		"defaults": {
 			"enabled": true,
-			"allowed_roles": "CRT,Admin,Moderator",
-			"admin_roles": "Admin"
+			"allowed_role_ids": "",
+			"admin_role_ids": ""
 		},
 		"validation": {
 			"enabled": {
 				"type": "boolean",
 				"required": true
 			},
-			"allowed_roles": {
+			"allowed_role_ids": {
 				"type": "string",
-				"required": true
+				"required": false
 			},
-			"admin_roles": {
+			"admin_role_ids": {
 				"type": "string",
-				"required": true
+				"required": false
 			}
 		}
 	},
@@ -528,13 +528,13 @@
 	"handoff": {
 		"description": "CRT session handoff configuration (Phase 9.2)",
 		"enabled": "${BOT_HANDOFF_ENABLED}",
-		"crt_roles": "${BOT_HANDOFF_CRT_ROLES}",
-		"notes_channel_id": "${BOT_CRT_NOTES_CHANNEL_ID}",
+		"crt_role_ids": "${BOT_HANDOFF_CRT_ROLE_IDS}",
+		"notes_channel_ids": "${BOT_CRT_NOTES_CHANNEL_IDS}",
 		"context_enabled": "${BOT_HANDOFF_CONTEXT_ENABLED}",
 		"defaults": {
 			"enabled": true,
-			"crt_roles": "CRT,Crisis Response Team",
-			"notes_channel_id": null,
+			"crt_role_ids": [],
+			"notes_channel_ids": [],
 			"context_enabled": true
 		},
 		"validation": {
@@ -542,12 +542,12 @@
 				"type": "boolean",
 				"required": true
 			},
-			"crt_roles": {
-				"type": "string",
-				"required": true
+			"crt_role_ids": {
+				"type": "list",
+				"required": false
 			},
-			"notes_channel_id": {
-				"type": "string",
+			"notes_channel_ids": {
+				"type": "list",
 				"required": false
 			},
 			"context_enabled": {

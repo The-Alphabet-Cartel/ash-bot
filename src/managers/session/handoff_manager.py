@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Handoff Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-9-2.0-1
-LAST MODIFIED: 2026-01-05
+FILE VERSION: v5.0-9-2.0-3
+LAST MODIFIED: 2026-01-06
 PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.2)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -40,6 +40,7 @@ USAGE:
         await handoff_manager.handle_crt_join(session, member)
 """
 
+import json
 import logging
 from datetime import datetime, timezone
 from typing import List, Optional, TYPE_CHECKING
@@ -53,7 +54,7 @@ if TYPE_CHECKING:
     from src.managers.session.notes_manager import NotesManager
 
 # Module version
-__version__ = "v5.0-9-2.0-1"
+__version__ = "v5.0-9-2.0-3"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ class HandoffManager:
     Attributes:
         _config: ConfigManager instance
         _notes_manager: NotesManager for documentation
-        _crt_roles: List of role names that identify CRT staff
+        _crt_role_ids: List of role IDs that identify CRT staff
         _is_enabled: Whether handoff detection is enabled
         _context_enabled: Whether to show context summaries
 
@@ -128,8 +129,8 @@ class HandoffManager:
         self._context_enabled = config_manager.get(
             "handoff", "context_enabled", True
         )
-        self._crt_roles = self._parse_roles(
-            config_manager.get("handoff", "crt_roles", "CRT,Crisis Response Team")
+        self._crt_role_ids = self._parse_role_ids(
+            config_manager.get("handoff", "crt_role_ids", "")
         )
 
         # Track handoffs to prevent duplicate announcements
@@ -138,21 +139,55 @@ class HandoffManager:
         logger.info("✅ HandoffManager initialized")
         logger.debug(f"   Enabled: {self._is_enabled}")
         logger.debug(f"   Context enabled: {self._context_enabled}")
-        logger.debug(f"   CRT roles: {self._crt_roles}")
+        logger.debug(f"   CRT role IDs: {self._crt_role_ids}")
 
-    def _parse_roles(self, roles_str: str) -> List[str]:
+    def _parse_role_ids(self, role_ids_value) -> List[str]:
         """
-        Parse comma-separated role string into list.
+        Parse role IDs from various formats into list.
+
+        Supports:
+        - List of strings: ["123", "456"]
+        - JSON string: '["123", "456"]'
+        - Legacy comma-separated: "123,456"
+        - Single value: "123"
+        - Empty/None: []
 
         Args:
-            roles_str: Comma-separated role names
+            role_ids_value: Role IDs in any supported format
 
         Returns:
-            List of role names (lowercase for comparison)
+            List of role IDs as strings
         """
-        if not roles_str:
+        if not role_ids_value:
             return []
-        return [role.strip().lower() for role in roles_str.split(",") if role.strip()]
+
+        # If already a list, process each element
+        if isinstance(role_ids_value, (list, tuple)):
+            result = []
+            for item in role_ids_value:
+                if item:
+                    result.append(str(item).strip())
+            return result
+
+        # Convert to string if needed
+        if not isinstance(role_ids_value, str):
+            return [str(role_ids_value).strip()]
+
+        role_ids_str = role_ids_value.strip()
+        if not role_ids_str:
+            return []
+
+        # Try JSON parsing first
+        if role_ids_str.startswith('['):
+            try:
+                parsed = json.loads(role_ids_str)
+                if isinstance(parsed, list):
+                    return [str(item).strip() for item in parsed if item]
+            except json.JSONDecodeError:
+                pass
+
+        # Fall back to comma-separated (legacy support)
+        return [role_id.strip() for role_id in role_ids_str.split(",") if role_id.strip()]
 
     # =========================================================================
     # CRT Detection
@@ -165,6 +200,9 @@ class HandoffManager:
     ) -> bool:
         """
         Check if a member is on the Crisis Response Team.
+
+        Uses role IDs for reliable detection (role names can change,
+        but IDs are immutable).
 
         Args:
             member: Discord member to check
@@ -183,11 +221,16 @@ class HandoffManager:
             else:
                 return False
 
-        # Check member's roles against CRT roles
-        member_role_names = [role.name.lower() for role in member.roles]
+        # If no role IDs configured, return False
+        if not self._crt_role_ids:
+            logger.debug("No CRT role IDs configured for handoff detection")
+            return False
 
-        for crt_role in self._crt_roles:
-            if crt_role in member_role_names:
+        # Check member's roles against CRT role IDs
+        member_role_ids = [str(role.id) for role in member.roles]
+
+        for crt_role_id in self._crt_role_ids:
+            if crt_role_id in member_role_ids:
                 return True
 
         return False
@@ -611,9 +654,9 @@ class HandoffManager:
         return self._context_enabled
 
     @property
-    def crt_roles(self) -> List[str]:
-        """Get list of CRT role names."""
-        return self._crt_roles.copy()
+    def crt_role_ids(self) -> List[str]:
+        """Get list of CRT role IDs."""
+        return self._crt_role_ids.copy()
 
 
 # =============================================================================

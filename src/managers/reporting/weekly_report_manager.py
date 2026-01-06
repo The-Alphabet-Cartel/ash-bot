@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Weekly Report Manager for Automated CRT Reports
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-8-2.0-1
-LAST MODIFIED: 2026-01-05
+FILE VERSION: v5.0-8-2.0-2
+LAST MODIFIED: 2026-01-06
 PHASE: Phase 8 - Metrics & Reporting
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -52,6 +52,7 @@ USAGE:
 """
 
 import asyncio
+import json
 import logging
 from datetime import datetime, date, timedelta, time
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
@@ -66,7 +67,7 @@ if TYPE_CHECKING:
     from src.managers.metrics.models import WeeklySummary
 
 # Module version
-__version__ = "v5.0-8-2.0-1"
+__version__ = "v5.0-8-2.0-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -158,10 +159,9 @@ class WeeklyReportManager:
         self._enabled = self._config.get(
             "weekly_report", "enabled", True
         )
-        channel_id_str = self._config.get(
-            "weekly_report", "channel_id", None
+        self._channel_ids = self._parse_channel_ids(
+            self._config.get("weekly_report", "channel_ids", [])
         )
-        self._channel_id = int(channel_id_str) if channel_id_str else None
 
         # Parse report day
         report_day_str = self._config.get(
@@ -186,10 +186,68 @@ class WeeklyReportManager:
         logger.info(
             f"✅ WeeklyReportManager initialized "
             f"(enabled={self._enabled}, "
-            f"channel={self._channel_id}, "
+            f"channels={self._channel_ids}, "
             f"day={report_day_str}, "
             f"hour={self._report_hour}:00 UTC)"
         )
+
+    def _parse_channel_ids(self, channel_ids_value) -> List[int]:
+        """
+        Parse channel IDs from various formats into list.
+
+        Supports:
+        - List of integers: [123, 456]
+        - List of strings: ["123", "456"]
+        - JSON string: '["123", "456"]'
+        - Single value: 123 or "123"
+        - Empty/None: []
+
+        Args:
+            channel_ids_value: Channel IDs in any supported format
+
+        Returns:
+            List of integer channel IDs
+        """
+        if not channel_ids_value:
+            return []
+
+        # If already a list, process each element
+        if isinstance(channel_ids_value, (list, tuple)):
+            result = []
+            for item in channel_ids_value:
+                try:
+                    if item:
+                        result.append(int(str(item).strip()))
+                except (ValueError, TypeError):
+                    pass
+            return result
+
+        # If it's an integer, wrap in list
+        if isinstance(channel_ids_value, int):
+            return [channel_ids_value]
+
+        # Handle string
+        if isinstance(channel_ids_value, str):
+            channel_ids_str = channel_ids_value.strip()
+            if not channel_ids_str:
+                return []
+
+            # Try JSON parsing first
+            if channel_ids_str.startswith('['):
+                try:
+                    parsed = json.loads(channel_ids_str)
+                    if isinstance(parsed, list):
+                        return [int(str(item).strip()) for item in parsed if item]
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+            # Try single integer
+            try:
+                return [int(channel_ids_str)]
+            except ValueError:
+                pass
+
+        return []
 
     # =========================================================================
     # Lifecycle Methods
@@ -206,10 +264,10 @@ class WeeklyReportManager:
             logger.info("📊 Weekly reports disabled, not starting scheduler")
             return False
 
-        if not self._channel_id:
+        if not self._channel_ids:
             logger.warning(
                 "⚠️ Weekly report channel not configured\n"
-                "   Set BOT_WEEKLY_REPORT_CHANNEL_ID in .env"
+                "   Set BOT_WEEKLY_REPORT_CHANNEL_IDS in .env"
             )
             return False
 
@@ -539,65 +597,70 @@ class WeeklyReportManager:
     async def post_report(
         self,
         report_content: str,
-        channel_id: Optional[int] = None,
+        channel_ids: Optional[List[int]] = None,
     ) -> bool:
         """
-        Post report to Discord channel.
+        Post report to Discord channel(s).
 
         Args:
             report_content: Formatted report string
-            channel_id: Target channel (default: configured channel)
+            channel_ids: Target channel(s) (default: configured channels)
 
         Returns:
-            True if posted successfully
+            True if posted successfully to at least one channel
         """
-        target_channel_id = channel_id or self._channel_id
+        target_channel_ids = channel_ids or self._channel_ids
 
-        if not target_channel_id:
-            logger.error("❌ No channel ID configured for weekly report")
+        if not target_channel_ids:
+            logger.error("❌ No channel IDs configured for weekly report")
             return False
 
-        try:
-            channel = self._bot.get_channel(target_channel_id)
+        success_count = 0
 
-            if channel is None:
-                # Try fetching if not in cache
-                channel = await self._bot.fetch_channel(target_channel_id)
+        for channel_id in target_channel_ids:
+            try:
+                channel = self._bot.get_channel(channel_id)
 
-            if channel is None:
-                logger.error(f"❌ Could not find channel {target_channel_id}")
-                return False
+                if channel is None:
+                    # Try fetching if not in cache
+                    channel = await self._bot.fetch_channel(channel_id)
 
-            if not isinstance(channel, discord.TextChannel):
-                logger.error(f"❌ Channel {target_channel_id} is not a text channel")
-                return False
+                if channel is None:
+                    logger.error(f"❌ Could not find channel {channel_id}")
+                    continue
 
-            # Create embed for professional appearance
-            embed = self._create_report_embed(report_content)
+                if not isinstance(channel, discord.TextChannel):
+                    logger.error(f"❌ Channel {channel_id} is not a text channel")
+                    continue
 
-            # Send the report
-            await channel.send(embed=embed)
+                # Create embed for professional appearance
+                embed = self._create_report_embed(report_content)
 
+                # Send the report
+                await channel.send(embed=embed)
+
+                success_count += 1
+                logger.info(
+                    f"📊 Weekly report posted to #{channel.name} "
+                    f"(reports_posted={self._reports_posted + 1})"
+                )
+
+            except discord.Forbidden:
+                logger.error(
+                    f"❌ Missing permissions to post in channel {channel_id}"
+                )
+
+            except discord.HTTPException as e:
+                logger.error(f"❌ Discord API error posting report: {e}")
+
+            except Exception as e:
+                logger.error(f"❌ Unexpected error posting report: {e}")
+
+        if success_count > 0:
             self._reports_posted += 1
-            logger.info(
-                f"📊 Weekly report posted to #{channel.name} "
-                f"(reports_posted={self._reports_posted})"
-            )
             return True
 
-        except discord.Forbidden:
-            logger.error(
-                f"❌ Missing permissions to post in channel {target_channel_id}"
-            )
-            return False
-
-        except discord.HTTPException as e:
-            logger.error(f"❌ Discord API error posting report: {e}")
-            return False
-
-        except Exception as e:
-            logger.error(f"❌ Unexpected error posting report: {e}")
-            return False
+        return False
 
     def _create_report_embed(self, report_content: str) -> discord.Embed:
         """
@@ -643,7 +706,7 @@ class WeeklyReportManager:
 
     async def trigger_manual_report(
         self,
-        channel_id: Optional[int] = None,
+        channel_ids: Optional[List[int]] = None,
         end_date: Optional[date] = None,
     ) -> Tuple[bool, str]:
         """
@@ -652,7 +715,7 @@ class WeeklyReportManager:
         Useful for testing or on-demand reports.
 
         Args:
-            channel_id: Target channel (default: configured)
+            channel_ids: Target channel(s) (default: configured)
             end_date: Report end date (default: yesterday)
 
         Returns:
@@ -660,7 +723,7 @@ class WeeklyReportManager:
         """
         try:
             report_content = await self.generate_report(end_date)
-            success = await self.post_report(report_content, channel_id)
+            success = await self.post_report(report_content, channel_ids)
 
             if success:
                 return True, report_content
@@ -687,9 +750,9 @@ class WeeklyReportManager:
         return self._running
 
     @property
-    def channel_id(self) -> Optional[int]:
-        """Get configured channel ID."""
-        return self._channel_id
+    def channel_ids(self) -> List[int]:
+        """Get configured channel IDs."""
+        return self._channel_ids.copy()
 
     def get_next_report_time(self) -> Optional[datetime]:
         """
@@ -698,7 +761,7 @@ class WeeklyReportManager:
         Returns:
             Next report datetime or None if not scheduled
         """
-        if not self._enabled or not self._channel_id:
+        if not self._enabled or not self._channel_ids:
             return None
 
         now = datetime.utcnow()
@@ -722,7 +785,7 @@ class WeeklyReportManager:
         return {
             "enabled": self._enabled,
             "running": self._running,
-            "channel_id": self._channel_id,
+            "channel_ids": self._channel_ids,
             "report_day": list(DAY_NAME_TO_WEEKDAY.keys())[self._report_day],
             "report_hour": self._report_hour,
             "reports_generated": self._reports_generated,

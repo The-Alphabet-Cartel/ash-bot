@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Notes Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-9-2.0-1
-LAST MODIFIED: 2026-01-05
+FILE VERSION: v5.0-9-2.0-2
+LAST MODIFIED: 2026-01-06
 PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.2)
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     from src.managers.storage.redis_manager import RedisManager
 
 # Module version
-__version__ = "v5.0-9-2.0-1"
+__version__ = "v5.0-9-2.0-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -195,7 +195,7 @@ class NotesManager:
     Attributes:
         _config: ConfigManager instance
         _redis: RedisManager instance
-        _notes_channel_id: ID of channel to post notes to
+        _notes_channel_ids: List of channel IDs to post notes to
         _retention_days: Days to retain session notes
 
     Example:
@@ -220,32 +220,76 @@ class NotesManager:
         self._redis = redis_manager
 
         # Load configuration
-        self._notes_channel_id = self._parse_channel_id(
-            config_manager.get("handoff", "notes_channel_id", None)
+        self._notes_channel_ids = self._parse_channel_ids(
+            config_manager.get("handoff", "notes_channel_ids", [])
         )
         self._retention_days = config_manager.get(
             "data_retention", "session_data_days", 30
         )
 
         logger.info("✅ NotesManager initialized")
-        if self._notes_channel_id:
-            logger.info(f"   Notes channel: {self._notes_channel_id}")
+        if self._notes_channel_ids:
+            logger.info(f"   Notes channels: {self._notes_channel_ids}")
         else:
             logger.warning("   ⚠️ No notes channel configured")
 
-    def _parse_channel_id(self, channel_id: Any) -> Optional[int]:
-        """Parse channel ID to integer."""
-        if channel_id is None:
-            return None
-        if isinstance(channel_id, int):
-            return channel_id
-        if isinstance(channel_id, str) and channel_id.strip():
+    def _parse_channel_ids(self, channel_ids_value) -> List[int]:
+        """
+        Parse channel IDs from various formats into list.
+
+        Supports:
+        - List of integers: [123, 456]
+        - List of strings: ["123", "456"]
+        - JSON string: '["123", "456"]'
+        - Single value: 123 or "123"
+        - Empty/None: []
+
+        Args:
+            channel_ids_value: Channel IDs in any supported format
+
+        Returns:
+            List of integer channel IDs
+        """
+        if not channel_ids_value:
+            return []
+
+        # If already a list, process each element
+        if isinstance(channel_ids_value, (list, tuple)):
+            result = []
+            for item in channel_ids_value:
+                try:
+                    if item:
+                        result.append(int(str(item).strip()))
+                except (ValueError, TypeError):
+                    pass
+            return result
+
+        # If it's an integer, wrap in list
+        if isinstance(channel_ids_value, int):
+            return [channel_ids_value]
+
+        # Handle string
+        if isinstance(channel_ids_value, str):
+            channel_ids_str = channel_ids_value.strip()
+            if not channel_ids_str:
+                return []
+
+            # Try JSON parsing first
+            if channel_ids_str.startswith('['):
+                try:
+                    parsed = json.loads(channel_ids_str)
+                    if isinstance(parsed, list):
+                        return [int(str(item).strip()) for item in parsed if item]
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+            # Try single integer
             try:
-                return int(channel_id.strip())
+                return [int(channel_ids_str)]
             except ValueError:
-                logger.warning(f"Invalid channel ID: {channel_id}")
-                return None
-        return None
+                pass
+
+        return []
 
     # =========================================================================
     # Note Storage
@@ -517,47 +561,51 @@ class NotesManager:
         bot: "commands.Bot",
     ) -> Optional[discord.Message]:
         """
-        Post session summary to the notes channel.
+        Post session summary to the notes channel(s).
 
         Args:
             summary: SessionSummary with session details
             bot: Discord bot instance for channel access
 
         Returns:
-            Posted message or None if failed
+            First posted message or None if failed
         """
-        if not self._notes_channel_id:
+        if not self._notes_channel_ids:
             logger.debug("No notes channel configured, skipping post")
             return None
 
-        try:
-            channel = bot.get_channel(self._notes_channel_id)
-            if not channel:
-                channel = await bot.fetch_channel(self._notes_channel_id)
+        first_message = None
 
-            if not channel:
-                logger.error(f"Could not find notes channel {self._notes_channel_id}")
-                return None
+        for channel_id in self._notes_channel_ids:
+            try:
+                channel = bot.get_channel(channel_id)
+                if not channel:
+                    channel = await bot.fetch_channel(channel_id)
 
-            # Build the embed
-            embed = self._build_summary_embed(summary)
+                if not channel:
+                    logger.error(f"Could not find notes channel {channel_id}")
+                    continue
 
-            # Send to channel
-            message = await channel.send(embed=embed)
+                # Build the embed
+                embed = self._build_summary_embed(summary)
 
-            logger.info(
-                f"📋 Posted session summary for {summary.session_id} "
-                f"to notes channel"
-            )
+                # Send to channel
+                message = await channel.send(embed=embed)
 
-            return message
+                if first_message is None:
+                    first_message = message
 
-        except discord.Forbidden:
-            logger.error("Bot lacks permission to post to notes channel")
-            return None
-        except Exception as e:
-            logger.error(f"Failed to post session summary: {e}")
-            return None
+                logger.info(
+                    f"📋 Posted session summary for {summary.session_id} "
+                    f"to notes channel #{channel.name}"
+                )
+
+            except discord.Forbidden:
+                logger.error(f"Bot lacks permission to post to notes channel {channel_id}")
+            except Exception as e:
+                logger.error(f"Failed to post session summary to channel {channel_id}: {e}")
+
+        return first_message
 
     def _build_summary_embed(self, summary: SessionSummary) -> discord.Embed:
         """
@@ -667,23 +715,39 @@ class NotesManager:
 
     def set_notes_channel(self, channel_id: int) -> None:
         """
-        Set the notes channel ID.
+        Add a notes channel ID.
 
         Args:
             channel_id: Discord channel ID for notes
         """
-        self._notes_channel_id = channel_id
-        logger.info(f"Notes channel set to {channel_id}")
+        if channel_id not in self._notes_channel_ids:
+            self._notes_channel_ids.append(channel_id)
+            logger.info(f"Notes channel {channel_id} added")
+
+    def set_notes_channels(self, channel_ids: List[int]) -> None:
+        """
+        Set the notes channel IDs (replaces existing).
+
+        Args:
+            channel_ids: List of Discord channel IDs for notes
+        """
+        self._notes_channel_ids = list(channel_ids)
+        logger.info(f"Notes channels set to {channel_ids}")
+
+    @property
+    def notes_channel_ids(self) -> List[int]:
+        """Get the configured notes channel IDs."""
+        return self._notes_channel_ids.copy()
 
     @property
     def notes_channel_id(self) -> Optional[int]:
-        """Get the configured notes channel ID."""
-        return self._notes_channel_id
+        """Get the first configured notes channel ID (backward compatibility)."""
+        return self._notes_channel_ids[0] if self._notes_channel_ids else None
 
     @property
     def is_notes_channel_configured(self) -> bool:
-        """Check if notes channel is configured."""
-        return self._notes_channel_id is not None
+        """Check if any notes channel is configured."""
+        return len(self._notes_channel_ids) > 0
 
 
 # =============================================================================

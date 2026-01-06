@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Channel Configuration Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-7-3.0-1
-LAST MODIFIED: 2026-01-05
+FILE VERSION: v5.0-7-3.0-2
+LAST MODIFIED: 2026-01-06
 PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from src.managers.config_manager import ConfigManager
 
 # Module version
-__version__ = "v5.0-7-3.0-1"
+__version__ = "v5.0-7-3.0-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -66,8 +66,8 @@ class ChannelConfigManager:
     Attributes:
         config_manager: Configuration manager instance
         _monitored_channels: Set of monitored channel IDs
-        _alert_channels: Dict mapping severity to channel ID
-        _crt_role_id: Crisis Response Team role ID
+        _alert_channels: Dict mapping severity to list of channel IDs
+        _crt_role_ids: List of Crisis Response Team role IDs
         _guild_id: Target guild ID (optional)
         _channel_sensitivity: Dict mapping channel ID to sensitivity (Phase 7)
         _default_sensitivity: Default sensitivity for channels (Phase 7)
@@ -76,8 +76,8 @@ class ChannelConfigManager:
         >>> channel_config = create_channel_config_manager(config_manager)
         >>> channel_config.is_monitored_channel(123456789)
         True
-        >>> channel_config.get_alert_channel("high")
-        987654321
+        >>> channel_config.get_alert_channels("high")
+        [987654321]
     """
 
     def __init__(self, config_manager: "ConfigManager"):
@@ -95,11 +95,11 @@ class ChannelConfigManager:
         # Internal storage
         self._monitored_channels: Set[int] = set()
         self._alert_channels: dict = {
-            "medium": None,
-            "high": None,
-            "critical": None,
+            "medium": [],
+            "high": [],
+            "critical": [],
         }
-        self._crt_role_id: Optional[int] = None
+        self._crt_role_ids: List[int] = []
         self._guild_id: Optional[int] = None
 
         # Phase 7: Channel sensitivity settings
@@ -124,8 +124,8 @@ class ChannelConfigManager:
 
         Loads:
         - Monitored channel whitelist
-        - Alert channel mappings
-        - CRT role ID
+        - Alert channel mappings (now supports multiple channels per severity)
+        - CRT role IDs (now supports multiple roles)
         - Guild ID
         """
         # Load channels config
@@ -135,20 +135,22 @@ class ChannelConfigManager:
         monitored_raw = channels_config.get("monitored_channels", [])
         self._monitored_channels = self._parse_channel_ids(monitored_raw)
 
-        # Load alert channels
-        self._alert_channels["medium"] = self._parse_single_id(
-            channels_config.get("alert_channel_monitor")
+        # Load alert channels (now arrays)
+        self._alert_channels["medium"] = self._parse_ids_to_list(
+            channels_config.get("alert_channel_monitor_ids", [])
         )
-        self._alert_channels["high"] = self._parse_single_id(
-            channels_config.get("alert_channel_crisis")
+        self._alert_channels["high"] = self._parse_ids_to_list(
+            channels_config.get("alert_channel_crisis_ids", [])
         )
-        self._alert_channels["critical"] = self._parse_single_id(
-            channels_config.get("alert_channel_critical")
+        self._alert_channels["critical"] = self._parse_ids_to_list(
+            channels_config.get("alert_channel_critical_ids", [])
         )
 
-        # Load alerting config
+        # Load alerting config - CRT role IDs (now array)
         alerting_config = self.config_manager.get_section("alerting")
-        self._crt_role_id = self._parse_single_id(alerting_config.get("crt_role_id"))
+        self._crt_role_ids = self._parse_ids_to_list(
+            alerting_config.get("crt_role_ids", [])
+        )
 
         # Load discord config
         discord_config = self.config_manager.get_section("discord")
@@ -185,7 +187,7 @@ class ChannelConfigManager:
         # Log configuration
         logger.debug(f"  Monitored channels: {len(self._monitored_channels)}")
         logger.debug(f"  Alert channels: {self._alert_channels}")
-        logger.debug(f"  CRT role ID: {self._crt_role_id}")
+        logger.debug(f"  CRT role IDs: {self._crt_role_ids}")
         logger.debug(f"  Guild ID: {self._guild_id}")
         logger.debug(f"  Default sensitivity: {self._default_sensitivity}")
         logger.debug(f"  Channel sensitivity overrides: {len(self._channel_sensitivity)}")
@@ -262,6 +264,51 @@ class ChannelConfigManager:
 
         return None
 
+    def _parse_ids_to_list(self, value) -> List[int]:
+        """
+        Parse IDs from various formats into a list.
+
+        Supports:
+        - List of integers: [123, 456]
+        - List of strings: ["123", "456"]
+        - JSON string: '["123", "456"]'
+        - Single value: 123 or "123"
+        - Empty/None: []
+
+        Args:
+            value: Raw ID value(s)
+
+        Returns:
+            List of integer IDs
+        """
+        if value is None:
+            return []
+
+        # If it's a string, try to parse as JSON
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                # Maybe it's a single ID
+                parsed = self._parse_single_id(value)
+                return [parsed] if parsed else []
+
+        # If it's a list, parse each element
+        if isinstance(value, (list, tuple)):
+            result = []
+            for item in value:
+                parsed = self._parse_single_id(item)
+                if parsed:
+                    result.append(parsed)
+            return result
+
+        # Single value
+        parsed = self._parse_single_id(value)
+        return [parsed] if parsed else []
+
     def reload_config(self) -> None:
         """
         Reload configuration from ConfigManager.
@@ -335,7 +382,10 @@ class ChannelConfigManager:
 
     def get_alert_channel(self, severity: str) -> Optional[int]:
         """
-        Get the alert channel for a given severity level.
+        Get the first alert channel for a given severity level.
+
+        This is a backward-compatible method that returns a single channel.
+        Use get_alert_channels() to get all configured channels.
 
         Severity mapping:
         - medium → alert_channel_monitor (#monitor-queue)
@@ -346,47 +396,65 @@ class ChannelConfigManager:
             severity: Crisis severity (medium, high, critical)
 
         Returns:
-            Channel ID or None if not configured
+            First channel ID or None if not configured
+        """
+        channels = self.get_alert_channels(severity)
+        return channels[0] if channels else None
+
+    def get_alert_channels(self, severity: str) -> List[int]:
+        """
+        Get all alert channels for a given severity level.
+
+        Severity mapping:
+        - medium → alert_channel_monitor_ids (#monitor-queue)
+        - high → alert_channel_crisis_ids (#crisis-response)
+        - critical → alert_channel_critical_ids (#critical-response)
+
+        Args:
+            severity: Crisis severity (medium, high, critical)
+
+        Returns:
+            List of channel IDs (may be empty)
         """
         severity_lower = severity.lower()
 
-        # Map severity to channel
-        channel_id = self._alert_channels.get(severity_lower)
+        # Map severity to channels
+        channels = self._alert_channels.get(severity_lower, [])
 
         # Critical falls back to high if not configured
-        if channel_id is None and severity_lower == "critical":
-            channel_id = self._alert_channels.get("high")
+        if not channels and severity_lower == "critical":
+            channels = self._alert_channels.get("high", [])
 
         # High falls back to medium if not configured
-        if channel_id is None and severity_lower in ("high", "critical"):
-            channel_id = self._alert_channels.get("medium")
+        if not channels and severity_lower in ("high", "critical"):
+            channels = self._alert_channels.get("medium", [])
 
-        return channel_id
+        return channels
 
     def get_all_alert_channels(self) -> dict:
         """
         Get all configured alert channels.
 
         Returns:
-            Dictionary mapping severity to channel ID
+            Dictionary mapping severity to list of channel IDs
         """
         return {
-            severity: channel_id
-            for severity, channel_id in self._alert_channels.items()
-            if channel_id is not None
+            severity: channels
+            for severity, channels in self._alert_channels.items()
+            if channels
         }
 
     def has_alert_channel(self, severity: str) -> bool:
         """
-        Check if an alert channel is configured for severity.
+        Check if any alert channel is configured for severity.
 
         Args:
             severity: Crisis severity level
 
         Returns:
-            True if channel is configured
+            True if at least one channel is configured
         """
-        return self.get_alert_channel(severity) is not None
+        return len(self.get_alert_channels(severity)) > 0
 
     # =========================================================================
     # Role Methods
@@ -394,21 +462,33 @@ class ChannelConfigManager:
 
     def get_crt_role_id(self) -> Optional[int]:
         """
-        Get the Crisis Response Team role ID.
+        Get the first Crisis Response Team role ID.
+
+        This is a backward-compatible method that returns a single role.
+        Use get_crt_role_ids() to get all configured roles.
 
         Returns:
-            Role ID or None if not configured
+            First role ID or None if not configured
         """
-        return self._crt_role_id
+        return self._crt_role_ids[0] if self._crt_role_ids else None
+
+    def get_crt_role_ids(self) -> List[int]:
+        """
+        Get all Crisis Response Team role IDs.
+
+        Returns:
+            List of role IDs (may be empty)
+        """
+        return self._crt_role_ids.copy()
 
     def has_crt_role(self) -> bool:
         """
-        Check if CRT role is configured.
+        Check if any CRT role is configured.
 
         Returns:
-            True if role is configured
+            True if at least one role is configured
         """
-        return self._crt_role_id is not None
+        return len(self._crt_role_ids) > 0
 
     # =========================================================================
     # Guild Methods
@@ -564,9 +644,9 @@ class ChannelConfigManager:
         return {
             "monitored_channels": len(self._monitored_channels),
             "alert_channels": {
-                k: v for k, v in self._alert_channels.items() if v is not None
+                k: v for k, v in self._alert_channels.items() if v
             },
-            "crt_role_configured": self._crt_role_id is not None,
+            "crt_roles_configured": len(self._crt_role_ids),
             "guild_restriction": self._guild_id is not None,
             # Phase 7: Sensitivity status
             "default_sensitivity": self._default_sensitivity,

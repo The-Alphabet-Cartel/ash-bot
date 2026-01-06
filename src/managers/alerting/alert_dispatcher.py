@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Alert Dispatcher for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-8-1.0-1
-LAST MODIFIED: 2026-01-05
+FILE VERSION: v5.0-8-1.0-2
+LAST MODIFIED: 2026-01-06
 PHASE: Phase 8 - Metrics & Reporting
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -44,7 +44,7 @@ USAGE:
 
 import discord
 from discord.ext import commands
-from typing import Optional, Set, TYPE_CHECKING
+from typing import List, Optional, Set, TYPE_CHECKING
 import logging
 
 if TYPE_CHECKING:
@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 from src.views.alert_buttons import AlertButtonView
 
 # Module version
-__version__ = "v5.0-8-1.0-1"
+__version__ = "v5.0-8-1.0-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ class AlertDispatcher:
         self._min_severity = self._config.get(
             "alerting", "min_severity_to_alert", "medium"
         )
-        self._crt_role_id = self._channel_config.get_crt_role_id()
+        self._crt_role_ids = self._channel_config.get_crt_role_ids()
 
         # Statistics
         self._alerts_sent = 0
@@ -191,10 +191,24 @@ class AlertDispatcher:
         Returns:
             True if CRT should be pinged
         """
-        if not self._crt_role_id:
+        if not self._crt_role_ids:
             return False
 
         return severity.lower() in PING_SEVERITIES
+
+    def _get_crt_ping_content(self) -> Optional[str]:
+        """
+        Build CRT ping content with all configured role IDs.
+
+        Returns:
+            String with role mentions, or None if no roles configured
+        """
+        if not self._crt_role_ids:
+            return None
+
+        # Build mentions for all configured CRT roles
+        mentions = [f"<@&{role_id}>" for role_id in self._crt_role_ids]
+        return " ".join(mentions)
 
     def _get_alert_channel(
         self,
@@ -302,8 +316,8 @@ class AlertDispatcher:
         # Build content (CRT ping if needed)
         content = None
         if self._should_ping_crt(severity):
-            content = f"<@&{self._crt_role_id}>"
-            logger.debug(f"Will ping CRT role {self._crt_role_id}")
+            content = self._get_crt_ping_content()
+            logger.debug(f"Will ping CRT roles: {self._crt_role_ids}")
 
         # Send alert
         try:
@@ -423,8 +437,9 @@ class AlertDispatcher:
 
         # Always ping CRT for escalations
         content = None
-        if self._crt_role_id:
-            content = f"📈 **ESCALATION** <@&{self._crt_role_id}>"
+        if self._crt_role_ids:
+            crt_ping = self._get_crt_ping_content()
+            content = f"📈 **ESCALATION** {crt_ping}"
 
         # Send alert
         try:
@@ -547,7 +562,7 @@ class AlertDispatcher:
         return {
             "enabled": self._enabled,
             "min_severity": self._min_severity,
-            "crt_role_configured": self._crt_role_id is not None,
+            "crt_roles_configured": len(self._crt_role_ids),
             "alerts_sent": self._alerts_sent,
             "alerts_skipped_cooldown": self._alerts_skipped_cooldown,
             "alerts_skipped_severity": self._alerts_skipped_severity,
