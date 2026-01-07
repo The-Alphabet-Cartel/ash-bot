@@ -67,7 +67,7 @@ x-health: &health
   timeout: 10s
   retries: 3
   start_period: 120s
-  start_interval: 30s
+  start_interval: 10s
 
 services:
   # ===========================================================================
