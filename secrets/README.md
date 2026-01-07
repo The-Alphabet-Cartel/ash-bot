@@ -1,13 +1,13 @@
-# Ash-Bot Secrets
+# Ash Secrets
 
-**Repository**: https://github.com/the-alphabet-cartel/ash-bot  
+**Repository**: https://github.com/the-alphabet-cartel/ash
 **Community**: [The Alphabet Cartel](https://discord.gg/alphabetcartel) | [alphabetcartel.org](https://alphabetcartel.org)
 
 ---
 
 ## Overview
 
-This directory contains sensitive credentials used by Ash-Bot. These files are:
+This directory contains sensitive credentials used by Ash. These files are:
 - **NOT** committed to Git (via `.gitignore`)
 - Mounted into Docker containers via Docker Secrets
 - Read by the `SecretsManager` at runtime
@@ -16,12 +16,15 @@ This directory contains sensitive credentials used by Ash-Bot. These files are:
 
 ## Secret Files
 
-| File | Description | Required | Phase |
-|------|-------------|----------|-------|
-| `discord_bot_token` | Discord bot token | ✅ Required | Phase 1 |
-| `claude_api_token` | Claude API key for Ash AI | ✅ Required | Phase 4 |
-| `redis_token` | Redis password | Optional | Phase 2 |
-| `discord_alert_token` | Discord webhook for system alerts | Optional | Phase 3 |
+| File | Description | Required | Module(s) |
+|------|-------------|----------|-----------|
+| `claude_api_token` | Claude API Token | ✅ Required | Ash-Bot |
+| `discord_alert_token` | Discord Webhook Alert Token | ✅ Required | Ash-Bot, Ash-Dash, Ash-NLP, Ash-Thrash |
+| `discord_bot_token` | Discord Bot Token | ✅ Required | Ash-Bot |
+| `huggingface_token` | HuggingFace API Token | ✅ Required | Ash-NLP |
+| `postgres_token` | Postgres Token | ✅ Required | Ash-Dash |
+| `redis_token` | Redis Token | ✅ Required | Ash-Bot, Ash-Dash, Ash-Thrash |
+| `webhook_token` | Webhook Token | Future Use - Optional | None |
 
 ---
 
@@ -33,45 +36,22 @@ This directory contains sensitive credentials used by Ash-Bot. These files are:
 mkdir -p secrets
 ```
 
-### 2. Add Discord Bot Token (Required)
+### 2. Add Claude API Token (Required for Ash-Bot)
 
-Get your token from: https://discord.com/developers/applications
-
-```bash
-# Create the secret file (no file extension)
-echo "your_discord_bot_token_here" > secrets/discord_bot_token
-
-# Set secure permissions
-chmod 600 secrets/discord_bot_token
-```
-
-### 3. Add Claude API Token (Required for Phase 4)
-
-Get your API key from: https://console.anthropic.com/settings/keys
+Get your API key from: [Claude API Key](https://console.anthropic.com/settings/keys)
 
 ```bash
 # Create the secret file (no file extension)
 echo "sk-ant-your_claude_api_key_here" > secrets/claude_api_token
 
 # Set secure permissions
+chown nas:nas secrets/claude_api_token
 chmod 600 secrets/claude_api_token
 ```
 
 **Note**: The Claude API key enables the Ash AI conversational support feature. Without it, the "Talk to Ash" button will not appear on alerts.
 
-### 4. Add Redis Password (Optional)
-
-Only needed if your Redis instance requires authentication:
-
-```bash
-# Create the secret file (no file extension)
-echo "your_redis_password_here" > secrets/redis_token
-
-# Set secure permissions
-chmod 600 secrets/redis_token
-```
-
-### 5. Add Discord Alert Webhook (Optional)
+### 3. Add Discord Alert Webhook (Required for System Alerts)
 
 For system alerts (bot failures, startup notifications):
 
@@ -84,10 +64,79 @@ For system alerts (bot failures, startup notifications):
 echo "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN" > secrets/discord_alert_token
 
 # Set secure permissions
+chown nas:nas secrets/discord_alert_token
 chmod 600 secrets/discord_alert_token
 ```
 
-### 6. Verify Setup
+### 4. Add Discord Bot Token (Required for Ash-Bot)
+
+Get your token from: [Discord Bot Token](https://discord.com/developers/applications)
+
+```bash
+# Create the secret file (no file extension)
+echo "your_discord_bot_token_here" > secrets/discord_bot_token
+
+# Set secure permissions
+chown nas:nas secrets/discord_bot_token
+chmod 600 secrets/discord_bot_token
+```
+
+### 5. Add HuggingFace API Token (Required for Ash-NLP)
+
+Get your token from: [HuggingFace API Token](https://huggingface.co/settings/tokens)
+
+```bash
+# Create the secret file (no file extension)
+echo "your_huggingface_api_token_here" > secrets/huggingface_token
+
+# Set secure permissions
+chown nas:nas secrets/huggingface_token
+chmod 600 secrets/huggingface_token
+```
+
+### 6. Add Postgres Password Token (Required for Ash-Dash)
+
+```bash
+# Create your random password
+openssl rand -base64 32
+
+# Create the secret file (no file extension)
+echo "your_postgres_password_here" > secrets/postgres_token
+
+# Set secure permissions
+chown nas:nas secrets/postgres_token
+chmod 600 secrets/postgres_token
+```
+
+### 7. Add Redis Password Token (Required for Ash-Bot, Ash-Dash, and Ash-Thrash)
+
+```bash
+# Create your random password
+openssl rand -base64 32
+
+# Create the secret file (no file extension)
+echo "your_redis_password_here" > secrets/redis_token
+
+# Set secure permissions
+chown nas:nas secrets/redis_token
+chmod 600 secrets/redis_token
+```
+
+### 8. Add Webhook (Incoming) Password Token (Future Use - Optional)
+
+```bash
+# Create your random password
+openssl rand -base64 32
+
+# Create the secret file (no file extension)
+echo "your_webhook_password_here" > secrets/webhook_token
+
+# Set secure permissions
+chown nas:nas secrets/webhook_token
+chmod 600 secrets/webhook_token
+```
+
+### 9. Verify Setup
 
 ```bash
 # Check files exist and have content
@@ -95,7 +144,13 @@ ls -la secrets/
 
 # Verify permissions (should be 600 or -rw-------)
 # Verify no trailing whitespace
+cat -A secrets/claude_api_token
+cat -A secrets/discord_alert_token
 cat -A secrets/discord_bot_token
+cat -A secrets/hugginface_token
+cat -A secrets/postgres_token
+cat -A secrets/redis_token
+cat -A secrets/webhook_token
 ```
 
 ---
@@ -112,22 +167,42 @@ When running with Docker Compose, secrets are:
 ```yaml
 # docker-compose.yml
 secrets:
-  discord_bot_token:
-    file: ./secrets/discord_bot_token
   claude_api_token:
     file: ./secrets/claude_api_token
+  discord_alert_token:
+    file: ./secrets/discord_alert_token
+  discord_bot_token:
+    file: ./secrets/discord_bot_token
+  hugginface_token:
+    file: ./secrets/hugginface_token
+  postgres_token:
+    file: ./secrets/postgres_token
+  redis_token:
+    file: ./secrets/redis_token
+  webhook_token:
+    file: ./secrets/webhook_token
 
 services:
   ash-bot:
     secrets:
-      - discord_bot_token
       - claude_api_token
+      - discord_alert_token
+      - discord_bot_token
+      - hugginface_token
+      - postgres_token
+      - redis_token
+      - webhook_token
 ```
 
 Inside the container, the secrets are available at:
 ```
-/run/secrets/discord_bot_token
 /run/secrets/claude_api_token
+/run/secrets/discord_alert_token
+/run/secrets/discord_bot_token
+/run/secrets/hugginface_token
+/run/secrets/postgres_token
+/run/secrets/redis_token
+/run/secrets/webhook_token
 ```
 
 ### Local Development
@@ -146,8 +221,13 @@ token = get_secret("discord_bot_token")
 # Or use convenience methods
 from src.managers import create_secrets_manager
 secrets = create_secrets_manager()
-discord_token = secrets.get_discord_bot_token()
 claude_token = secrets.get_claude_api_token()
+discord_alert_token = secrets.get_discord_alert_token()
+discord_bot_token = secrets.get_discord_bot_token()
+hugginface_token = secrets.get_hugginface_token()
+postgres_token = secrets.get_postgres_token()
+redis_token = secrets.get_redis_token()
+webhook_token = secrets.get_webhook_token()
 ```
 
 ---
@@ -311,17 +391,6 @@ s = create_secrets_manager()
 print(s.get_status())
 "
 ```
-
----
-
-## Required Secrets by Phase
-
-| Phase | Required Secrets |
-|-------|------------------|
-| Phase 1 (Discord) | `discord_bot_token` |
-| Phase 2 (Redis) | `redis_token` (if auth enabled) |
-| Phase 3 (Alerting) | `discord_alert_token` (optional) |
-| Phase 4 (Ash AI) | `claude_api_token` |
 
 ---
 
