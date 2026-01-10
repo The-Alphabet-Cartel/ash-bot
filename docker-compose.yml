@@ -57,9 +57,9 @@ x-common: &common
 
 ### Common Environmental Variables ###
 x-env: &env
-  TZ: America/Los_Angeles
-  PGID: 1001
-  PUID: 1001
+  PGID: ${PGID:-1000}
+  PUID: ${PUID:-1000}
+  TZ: ${TZ:-America/Los_Angeles}
 
 ### Healthchecks ###
 x-health: &health
