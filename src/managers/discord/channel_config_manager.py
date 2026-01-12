@@ -13,8 +13,8 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Channel Configuration Manager for Ash-Bot Service
 ---
-FILE VERSION: v5.0-7-3.0-2
-LAST MODIFIED: 2026-01-06
+FILE VERSION: v5.0-7-4.0-1
+LAST MODIFIED: 2026-01-11
 PHASE: Phase 7 - Core Safety & User Preferences
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from src.managers.config_manager import ConfigManager
 
 # Module version
-__version__ = "v5.0-7-3.0-2"
+__version__ = "v5.0-7-4.0-1"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -102,9 +102,15 @@ class ChannelConfigManager:
         self._crt_role_ids: List[int] = []
         self._guild_id: Optional[int] = None
 
-        # Phase 7: Channel sensitivity settings
+        # Phase 7: Channel sensitivity settings (Priority Class System)
         self._channel_sensitivity: dict[int, float] = {}
+        self._channel_priority_class: dict[int, str] = {}  # Maps channel_id to class name
         self._default_sensitivity: float = 1.0
+        self._sensitivity_ranges: dict[str, tuple[float, float]] = {
+            "low": (0.3, 0.6),
+            "medium": (0.6, 0.9),
+            "high": (1.0, 1.5),
+        }
 
         # Load configuration
         self._load_config()
@@ -156,33 +162,39 @@ class ChannelConfigManager:
         discord_config = self.config_manager.get_section("discord")
         self._guild_id = self._parse_single_id(discord_config.get("guild_id"))
 
-        # Phase 7: Load channel sensitivity configuration
+        # Phase 7: Load channel sensitivity configuration (Priority Class System)
         sensitivity_config = self.config_manager.get_section("channel_sensitivity")
+        
+        # Load default sensitivity for unassigned channels
         self._default_sensitivity = float(
             sensitivity_config.get("default_sensitivity", 1.0)
         )
-        # Validate default sensitivity range
-        if not 0.3 <= self._default_sensitivity <= 2.0:
+        if not 0.1 <= self._default_sensitivity <= 2.0:
             logger.warning(
-                f"⚠️ Default sensitivity {self._default_sensitivity} out of range [0.3-2.0], "
+                f"⚠️ Default sensitivity {self._default_sensitivity} out of range [0.1-2.0], "
                 f"using 1.0"
             )
             self._default_sensitivity = 1.0
 
-        # Load per-channel sensitivity from channel_sensitivity_overrides
-        sensitivity_overrides = sensitivity_config.get("channel_overrides", {})
+        # Load priority class ranges
+        self._sensitivity_ranges = {
+            "low": self._parse_range(sensitivity_config.get("range_low", "0.3-0.6")),
+            "medium": self._parse_range(sensitivity_config.get("range_medium", "0.6-0.9")),
+            "high": self._parse_range(sensitivity_config.get("range_high", "1.0-1.5")),
+        }
+
+        # Load and process priority channel assignments
         self._channel_sensitivity = {}
-        for channel_id_str, sensitivity in sensitivity_overrides.items():
-            channel_id = self._parse_single_id(channel_id_str)
-            if channel_id:
-                sens_value = float(sensitivity)
-                if 0.3 <= sens_value <= 2.0:
-                    self._channel_sensitivity[channel_id] = sens_value
-                else:
-                    logger.warning(
-                        f"⚠️ Channel {channel_id} sensitivity {sens_value} out of range, "
-                        f"using default {self._default_sensitivity}"
-                    )
+        self._channel_priority_class = {}
+        
+        priority_configs = [
+            ("low", sensitivity_config.get("low_priority_channels", {})),
+            ("medium", sensitivity_config.get("medium_priority_channels", {})),
+            ("high", sensitivity_config.get("high_priority_channels", {})),
+        ]
+        
+        for priority_class, channels_config in priority_configs:
+            self._process_priority_channels(priority_class, channels_config)
 
         # Log configuration
         logger.debug(f"  Monitored channels: {len(self._monitored_channels)}")
@@ -190,7 +202,104 @@ class ChannelConfigManager:
         logger.debug(f"  CRT role IDs: {self._crt_role_ids}")
         logger.debug(f"  Guild ID: {self._guild_id}")
         logger.debug(f"  Default sensitivity: {self._default_sensitivity}")
+        logger.debug(f"  Sensitivity ranges: {self._sensitivity_ranges}")
         logger.debug(f"  Channel sensitivity overrides: {len(self._channel_sensitivity)}")
+        for channel_id, sensitivity in self._channel_sensitivity.items():
+            priority = self._channel_priority_class.get(channel_id, "unknown")
+            logger.debug(f"    Channel {channel_id}: {sensitivity:.2f} ({priority})")
+
+    def _parse_range(self, range_str: str) -> tuple[float, float]:
+        """
+        Parse a range string like "0.3-0.6" into a tuple of floats.
+
+        Args:
+            range_str: Range string in format "min-max"
+
+        Returns:
+            Tuple of (min, max) floats
+        """
+        try:
+            if isinstance(range_str, str) and "-" in range_str:
+                parts = range_str.split("-")
+                if len(parts) == 2:
+                    min_val = float(parts[0].strip())
+                    max_val = float(parts[1].strip())
+                    # Validate range values
+                    if 0.1 <= min_val <= 2.0 and 0.1 <= max_val <= 2.0:
+                        return (min_val, max_val)
+            logger.warning(f"⚠️ Invalid range format '{range_str}', using (0.5, 1.0)")
+        except (ValueError, AttributeError) as e:
+            logger.warning(f"⚠️ Failed to parse range '{range_str}': {e}")
+        return (0.5, 1.0)
+
+    def _process_priority_channels(
+        self, priority_class: str, channels_config
+    ) -> None:
+        """
+        Process channel assignments for a priority class.
+
+        Args:
+            priority_class: Priority class name ("low", "medium", "high")
+            channels_config: Dict of channel_id -> weight mappings
+        """
+        # Parse JSON string if needed
+        if isinstance(channels_config, str):
+            channels_config = channels_config.strip()
+            if not channels_config:
+                return
+            try:
+                channels_config = json.loads(channels_config)
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"⚠️ Invalid JSON for {priority_class}_priority_channels: {e}"
+                )
+                return
+        
+        if not isinstance(channels_config, dict):
+            return
+
+        range_min, range_max = self._sensitivity_ranges.get(
+            priority_class, (0.5, 1.0)
+        )
+        
+        for channel_id_str, weight in channels_config.items():
+            channel_id = self._parse_single_id(channel_id_str)
+            if not channel_id:
+                continue
+            
+            # Check for duplicate assignment
+            if channel_id in self._channel_sensitivity:
+                existing_class = self._channel_priority_class.get(channel_id, "unknown")
+                logger.warning(
+                    f"⚠️ Channel {channel_id} assigned to multiple priority classes! "
+                    f"Was '{existing_class}', now '{priority_class}'. Using default sensitivity."
+                )
+                # Remove from tracking, will use default
+                del self._channel_sensitivity[channel_id]
+                if channel_id in self._channel_priority_class:
+                    del self._channel_priority_class[channel_id]
+                continue
+            
+            # Validate and clamp weight to 0.0-1.0
+            try:
+                weight_val = float(weight)
+                weight_val = max(0.0, min(1.0, weight_val))
+            except (ValueError, TypeError):
+                logger.warning(
+                    f"⚠️ Invalid weight '{weight}' for channel {channel_id}, using 0.5"
+                )
+                weight_val = 0.5
+            
+            # Calculate final sensitivity: min + (weight × (max - min))
+            sensitivity = range_min + (weight_val * (range_max - range_min))
+            
+            self._channel_sensitivity[channel_id] = sensitivity
+            self._channel_priority_class[channel_id] = priority_class
+            
+            logger.debug(
+                f"  📊 Channel {channel_id}: {priority_class.upper()} "
+                f"(weight={weight_val:.1f}) → sensitivity={sensitivity:.2f}"
+            )
 
     def _parse_channel_ids(self, value) -> Set[int]:
         """
@@ -537,57 +646,102 @@ class ChannelConfigManager:
         return len(self._monitored_channels) > 0
 
     # =========================================================================
-    # Phase 7: Channel Sensitivity Methods
+    # Phase 7: Channel Sensitivity Methods (Priority Class System)
     # =========================================================================
 
     def get_channel_sensitivity(self, channel_id: int) -> float:
         """
         Get the sensitivity modifier for a channel.
 
-        Sensitivity affects how crisis scores are interpreted:
-        - 0.3 - 0.5: Much less sensitive (Wreck Room, vent channels)
-        - 0.6 - 0.8: Somewhat less sensitive (mental health discussion)
-        - 1.0: Normal (default for general channels)
-        - 1.2 - 1.5: More sensitive (vulnerable population channels)
-        - 2.0: Highly sensitive (extreme vigilance needed)
+        Channels are assigned to priority classes (LOW, MEDIUM, HIGH) with
+        a weight that determines their position within that class's range.
+
+        Formula: sensitivity = range_min + (weight × (range_max - range_min))
+
+        Returns default_sensitivity for unassigned channels.
 
         Args:
             channel_id: Discord channel ID
 
         Returns:
-            Sensitivity modifier (0.3-2.0)
+            Calculated sensitivity value (typically 0.1-2.0)
         """
         return self._channel_sensitivity.get(channel_id, self._default_sensitivity)
+
+    def get_channel_priority_class(self, channel_id: int) -> Optional[str]:
+        """
+        Get the priority class for a channel.
+
+        Args:
+            channel_id: Discord channel ID
+
+        Returns:
+            Priority class name ("low", "medium", "high") or None if unassigned
+        """
+        return self._channel_priority_class.get(channel_id)
+
+    def get_channel_sensitivity_info(self, channel_id: int) -> dict:
+        """
+        Get detailed sensitivity information for a channel.
+
+        Args:
+            channel_id: Discord channel ID
+
+        Returns:
+            Dict with sensitivity, priority_class, and is_default
+        """
+        sensitivity = self._channel_sensitivity.get(channel_id)
+        priority_class = self._channel_priority_class.get(channel_id)
+        
+        if sensitivity is None:
+            return {
+                "sensitivity": self._default_sensitivity,
+                "priority_class": None,
+                "is_default": True,
+            }
+        
+        return {
+            "sensitivity": sensitivity,
+            "priority_class": priority_class,
+            "is_default": False,
+        }
 
     def set_channel_sensitivity(
         self,
         channel_id: int,
         sensitivity: float,
+        priority_class: Optional[str] = None,
     ) -> bool:
         """
         Set the sensitivity modifier for a channel (runtime only).
 
         Note: This change is not persisted to configuration.
+        For persistent changes, update .env file.
 
         Args:
             channel_id: Discord channel ID
-            sensitivity: Sensitivity modifier (0.3-2.0)
+            sensitivity: Sensitivity modifier (0.1-2.0)
+            priority_class: Optional priority class label for tracking
 
         Returns:
             True if set successfully, False if out of range
         """
-        if not 0.3 <= sensitivity <= 2.0:
+        if not 0.1 <= sensitivity <= 2.0:
             logger.warning(
                 f"⚠️ Cannot set sensitivity {sensitivity} for channel {channel_id}: "
-                f"out of range [0.3-2.0]"
+                f"out of range [0.1-2.0]"
             )
             return False
 
         old_sensitivity = self._channel_sensitivity.get(channel_id, self._default_sensitivity)
         self._channel_sensitivity[channel_id] = sensitivity
+        
+        if priority_class:
+            self._channel_priority_class[channel_id] = priority_class
 
         logger.info(
-            f"📊 Channel {channel_id} sensitivity updated: {old_sensitivity} → {sensitivity}"
+            f"📊 Channel {channel_id} sensitivity updated: {old_sensitivity:.2f} → {sensitivity:.2f}"
+            + (f" ({priority_class})" if priority_class else "")
         )
         return True
 
@@ -605,9 +759,12 @@ class ChannelConfigManager:
             return False
 
         old_sensitivity = self._channel_sensitivity.pop(channel_id)
+        old_class = self._channel_priority_class.pop(channel_id, None)
+        
         logger.info(
-            f"📊 Channel {channel_id} sensitivity removed: {old_sensitivity} → "
-            f"{self._default_sensitivity} (default)"
+            f"📊 Channel {channel_id} sensitivity removed: {old_sensitivity:.2f}"
+            + (f" ({old_class})" if old_class else "")
+            + f" → {self._default_sensitivity} (default)"
         )
         return True
 
@@ -616,9 +773,34 @@ class ChannelConfigManager:
         Get all custom channel sensitivities.
 
         Returns:
-            Dictionary mapping channel ID to sensitivity
+            Dictionary mapping channel ID to calculated sensitivity
         """
         return dict(self._channel_sensitivity)
+
+    def get_sensitivity_ranges(self) -> dict[str, tuple[float, float]]:
+        """
+        Get the configured sensitivity ranges for each priority class.
+
+        Returns:
+            Dict mapping class name to (min, max) tuple
+        """
+        return dict(self._sensitivity_ranges)
+
+    def get_channels_by_priority_class(self, priority_class: str) -> dict[int, float]:
+        """
+        Get all channels assigned to a specific priority class.
+
+        Args:
+            priority_class: Priority class name ("low", "medium", "high")
+
+        Returns:
+            Dict mapping channel ID to sensitivity for that class
+        """
+        return {
+            channel_id: sensitivity
+            for channel_id, sensitivity in self._channel_sensitivity.items()
+            if self._channel_priority_class.get(channel_id) == priority_class
+        }
 
     @property
     def default_sensitivity(self) -> float:
@@ -641,6 +823,13 @@ class ChannelConfigManager:
         Returns:
             Status dictionary for logging/debugging
         """
+        # Count channels by priority class
+        channels_by_class = {
+            "low": len(self.get_channels_by_priority_class("low")),
+            "medium": len(self.get_channels_by_priority_class("medium")),
+            "high": len(self.get_channels_by_priority_class("high")),
+        }
+        
         return {
             "monitored_channels": len(self._monitored_channels),
             "alert_channels": {
@@ -648,9 +837,13 @@ class ChannelConfigManager:
             },
             "crt_roles_configured": len(self._crt_role_ids),
             "guild_restriction": self._guild_id is not None,
-            # Phase 7: Sensitivity status
-            "default_sensitivity": self._default_sensitivity,
-            "sensitivity_overrides": len(self._channel_sensitivity),
+            # Phase 7: Sensitivity status (Priority Class System)
+            "sensitivity": {
+                "default": self._default_sensitivity,
+                "ranges": self._sensitivity_ranges,
+                "channels_configured": len(self._channel_sensitivity),
+                "by_priority_class": channels_by_class,
+            },
         }
 
     def __repr__(self) -> str:
