@@ -1,7 +1,7 @@
 {
 	"_metadata": {
-		"file_version": "v5.0.13",
-		"last_modified": "2026-01-06",
+		"file_version": "v5.0.14",
+		"last_modified": "2026-01-11",
 		"clean_architecture": "Compliant",
 		"description": "Ash-Bot v5.0 Default Configuration",
 		"repository": "https://github.com/the-alphabet-cartel/ash-bot",
@@ -264,30 +264,73 @@
 	},
 
 	"channel_sensitivity": {
-		"description": "Per-channel crisis detection sensitivity (Phase 7)",
-		"default_sensitivity": "${BOT_DEFAULT_CHANNEL_SENSITIVITY}",
-		"channel_overrides": {},
+		"description": "Per-channel crisis detection sensitivity using priority classes (Phase 7)",
+		"range_low": "${BOT_SENSITIVITY_RANGE_LOW}",
+		"range_medium": "${BOT_SENSITIVITY_RANGE_MEDIUM}",
+		"range_high": "${BOT_SENSITIVITY_RANGE_HIGH}",
+		"default_sensitivity": "${BOT_SENSITIVITY_DEFAULT}",
+		"low_priority_channels": "${BOT_LOW_PRIORITY_CHANNELS}",
+		"medium_priority_channels": "${BOT_MEDIUM_PRIORITY_CHANNELS}",
+		"high_priority_channels": "${BOT_HIGH_PRIORITY_CHANNELS}",
 		"defaults": {
-			"default_sensitivity": 1.0
+			"range_low": "0.3-0.6",
+			"range_medium": "0.6-0.9",
+			"range_high": "1.0-1.5",
+			"default_sensitivity": 1.0,
+			"low_priority_channels": {},
+			"medium_priority_channels": {},
+			"high_priority_channels": {}
 		},
 		"validation": {
+			"range_low": {
+				"type": "string",
+				"pattern": "^[0-9.]+\\-[0-9.]+$",
+				"required": true
+			},
+			"range_medium": {
+				"type": "string",
+				"pattern": "^[0-9.]+\\-[0-9.]+$",
+				"required": true
+			},
+			"range_high": {
+				"type": "string",
+				"pattern": "^[0-9.]+\\-[0-9.]+$",
+				"required": true
+			},
 			"default_sensitivity": {
 				"type": "float",
-				"range": [0.3, 2.0],
+				"range": [0.1, 2.0],
 				"required": true
+			},
+			"low_priority_channels": {
+				"type": "object",
+				"required": false
+			},
+			"medium_priority_channels": {
+				"type": "object",
+				"required": false
+			},
+			"high_priority_channels": {
+				"type": "object",
+				"required": false
 			}
 		},
 		"notes": {
-			"sensitivity_ranges": {
-				"0.3-0.5": "Much less sensitive (Wreck Room, vent channels)",
-				"0.6-0.8": "Somewhat less sensitive (mental health discussion)",
-				"1.0": "Normal sensitivity (default for general channels)",
-				"1.2-1.5": "More sensitive (vulnerable population channels)",
-				"2.0": "Highly sensitive (extreme vigilance needed)"
+			"formula": "sensitivity = range_min + (weight × (range_max - range_min))",
+			"priority_classes": {
+				"LOW": "Heavy language expected, fewer alerts (e.g., wreck room, venting)",
+				"MEDIUM": "Balanced monitoring (e.g., mental health discussion)",
+				"HIGH": "Extra vigilance needed (e.g., vulnerable populations)"
 			},
-			"channel_overrides_example": {
-				"123456789": 0.5,
-				"987654321": 0.7
+			"weight_meaning": {
+				"0.0": "Minimum sensitivity for the class",
+				"0.5": "Middle of range",
+				"1.0": "Maximum sensitivity for the class"
+			},
+			"example_calculations": {
+				"wreck_room": "LOW class, weight 1.0 → 0.3 + (1.0 × 0.3) = 0.6",
+				"venting": "LOW class, weight 0.0 → 0.3 + (0.0 × 0.3) = 0.3",
+				"support": "MEDIUM class, weight 0.5 → 0.6 + (0.5 × 0.3) = 0.75"
 			}
 		}
 	},
