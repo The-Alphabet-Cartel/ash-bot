@@ -13,9 +13,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Secrets Manager for Ash-Bot Service
 ----------------------------------------------------------------------------
-FILE VERSION: v5.0-0-1.0-1
-LAST MODIFIED: 2026-01-03
-PHASE: Phase 0 - Foundation
+FILE VERSION: v5.0-4-1.0-1
+LAST MODIFIED: 2026-01-17
+PHASE: Phase 4 - Alerting Integration
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 ============================================================================
@@ -33,7 +33,7 @@ DOCKER SECRETS LOCATIONS:
 SUPPORTED SECRETS:
 - claude_api_token: Claude API key for Claude AI access
 - huggingface_token: HuggingFace API token for model downloads
-- discord_alert_token: Discord webhook URL for system alerts
+- ash_bot_discord_alert_token: Discord webhook URL for Ash-Bot alerts
 - discord_bot_token: Discord bot token
 - webhook_token: Webhook signing secret
 - redis_token: Redis password for secure connections
@@ -62,8 +62,8 @@ LOCAL_SECRETS_PATH = Path("secrets")
 
 # Known secret names and their descriptions
 KNOWN_SECRETS = {
+    "ash_bot_discord_alert_token": "Discord webhook URL for Ash-Bot alerts",
     "claude_api_token": "Claude API key for Claude AI access",
-    "discord_alert_token": "Discord webhook URL for system alerts",
     "discord_bot_token": "Discord bot token",
     "huggingface_token": "HuggingFace API token for authenticated model downloads",
     "postgres_token": "PostgreSQL password for secure connections",
@@ -260,18 +260,24 @@ class SecretsManager:
 
     def get_discord_alert_token(self) -> Optional[str]:
         """
-        Get Discord alert token.
+        Get Discord alert webhook token for Ash-Bot.
 
-        Also checks DISCORD_ALERT_TOKEN environment variable as fallback
-        (standard Discord environment variable).
+        Uses the module-specific secret name `ash_bot_discord_alert_token`.
+        Also checks ASH_BOT_DISCORD_ALERT_TOKEN environment variable as fallback.
 
         Returns:
-            Discord alert token or None
+            Discord alert webhook URL or None
         """
-        # Try our secrets system first
-        token = self.get("discord_alert_token")
+        # Try our secrets system first (new module-specific name)
+        token = self.get("ash_bot_discord_alert_token")
 
-        # Fallback to standard Discord env vars
+        # Fallback to environment variable
+        if token is None:
+            token = os.environ.get("ASH_BOT_DISCORD_ALERT_TOKEN")
+
+        # Legacy fallback (deprecated - will be removed)
+        if token is None:
+            token = self.get("discord_alert_token")
         if token is None:
             token = os.environ.get("DISCORD_ALERT_TOKEN")
 

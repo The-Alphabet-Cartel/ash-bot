@@ -1,8 +1,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Docker Compose Configuration
 # ============================================================================
-# FILE VERSION: v5.0.5
-# LAST MODIFIED: 2026-01-05
+# FILE VERSION: v5.0.6
+# LAST MODIFIED: 2026-01-17
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -39,9 +39,9 @@
 #
 # SECRETS:
 #   Secrets are stored in ./secrets/ directory:
+#   - ./secrets/ash_bot_discord_alert_token - Discord webhook for Ash-Bot alerts
 #   - ./secrets/claude_api_token    - Claude API key
 #   - ./secrets/discord_bot_token   - Discord bot token
-#   - ./secrets/discord_alert_token - Discord webhook for alerts (optional)
 #   - ./secrets/redis_token         - Redis password
 #
 # REQUIREMENTS:
@@ -107,8 +107,8 @@ services:
 
     # Docker Secrets
     secrets:
+      - ash_bot_discord_alert_token
       - claude_api_token
-      - discord_alert_token
       - discord_bot_token
       - redis_token
 
@@ -196,10 +196,10 @@ volumes:
 # Secrets
 # =============================================================================
 secrets:
+  ash_bot_discord_alert_token:
+    file: ./secrets/ash_bot_discord_alert_token
   claude_api_token:
     file: ./secrets/claude_api_token
-  discord_alert_token:
-    file: ./secrets/discord_alert_token
   discord_bot_token:
     file: ./secrets/discord_bot_token
   redis_token:
