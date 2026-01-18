@@ -14,9 +14,9 @@ MISSION - NEVER TO BE VIOLATED:
 ============================================================================
 Main Entry Point for Ash-Bot Service
 ---
-FILE VERSION: v5.0-9-3.0-1
-LAST MODIFIED: 2026-01-05
-PHASE: Phase 9 - CRT Workflow Enhancements (Step 9.3)
+FILE VERSION: v5.0-6-1.0-2
+LAST MODIFIED: 2026-01-17
+PHASE: Phase 6 - Logging Colorization Enforcement
 CLEAN ARCHITECTURE: Compliant
 Repository: https://github.com/the-alphabet-cartel/ash-bot
 Community: The Alphabet Cartel - https://discord.gg/alphabetcartel | https://alphabetcartel.org
@@ -48,52 +48,48 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Module version
-__version__ = "v5.0-9-3.0-1"
+__version__ = "v5.0-6-1.0-2"
+
+# Global logging manager instance (initialized in main)
+_logging_manager = None
+
+
+def get_logging_manager():
+    """Get the global logging manager instance."""
+    return _logging_manager
 
 
 # =============================================================================
-# Logging Setup
+# Logging Setup - Charter v5.2 Compliant
 # =============================================================================
 
 
-def setup_logging(log_level: str = "INFO", log_format: str = "text") -> None:
+def setup_logging(log_level: str = "INFO", log_format: str = "human") -> None:
     """
-    Configure logging for the application.
+    Configure logging using Charter v5.2 compliant LoggingConfigManager.
 
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
-        log_format: Log format (json, text)
+        log_format: Log format ('human' for colorized, 'json' for structured)
     """
-    # Convert string to logging level
-    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+    global _logging_manager
 
-    # Choose format
-    if log_format.lower() == "json":
-        # JSON format for production
-        format_str = '{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","message":"%(message)s"}'
-    else:
-        # Human-readable format for development
-        format_str = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    # Import and create the logging manager
+    from src.managers.logging_config_manager import create_logging_config_manager
 
-    # Configure root logger
-    logging.basicConfig(
-        level=numeric_level,
-        format=format_str,
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stdout,
+    # Map 'text' to 'human' for backward compatibility
+    if log_format.lower() == "text":
+        log_format = "human"
+
+    _logging_manager = create_logging_config_manager(
+        log_level=log_level,
+        log_format=log_format,
+        app_name="ash-bot",
     )
 
-    # Reduce noise from third-party libraries
-    logging.getLogger("discord").setLevel(logging.WARNING)
-    logging.getLogger("discord.http").setLevel(logging.WARNING)
-    logging.getLogger("discord.gateway").setLevel(logging.WARNING)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpcore").setLevel(logging.WARNING)
-    logging.getLogger("anthropic").setLevel(logging.WARNING)
-    logging.getLogger("aiohttp").setLevel(logging.WARNING)
-
-    logger = logging.getLogger(__name__)
+    logger = _logging_manager.get_logger("main")
     logger.info(f"Logging configured at {log_level} level ({log_format} format)")
+    logger.success("Charter v5.2 colorized logging active")
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -127,9 +123,9 @@ For more information, visit:
 
     parser.add_argument(
         "--log-format",
-        default=os.environ.get("BOT_LOG_FORMAT", "text"),
-        choices=["json", "text"],
-        help="Log format (default: text for dev, json for prod)",
+        default=os.environ.get("BOT_LOG_FORMAT", "human"),
+        choices=["json", "human", "text"],  # 'text' kept for backward compatibility
+        help="Log format (default: human for colorized, json for structured)",
     )
 
     parser.add_argument(
