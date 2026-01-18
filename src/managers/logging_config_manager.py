@@ -30,13 +30,14 @@ RESPONSIBILITIES:
 """
 
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 # Module version
-__version__ = "v5.0-6-1.0-1"
+__version__ = "v5.0-6-1.1-1"
 
 
 # =============================================================================
@@ -299,7 +300,10 @@ class LoggingConfigManager:
         if self._log_format.lower() == "json":
             formatter = JSONFormatter()
         else:
-            use_colors = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+            # Check for forced color output (useful for Docker containers)
+            # Set FORCE_COLOR=1 in environment to enable colors without TTY
+            force_color = os.environ.get("FORCE_COLOR", "").lower() in ("1", "true", "yes")
+            use_colors = force_color or (hasattr(sys.stdout, "isatty") and sys.stdout.isatty())
             formatter = ColorizedFormatter(use_colors=use_colors)
 
         # Add console handler
