@@ -82,16 +82,16 @@ class Colors:
 
     # Charter v5.2 Standard Log Level Colors
     CRITICAL = "\033[1;91m"  # Bright Red Bold
-    ERROR = "\033[91m"        # Bright Red
-    WARNING = "\033[93m"      # Bright Yellow
-    INFO = "\033[96m"         # Bright Cyan
-    DEBUG = "\033[90m"        # Gray
-    SUCCESS = "\033[92m"      # Bright Green
+    ERROR = "\033[91m"  # Bright Red
+    WARNING = "\033[93m"  # Bright Yellow
+    INFO = "\033[96m"  # Bright Cyan
+    DEBUG = "\033[90m"  # Gray
+    SUCCESS = "\033[92m"  # Bright Green
 
     # Additional colors for formatting
-    TIMESTAMP = "\033[90m"    # Gray
+    TIMESTAMP = "\033[90m"  # Gray
     LOGGER_NAME = "\033[94m"  # Bright Blue
-    MESSAGE = "\033[97m"      # Bright White
+    MESSAGE = "\033[97m"  # Bright White
 
 
 # =============================================================================
@@ -302,9 +302,15 @@ class LoggingConfigManager:
         else:
             # Check for forced color output (useful for Docker containers)
             # Set FORCE_COLOR=1 in environment to enable colors without TTY
-            force_color = os.environ.get("FORCE_COLOR", "").lower() in ("1", "true", "yes")
-            use_colors = force_color or (hasattr(sys.stdout, "isatty") and sys.stdout.isatty())
-            formatter = ColorizedFormatter(use_colors=use_colors)
+            force_color = os.environ.get("FORCE_COLOR", "").lower() in (
+                "1",
+                "true",
+                "yes",
+            )
+            use_colors = force_color or (
+                hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+            )
+            formatter = ColorizedFormatter(use_colors=use_colors, use_symbols=True)
 
         # Add console handler
         if self._console_output:
@@ -326,7 +332,13 @@ class LoggingConfigManager:
         root_logger.propagate = False
 
         # Quiet noisy libraries (but allow discord.client for connection messages)
-        for lib in ["discord.http", "discord.gateway", "discord.webhook", "httpx", "httpcore"]:
+        for lib in [
+            "discord.http",
+            "discord.gateway",
+            "discord.webhook",
+            "httpx",
+            "httpcore",
+        ]:
             logging.getLogger(lib).setLevel(logging.WARNING)
 
     def get_logger(self, name: str) -> logging.Logger:
