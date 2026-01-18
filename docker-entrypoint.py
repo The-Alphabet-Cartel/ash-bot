@@ -2,8 +2,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Container Entrypoint Script
 # ============================================================================
-# FILE VERSION: v5.0-entrypoint-1.1
-# LAST MODIFIED: 2026-01-05
+# FILE VERSION: v5.0-entrypoint-1.2
+# LAST MODIFIED: 2026-01-18
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -28,6 +28,7 @@ import pwd
 import grp
 import sys
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 
@@ -42,22 +43,63 @@ APP_HOME = Path("/app")
 
 
 # =============================================================================
-# Logging Functions
+# Charter v5.2 Colorized Logging
 # =============================================================================
+
+class Colors:
+    """ANSI escape codes for Charter v5.2 compliant colorization."""
+    RESET = "\033[0m"
+    DIM = "\033[2m"
+    CRITICAL = "\033[1;91m"  # Bright Red Bold
+    ERROR = "\033[91m"        # Bright Red
+    WARNING = "\033[93m"      # Bright Yellow
+    INFO = "\033[96m"         # Bright Cyan
+    DEBUG = "\033[90m"        # Gray
+    SUCCESS = "\033[92m"      # Bright Green
+    TIMESTAMP = "\033[90m"    # Gray
+
+
+def _should_use_colors() -> bool:
+    """Check if colors should be used based on FORCE_COLOR or TTY."""
+    force_color = os.environ.get("FORCE_COLOR", "").lower() in ("1", "true", "yes")
+    return force_color or (hasattr(sys.stdout, "isatty") and sys.stdout.isatty())
+
+
+_USE_COLORS = _should_use_colors()
+
+
+def _format_log(level: str, message: str, color: str) -> str:
+    """Format a log message with Charter v5.2 colorization."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if _USE_COLORS:
+        return (
+            f"{Colors.TIMESTAMP}[{timestamp}]{Colors.RESET} "
+            f"{color}{level.ljust(8)}{Colors.RESET} "
+            f"{Colors.DIM}|{Colors.RESET} "
+            f"{color}{message}{Colors.RESET}"
+        )
+    else:
+        return f"[{timestamp}] {level.ljust(8)} | {message}"
+
 
 def log_info(message: str) -> None:
     """Log an info message."""
-    print(f"[entrypoint] INFO: {message}", flush=True)
+    print(_format_log("INFO", message, Colors.INFO), flush=True)
+
+
+def log_success(message: str) -> None:
+    """Log a success message."""
+    print(_format_log("SUCCESS", message, Colors.SUCCESS), flush=True)
 
 
 def log_warn(message: str) -> None:
     """Log a warning message."""
-    print(f"[entrypoint] WARN: {message}", flush=True)
+    print(_format_log("WARNING", message, Colors.WARNING), flush=True)
 
 
 def log_error(message: str) -> None:
     """Log an error message."""
-    print(f"[entrypoint] ERROR: {message}", file=sys.stderr, flush=True)
+    print(_format_log("ERROR", message, Colors.ERROR), file=sys.stderr, flush=True)
 
 
 # =============================================================================
@@ -158,7 +200,7 @@ def setup_user(puid: int, pgid: int) -> bool:
         except subprocess.CalledProcessError:
             pass  # Non-critical
 
-    log_info(f"User {APP_USER} configured with UID:{puid} GID:{pgid}")
+    log_success(f"User {APP_USER} configured with UID:{puid} GID:{pgid}")
     return True
 
 
@@ -187,7 +229,7 @@ def fix_permissions(puid: int, pgid: int) -> None:
             except OSError as e:
                 log_warn(f"Could not fix permissions on {directory}: {e}")
 
-    log_info("Permissions configured")
+    log_success("Permissions configured")
 
 
 # =============================================================================
@@ -213,7 +255,7 @@ def drop_privileges_and_exec(puid: int, pgid: int, command: list[str]) -> None:
         os.setgid(pgid)
         os.setuid(puid)
 
-        log_info(f"Dropped privileges to UID:{os.getuid()} GID:{os.getgid()}")
+        log_success(f"Dropped privileges to UID:{os.getuid()} GID:{os.getgid()}")
 
     log_info("━" * 64)
     log_info("  Starting application...")

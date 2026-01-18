@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # Module version
-__version__ = "v5.0-6-1.1-1"
+__version__ = "v5.0-6-1.2-1"
 
 
 # =============================================================================
@@ -325,8 +325,8 @@ class LoggingConfigManager:
         # Prevent propagation
         root_logger.propagate = False
 
-        # Quiet noisy libraries
-        for lib in ["discord", "discord.http", "discord.gateway", "httpx", "httpcore"]:
+        # Quiet noisy libraries (but allow discord.client for connection messages)
+        for lib in ["discord.http", "discord.gateway", "discord.webhook", "httpx", "httpcore"]:
             logging.getLogger(lib).setLevel(logging.WARNING)
 
     def get_logger(self, name: str) -> logging.Logger:

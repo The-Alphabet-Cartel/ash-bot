@@ -74,7 +74,7 @@ if TYPE_CHECKING:
 from src.models.nlp_models import CrisisAnalysisResult
 
 # Module version
-__version__ = "v5.0-9-1.0-1"
+__version__ = "v5.0-9-1.0-2"
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -459,6 +459,9 @@ class DiscordManager:
             logger.info("✅ Ash-NLP API is healthy")
         else:
             logger.warning("⚠️ Ash-NLP API is not responding - will retry on messages")
+
+        logger.info("=" * 60)
+        logger.success("🚀 Ash-Bot is ready and listening!")
 
     async def _on_disconnect(self) -> None:
         """Handle disconnect event with metrics tracking."""
