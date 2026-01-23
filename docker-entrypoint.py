@@ -46,17 +46,19 @@ APP_HOME = Path("/app")
 # Charter v5.2 Colorized Logging
 # =============================================================================
 
+
 class Colors:
     """ANSI escape codes for Charter v5.2 compliant colorization."""
+
     RESET = "\033[0m"
     DIM = "\033[2m"
     CRITICAL = "\033[1;91m"  # Bright Red Bold
-    ERROR = "\033[91m"        # Bright Red
-    WARNING = "\033[93m"      # Bright Yellow
-    INFO = "\033[96m"         # Bright Cyan
-    DEBUG = "\033[90m"        # Gray
-    SUCCESS = "\033[92m"      # Bright Green
-    TIMESTAMP = "\033[90m"    # Gray
+    ERROR = "\033[91m"  # Bright Red
+    WARNING = "\033[93m"  # Bright Yellow
+    INFO = "\033[96m"  # Bright Cyan
+    DEBUG = "\033[90m"  # Gray
+    SUCCESS = "\033[92m"  # Bright Green
+    TIMESTAMP = "\033[90m"  # Gray
 
 
 def _should_use_colors() -> bool:
@@ -107,12 +109,12 @@ def print_startup_banner() -> None:
     banner = """
 ╔═══════════════════════════════════════════════════════════════════════════════════════╗
 ║                                                                                       ║
-║              █████╗ ███████╗██╗  ██╗      ██████╗  ██████╗ ████████╗              ║
-║             ██╔══██╗██╔════╝██║  ██║      ██╔══██╗██╔═══██╗╚══██╔══╝              ║
-║             ███████║███████╗███████║█████╗██████╔╝██║   ██║   ██║                 ║
-║             ██╔══██║╚════██║██╔══██║╚════╝██╔══██╗██║   ██║   ██║                 ║
-║             ██║  ██║███████║██║  ██║      ██████╔╝╚██████╔╝   ██║                 ║
-║             ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝      ╚═════╝  ╚═════╝    ╚═╝                 ║
+║              █████╗ ███████╗██╗  ██╗        ██████╗  ██████╗ ████████╗                ║
+║             ██╔══██╗██╔════╝██║  ██║        ██╔══██╗██╔═══██╗╚══██╔══╝                ║
+║             ███████║███████╗███████║ █████╗ ██████╔╝██║   ██║   ██║                   ║
+║             ██╔══██║╚════██║██╔══██║ ╚════╝ ██╔══██╗██║   ██║   ██║                   ║
+║             ██║  ██║███████║██║  ██║        ██████╔╝╚██████╔╝   ██║                   ║
+║             ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝        ╚═════╝  ╚═════╝    ╚═╝                   ║
 ║                                                                                       ║
 ║                         Crisis Detection Discord Bot v5.0                             ║
 ║                                                                                       ║
@@ -129,6 +131,7 @@ def print_startup_banner() -> None:
 # =============================================================================
 # User/Group Setup
 # =============================================================================
+
 
 def get_current_uid_gid(username: str) -> tuple[int | None, int | None]:
     """Get current UID and GID for a user."""
@@ -232,6 +235,7 @@ def setup_user(puid: int, pgid: int) -> bool:
 # Permission Setup
 # =============================================================================
 
+
 def fix_permissions(puid: int, pgid: int) -> None:
     """Fix ownership of application directories."""
     if os.getuid() != 0:
@@ -259,6 +263,7 @@ def fix_permissions(puid: int, pgid: int) -> None:
 # =============================================================================
 # Process Execution
 # =============================================================================
+
 
 def drop_privileges_and_exec(puid: int, pgid: int, command: list[str]) -> None:
     """Drop privileges to specified user and execute command."""
@@ -293,11 +298,12 @@ def drop_privileges_and_exec(puid: int, pgid: int, command: list[str]) -> None:
 # Main
 # =============================================================================
 
+
 def main() -> None:
     """Main entrypoint function."""
     # Print startup banner
     print_startup_banner()
-    
+
     # Get PUID/PGID from environment
     puid = int(os.environ.get("PUID", DEFAULT_UID))
     pgid = int(os.environ.get("PGID", DEFAULT_GID))
