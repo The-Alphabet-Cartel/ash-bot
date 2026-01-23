@@ -1,8 +1,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Production Dockerfile
 # ============================================================================
-# FILE VERSION: v5.0.6
-# LAST MODIFIED: 2026-01-05
+# FILE VERSION: v5.0-4-1.0-1
+# LAST MODIFIED: 2026-01-22
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -21,6 +21,10 @@
 # MULTI-STAGE BUILD:
 #   Stage 1 (builder): Install Python dependencies
 #   Stage 2 (runtime): Minimal production image with app code
+#
+# CLEAN ARCHITECTURE COMPLIANCE:
+#   - Pure Python entrypoint for PUID/PGID (Rule #13)
+#   - tini for PID 1 signal handling
 #
 # ============================================================================
 
@@ -65,8 +69,8 @@ LABEL org.opencontainers.image.vendor="The Alphabet Cartel"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Default user/group IDs (can be overridden at runtime via PUID/PGID)
-ARG DEFAULT_UID=1001
-ARG DEFAULT_GID=1001
+ARG DEFAULT_UID=1000
+ARG DEFAULT_GID=1000
 
 # Set runtime environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -84,6 +88,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # For healthchecks
     curl \
+    # For PID 1 signal handling
+    tini \
     # Timezone data
     tzdata \
     && rm -rf /var/lib/apt/lists/* \
@@ -91,12 +97,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Create default non-root user and group
 # Note: These will be modified at runtime by entrypoint if PUID/PGID differ
-RUN groupadd --gid ${DEFAULT_GID} bot && \
-    useradd --uid ${DEFAULT_UID} --gid ${DEFAULT_GID} --shell /bin/bash --create-home bot
+RUN groupadd --gid ${PGID} bot && \
+    useradd --uid ${PUID} --gid ${PGID} --shell /bin/bash --create-home bot
 
 # Create application directories
 RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/src ${APP_HOME}/config && \
-    chown -R bot:bot ${APP_HOME}
+    chown -R ${PUID}:${PGID} ${APP_HOME}
 
 # Set working directory
 WORKDIR ${APP_HOME}
@@ -120,9 +126,9 @@ EXPOSE 30881
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:30881/health || exit 1
 
-# Use Python entrypoint script for PUID/PGID handling
-# Container starts as root, entrypoint drops to specified user
-ENTRYPOINT ["python", "/usr/local/bin/docker-entrypoint.py"]
+# Use tini as init system for proper signal handling
+# Then our Python entrypoint for PUID/PGID handling (Rule #13)
+ENTRYPOINT ["/usr/bin/tini", "--", "python", "/usr/local/bin/docker-entrypoint.py"]
 
 # Default command - run the bot
 CMD ["python", "main.py"]
