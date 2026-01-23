@@ -2,8 +2,8 @@
 # ============================================================================
 # Ash-Bot v5.0 Container Entrypoint Script
 # ============================================================================
-# FILE VERSION: v5.0-entrypoint-1.2
-# LAST MODIFIED: 2026-01-18
+# FILE VERSION: v5.0-4-1.0-2
+# LAST MODIFIED: 2026-01-22
 # Repository: https://github.com/the-alphabet-cartel/ash-bot
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
@@ -100,6 +100,30 @@ def log_warn(message: str) -> None:
 def log_error(message: str) -> None:
     """Log an error message."""
     print(_format_log("ERROR", message, Colors.ERROR), file=sys.stderr, flush=True)
+
+
+def print_startup_banner() -> None:
+    """Print the ASCII art startup banner."""
+    banner = """
+╔═══════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                       ║
+║              █████╗ ███████╗██╗  ██╗      ██████╗  ██████╗ ████████╗              ║
+║             ██╔══██╗██╔════╝██║  ██║      ██╔══██╗██╔═══██╗╚══██╔══╝              ║
+║             ███████║███████╗███████║█████╗██████╔╝██║   ██║   ██║                 ║
+║             ██╔══██║╚════██║██╔══██║╚════╝██╔══██╗██║   ██║   ██║                 ║
+║             ██║  ██║███████║██║  ██║      ██████╔╝╚██████╔╝   ██║                 ║
+║             ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝      ╚═════╝  ╚═════╝    ╚═╝                 ║
+║                                                                                       ║
+║                         Crisis Detection Discord Bot v5.0                             ║
+║                                                                                       ║
+║                   The Alphabet Cartel - https://discord.gg/alphabetcartel             ║
+║                                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════════════════════╝
+"""
+    if _USE_COLORS:
+        print(f"{Colors.INFO}{banner}{Colors.RESET}")
+    else:
+        print(banner)
 
 
 # =============================================================================
@@ -271,6 +295,9 @@ def drop_privileges_and_exec(puid: int, pgid: int, command: list[str]) -> None:
 
 def main() -> None:
     """Main entrypoint function."""
+    # Print startup banner
+    print_startup_banner()
+    
     # Get PUID/PGID from environment
     puid = int(os.environ.get("PUID", DEFAULT_UID))
     pgid = int(os.environ.get("PGID", DEFAULT_GID))
