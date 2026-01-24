@@ -97,8 +97,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Create default non-root user and group
 # Note: These will be modified at runtime by entrypoint if PUID/PGID differ
-RUN groupadd --gid ${PGID} bot && \
-    useradd --uid ${PUID} --gid ${PGID} --shell /bin/bash --create-home bot
+RUN groupadd --gid ${PGID} ash-bot && \
+    useradd --uid ${PUID} --gid ${PGID} --shell /bin/bash --create-home ash-bot
 
 # Create application directories
 RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/src ${APP_HOME}/config && \
@@ -115,9 +115,9 @@ COPY docker-entrypoint.py /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.py
 
 # Copy application code
-COPY --chown=bot:bot src/ ${APP_HOME}/src/
-COPY --chown=bot:bot main.py ${APP_HOME}/
-COPY --chown=bot:bot pytest.ini ${APP_HOME}/
+COPY --chown=${PUID}:${PGID} src/ ${APP_HOME}/src/
+COPY --chown=${PUID}:${PGID} main.py ${APP_HOME}/
+COPY --chown=${PUID}:${PGID} pytest.ini ${APP_HOME}/
 
 # Expose health check port (Ash ecosystem standard: 30881)
 EXPOSE 30881
