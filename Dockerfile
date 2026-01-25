@@ -44,6 +44,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# Create app directory
+WORKDIR /app
+
 # Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -110,9 +113,9 @@ WORKDIR ${APP_HOME}
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
 
-# Copy entrypoint script (Python - no bash scripting per project standards)
-COPY docker-entrypoint.py /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.py
+# Copy entrypoint script
+COPY docker-entrypoint.py ${APP_HOME}/docker-entrypoint.py
+RUN chmod +x ${APP_HOME}/docker-entrypoint.py
 
 # Copy application code
 COPY --chown=${PUID}:${PGID} src/ ${APP_HOME}/src/
@@ -128,7 +131,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
 
 # Use tini as init system for proper signal handling
 # Then our Python entrypoint for PUID/PGID handling (Rule #13)
-ENTRYPOINT ["/usr/bin/tini", "--", "python", "/usr/local/bin/docker-entrypoint.py"]
+ENTRYPOINT ["/usr/bin/tini", "--", "python", "/app/docker-entrypoint.py"]
 
 # Default command - run the bot
 CMD ["python", "main.py"]
