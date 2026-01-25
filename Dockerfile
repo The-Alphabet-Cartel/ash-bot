@@ -31,7 +31,7 @@
 # =============================================================================
 # Stage 1: Builder - Install Dependencies
 # =============================================================================
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 # Set build-time environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -57,7 +57,7 @@ RUN pip install --upgrade pip && \
 # =============================================================================
 # Stage 2: Runtime - Production Image
 # =============================================================================
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 # Labels for container metadata
 LABEL maintainer="PapaBearDoes <github.com/PapaBearDoes>"
