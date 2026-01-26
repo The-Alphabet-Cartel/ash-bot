@@ -82,7 +82,7 @@ docker network create ash-network
 
 ## User/Group Configuration
 
-Ash-Bot supports LinuxServer.io-style PUID/PGID environment variables for managing file permissions. This is especially useful when running on NAS systems or shared storage.
+Ash-Bot supports PUID/PGID environment variables for managing file permissions. This is especially useful when running on NAS systems or shared storage.
 
 ### Why This Matters
 
@@ -95,7 +95,7 @@ When a container creates files (like logs), those files are owned by the user ID
 id
 
 # Output example:
-# uid=1000(bubba) gid=1000(bubba) groups=1000(bubba),998(docker)
+# uid=1000(PapaBearDoes) gid=1000(PapaBearDoes) groups=1000(PapaBearDoes),998(docker)
 ```
 
 ### Configure PUID/PGID
