@@ -29,7 +29,7 @@
 #   # Stop services
 #   docker compose down
 #
-# USER/GROUP ID (LinuxServer.io Style):
+# USER/GROUP ID:
 #   Set PUID and PGID environment variables to match your host user.
 #   This ensures files created by the container have correct ownership.
 #
