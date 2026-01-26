@@ -8,9 +8,9 @@
 # Community: The Alphabet Cartel - https://discord.gg/alphabetcartel
 # ============================================================================
 #
-# This script handles runtime user/group ID configuration similar to
-# LinuxServer.io containers. It allows specifying PUID and PGID environment
-# variables to control what user the container runs as.
+# This script handles runtime User/Group ID configuration. It allows
+# specifying PUID and PGID environment variables to control what user the
+# container runs as.
 #
 # ENVIRONMENT VARIABLES:
 #   PUID - User ID to run as (default: 1001)
