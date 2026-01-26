@@ -83,7 +83,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     APP_HOME=/app \
     # Default environment
     BOT_ENVIRONMENT=production \
-    # Default PUID/PGID (LinuxServer.io style)
+    # Default PUID/PGID
     PUID=${DEFAULT_UID} \
     PGID=${DEFAULT_GID}
 
