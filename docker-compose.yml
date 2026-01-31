@@ -41,7 +41,7 @@
 #   Secrets are stored in ./secrets/ directory:
 #   - ./secrets/ash_bot_discord_alert_token - Discord webhook for Ash-Bot alerts
 #   - ./secrets/claude_api_token    - Claude API key
-#   - ./secrets/discord_bot_token   - Discord bot token
+#   - ./secrets/ash_bot_token   - Discord bot token
 #   - ./secrets/redis_token         - Redis password
 #
 # REQUIREMENTS:
@@ -110,7 +110,7 @@ services:
     secrets:
       - ash_bot_discord_alert_token
       - claude_api_token
-      - discord_bot_token
+      - ash_bot_token
       - redis_token
 
     # Health check - uses HTTP endpoint from health server
@@ -127,9 +127,9 @@ services:
 
     # Labels for organization
     labels:
-      - "org.alphabetcartel.service=ash-bot"
-      - "org.alphabetcartel.version=5.0.0"
-      - "org.alphabetcartel.description=Crisis Detection Discord Bot"
+      - "net.alphabetcartel.service=ash-bot"
+      - "net.alphabetcartel.version=5.0.0"
+      - "net.alphabetcartel.description=Crisis Detection Discord Bot"
 
     # Dependencies
     depends_on:
@@ -182,8 +182,8 @@ services:
 
     # Labels
     labels:
-      - "org.alphabetcartel.service=ash-redis"
-      - "org.alphabetcartel.description=Redis cache for Ash-Bot"
+      - "net.alphabetcartel.service=ash-redis"
+      - "net.alphabetcartel.description=Redis cache for Ash-Bot"
 
 # =============================================================================
 # Volumes
@@ -201,8 +201,8 @@ secrets:
     file: ./secrets/ash_bot_discord_alert_token
   claude_api_token:
     file: ./secrets/claude_api_token
-  discord_bot_token:
-    file: ./secrets/discord_bot_token
+  ash_bot_token:
+    file: ./secrets/ash_bot_token
   redis_token:
     file: ./secrets/redis_token
   webhook_token:

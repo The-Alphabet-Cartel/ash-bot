@@ -86,7 +86,7 @@ cd ash-bot
 
 ```bash
 mkdir -p secrets
-echo "your_test_bot_token" > secrets/discord_bot_token
+echo "your_test_bot_token" > secrets/ash_bot_token
 echo "your_claude_api_key" > secrets/claude_api_token
 chmod 600 secrets/*
 ```

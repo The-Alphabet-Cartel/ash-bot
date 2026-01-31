@@ -102,7 +102,7 @@ docker compose logs --since 5m ash-bot
 1. Verify token in Discord Developer Portal
 2. Update secret:
    ```bash
-   echo "correct_token_here" > secrets/discord_bot_token
+   echo "correct_token_here" > secrets/ash_bot_token
    docker compose restart ash-bot
    ```
 
@@ -118,7 +118,7 @@ docker compose logs --since 5m ash-bot
 2. Regenerate bot token
 3. Update secret:
    ```bash
-   echo "new_token_here" > secrets/discord_bot_token
+   echo "new_token_here" > secrets/ash_bot_token
    docker compose restart ash-bot
    ```
 

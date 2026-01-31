@@ -180,11 +180,11 @@ async def validate_startup(
     validation_passed = True
 
     # Check Discord bot token (required)
-    token = secrets_manager.get_discord_bot_token()
+    token = secrets_manager.get_ash_bot_token()
     if not token:
         logger.error(
             "❌ FATAL: Discord bot token not found!\n"
-            "   Please create: secrets/discord_bot_token\n"
+            "   Please create: secrets/ash_bot_token\n"
             "   See secrets/README.md for instructions"
         )
         return False

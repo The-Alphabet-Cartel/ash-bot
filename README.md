@@ -157,7 +157,7 @@ cd ash-bot
 mkdir -p secrets
 
 # Add required secrets
-echo "your_discord_bot_token" > secrets/discord_bot_token
+echo "your_ash_bot_token" > secrets/ash_bot_token
 echo "your_claude_api_key" > secrets/claude_api_token
 chmod 600 secrets/*
 
@@ -371,7 +371,7 @@ docker exec -it ash-bot /bin/bash
 
 | Issue | Check |
 |-------|-------|
-| Bot not connecting | `secrets/discord_bot_token` exists and is valid |
+| Bot not connecting | `secrets/ash_bot_token` exists and is valid |
 | No alerts | Channel IDs in `.env` are correct |
 | NLP failures | Ash-NLP service is running |
 | Redis errors | `docker compose logs ash-redis` |

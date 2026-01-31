@@ -314,11 +314,11 @@ class DiscordManager:
             ValueError: If bot token is missing
         """
         # Get bot token
-        token = self.secrets_manager.get_discord_bot_token()
+        token = self.secrets_manager.get_ash_bot_token()
         if not token:
             raise ValueError(
                 "Discord bot token not found. "
-                "Please add it to secrets/discord_bot_token"
+                "Please add it to secrets/ash_bot_token"
             )
 
         # Validate token format (basic check)

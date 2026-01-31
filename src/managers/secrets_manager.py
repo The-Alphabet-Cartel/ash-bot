@@ -34,7 +34,7 @@ SUPPORTED SECRETS:
 - claude_api_token: Claude API key for Claude AI access
 - huggingface_token: HuggingFace API token for model downloads
 - ash_bot_discord_alert_token: Discord webhook URL for Ash-Bot alerts
-- discord_bot_token: Discord bot token
+- ash_bot_token: Discord bot token
 - webhook_token: Webhook signing secret
 - redis_token: Redis password for secure connections
 """
@@ -64,7 +64,7 @@ LOCAL_SECRETS_PATH = Path("secrets")
 KNOWN_SECRETS = {
     "ash_bot_discord_alert_token": "Discord webhook URL for Ash-Bot alerts",
     "claude_api_token": "Claude API key for Claude AI access",
-    "discord_bot_token": "Discord bot token",
+    "ash_bot_token": "Discord bot token",
     "huggingface_token": "HuggingFace API token for authenticated model downloads",
     "postgres_token": "PostgreSQL password for secure connections",
     "redis_token": "Redis password for secure connections",
@@ -283,22 +283,22 @@ class SecretsManager:
 
         return token
 
-    def get_discord_bot_token(self) -> Optional[str]:
+    def get_ash_bot_token(self) -> Optional[str]:
         """
         Get Discord bot token.
 
-        Also checks DISCORD_BOT_TOKEN environment variable as fallback
+        Also checks ASH_BOT_TOKEN environment variable as fallback
         (standard Discord environment variable).
 
         Returns:
             Discord bot token or None
         """
         # Try our secrets system first
-        token = self.get("discord_bot_token")
+        token = self.get("ash_bot_token")
 
         # Fallback to standard Discord env vars
         if token is None:
-            token = os.environ.get("DISCORD_BOT_TOKEN")
+            token = os.environ.get("ASH_BOT_TOKEN")
 
         return token
 

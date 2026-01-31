@@ -8,7 +8,7 @@
 # ============================================================================
 #
 # Install: pip install -r requirements.txt
-# Or in Docker: docker-compose build
+# Or in Docker: docker compose build
 #
 # ============================================================================
 

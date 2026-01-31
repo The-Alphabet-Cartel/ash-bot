@@ -24,7 +24,7 @@ Environment variables always take precedence over JSON configuration.
 
 | Setting | Environment Variable | Description |
 |---------|---------------------|-------------|
-| Discord Bot Token | Docker Secret | `secrets/discord_bot_token` |
+| Discord Bot Token | Docker Secret | `secrets/ash_bot_token` |
 | Monitored Channels | `BOT_MONITORED_CHANNELS` | Comma-separated channel IDs |
 
 ### Recommended Settings
@@ -259,7 +259,7 @@ Sensitive credentials use Docker Secrets instead of environment variables.
 mkdir -p secrets
 
 # Discord bot token (REQUIRED)
-echo "your_discord_bot_token_here" > secrets/discord_bot_token
+echo "your_ash_bot_token_here" > secrets/ash_bot_token
 
 # Claude API key (optional, enables Ash AI)
 echo "your_claude_api_key_here" > secrets/claude_api_token
@@ -275,7 +275,7 @@ chmod 600 secrets/*
 
 | Secret Name | Description | Required |
 |-------------|-------------|----------|
-| `discord_bot_token` | Discord bot authentication token | ✅ Yes |
+| `ash_bot_token` | Discord bot authentication token | ✅ Yes |
 | `claude_api_token` | Anthropic Claude API key | ❌ No (disables Ash AI) |
 | `redis_token` | Redis password | ❌ No (if Redis has no auth) |
 | `discord_alert_token` | Webhook for system alerts | ❌ No |
@@ -432,7 +432,7 @@ BOT_METRICS_ENABLED=true
 ### Secrets Not Found
 
 1. Verify file exists: `ls -la secrets/`
-2. Check file has content: `cat secrets/discord_bot_token | head -c 20`
+2. Check file has content: `cat secrets/ash_bot_token | head -c 20`
 3. Check permissions: `chmod 600 secrets/*`
 
 ### Validation Failures

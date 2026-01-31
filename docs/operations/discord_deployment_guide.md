@@ -108,10 +108,10 @@ Before starting, ensure you have:
    **Token** (CRITICAL - Keep Secret!):
    - Click **"Reset Token"** → Confirm
    - **Copy the token immediately** - you won't see it again!
-   - Store securely in `secrets/discord_bot_token`:
+   - Store securely in `secrets/ash_bot_token`:
      ```bash
-     echo "YOUR_BOT_TOKEN_HERE" > secrets/discord_bot_token
-     chmod 600 secrets/discord_bot_token
+     echo "YOUR_BOT_TOKEN_HERE" > secrets/ash_bot_token
+     chmod 600 secrets/ash_bot_token
      ```
 
    **Public Bot**:
@@ -390,7 +390,7 @@ Add to your `.env` file or set in your environment:
 # =============================================================
 
 # Bot token (from Developer Portal → Bot → Token)
-# ⚠️ Store in secrets/discord_bot_token instead of .env!
+# ⚠️ Store in secrets/ash_bot_token instead of .env!
 
 # Guild/Server ID (optional, for single-server deployment)
 BOT_DISCORD_GUILD_ID=YOUR_GUILD_ID_HERE
@@ -429,8 +429,8 @@ Store sensitive values in Docker secrets:
 mkdir -p secrets
 
 # Store bot token (from Step 2)
-echo "YOUR_BOT_TOKEN" > secrets/discord_bot_token
-chmod 600 secrets/discord_bot_token
+echo "YOUR_BOT_TOKEN" > secrets/ash_bot_token
+chmod 600 secrets/ash_bot_token
 
 # Store alert webhook (optional, for system notifications)
 echo "YOUR_WEBHOOK_URL" > secrets/discord_alert_token
@@ -446,7 +446,7 @@ Use this checklist to verify your setup:
 ### Discord Developer Portal
 - [ ] Application created
 - [ ] Bot user added
-- [ ] Bot token saved to `secrets/discord_bot_token`
+- [ ] Bot token saved to `secrets/ash_bot_token`
 - [ ] Message Content Intent enabled
 - [ ] Server Members Intent enabled
 - [ ] Installation configured (Guild Install) ← **New step**
@@ -472,7 +472,7 @@ Use this checklist to verify your setup:
 - [ ] `BOT_ALERT_CHANNEL_CRITICAL` set
 - [ ] `BOT_MONITORED_CHANNELS` set
 - [ ] `BOT_CRT_ROLE_ID` set
-- [ ] `secrets/discord_bot_token` exists with valid token
+- [ ] `secrets/ash_bot_token` exists with valid token
 
 ### Startup Verification
 - [ ] Bot comes online when started
@@ -491,7 +491,7 @@ Use this checklist to verify your setup:
 **Solutions**:
 1. Verify token is correct:
    ```bash
-   cat secrets/discord_bot_token
+   cat secrets/ash_bot_token
    ```
 2. Check Docker logs:
    ```bash

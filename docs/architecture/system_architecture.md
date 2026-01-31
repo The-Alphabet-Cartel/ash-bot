@@ -244,7 +244,7 @@ Ash-Bot is a crisis detection Discord bot that monitors messages in The Alphabet
 ConfigManager (config/*.json)
      │
      ├── SecretsManager (secrets/*)
-     │        ├── discord_bot_token
+     │        ├── ash_bot_token
      │        ├── claude_api_key
      │        └── redis_token
      │
@@ -1187,7 +1187,7 @@ ash-bot/
 ├── secrets/
 │   ├── README.md
 │   ├── claude_api_token
-│   ├── discord_bot_token
+│   ├── ash_bot_token
 │   └── redis_token
 ├── src/
 │   ├── __init__.py

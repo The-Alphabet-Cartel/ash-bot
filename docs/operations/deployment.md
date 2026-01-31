@@ -158,7 +158,7 @@ When the container starts, you'll see the PUID/PGID in the logs:
 ```bash
 mkdir -p secrets
 
-echo "YOUR_DISCORD_BOT_TOKEN" > secrets/discord_bot_token
+echo "YOUR_ASH_BOT_TOKEN" > secrets/ash_bot_token
 echo "YOUR_CLAUDE_API_KEY" > secrets/claude_api_token
 echo "YOUR_REDIS_PASSWORD" > secrets/redis_token
 

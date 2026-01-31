@@ -74,7 +74,7 @@ docker compose ps
 Before starting Ash-Bot, verify:
 
 - [ ] **Secrets configured**: All files in `./secrets/` are present
-  - `discord_bot_token`
+  - `ash_bot_token`
   - `claude_api_token`
   - `redis_token`
   - `discord_alert_token` (optional)
@@ -158,7 +158,7 @@ docker compose logs -f ash-bot
 
 If startup fails, check:
 
-1. **Token issues**: Verify `secrets/discord_bot_token` is correct
+1. **Token issues**: Verify `secrets/ash_bot_token` is correct
 2. **Network issues**: Verify Redis and NLP are reachable
 3. **Port conflicts**: Verify port 30881 is available
 4. **Permission issues**: Verify Docker can read secrets
@@ -368,7 +368,7 @@ docker compose ps
 ```bash
 # 1. Get new token from Discord Developer Portal
 # 2. Update secret file
-echo "new_token_here" > secrets/discord_bot_token
+echo "new_token_here" > secrets/ash_bot_token
 
 # 3. Restart bot
 docker compose restart ash-bot

@@ -11,8 +11,8 @@
 #   # Build the image
 #   docker build -t ghcr.io/the-alphabet-cartel/ash-bot:latest .
 #
-#   # Run with docker-compose (recommended)
-#   docker-compose up -d
+#   # Run with docker compose (recommended)
+#   docker compose up -d
 #
 # ENVIRONMENT VARIABLES (Runtime):
 #   PUID - User ID to run as (default: 1001)

@@ -20,7 +20,7 @@ This directory contains sensitive credentials used by Ash. These files are:
 |------|-------------|----------|-----------|
 | `ash_bot_discord_alert_token` | Discord Webhook for Ash-Bot Alerts | ✅ Required | Ash-Bot |
 | `claude_api_token` | Claude API Token | ✅ Required | Ash-Bot |
-| `discord_bot_token` | Discord Bot Token | ✅ Required | Ash-Bot |
+| `ash_bot_token` | Discord Bot Token | ✅ Required | Ash-Bot |
 | `redis_token` | Redis Token | ✅ Required | Ash-Bot |
 | `webhook_token` | Webhook Token | Future Use - Optional | None |
 
@@ -77,11 +77,11 @@ Get your token from: [Discord Bot Token](https://discord.com/developers/applicat
 
 ```bash
 # Create the secret file (no file extension)
-echo "your_discord_bot_token_here" > secrets/discord_bot_token
+echo "your_ash_bot_token_here" > secrets/ash_bot_token
 
 # Set secure permissions
-chown nas:nas secrets/discord_bot_token
-chmod 600 secrets/discord_bot_token
+chown nas:nas secrets/ash_bot_token
+chmod 600 secrets/ash_bot_token
 ```
 
 ### 5. Add Redis Password Token (Required for Ash-Bot)
@@ -108,7 +108,7 @@ ls -la secrets/
 # Verify no trailing whitespace
 cat -A secrets/ash_bot_discord_alert_token
 cat -A secrets/claude_api_token
-cat -A secrets/discord_bot_token
+cat -A secrets/ash_bot_token
 cat -A secrets/redis_token
 ```
 
@@ -130,8 +130,8 @@ secrets:
     file: ./secrets/ash_bot_discord_alert_token
   claude_api_token:
     file: ./secrets/claude_api_token
-  discord_bot_token:
-    file: ./secrets/discord_bot_token
+  ash_bot_token:
+    file: ./secrets/ash_bot_token
   redis_token:
     file: ./secrets/redis_token
 
@@ -140,7 +140,7 @@ services:
     secrets:
       - ash_bot_discord_alert_token
       - claude_api_token
-      - discord_bot_token
+      - ash_bot_token
       - redis_token
 ```
 
@@ -148,7 +148,7 @@ Inside the container, the secrets are available at:
 ```
 /run/secrets/ash_bot_discord_alert_token
 /run/secrets/claude_api_token
-/run/secrets/discord_bot_token
+/run/secrets/ash_bot_token
 /run/secrets/redis_token
 ```
 
@@ -163,14 +163,14 @@ For local development without Docker:
 from src.managers import get_secret
 
 # Get any secret
-token = get_secret("discord_bot_token")
+token = get_secret("ash_bot_token")
 
 # Or use convenience methods
 from src.managers import create_secrets_manager
 secrets = create_secrets_manager()
 claude_token = secrets.get_claude_api_token()
 discord_alert_token = secrets.get_discord_alert_token()  # Returns ash_bot_discord_alert_token
-discord_bot_token = secrets.get_discord_bot_token()
+ash_bot_token = secrets.get_ash_bot_token()
 redis_token = secrets.get_redis_token()
 ```
 
@@ -231,23 +231,23 @@ sk-ant-abcdef123456789
 ### Secret Not Found
 
 ```
-DEBUG: Secret 'discord_bot_token' not found
+DEBUG: Secret 'ash_bot_token' not found
 ```
 
 Check:
-1. File exists: `ls -la secrets/discord_bot_token`
-2. File has content: `cat secrets/discord_bot_token`
-3. No extra whitespace: `cat -A secrets/discord_bot_token`
+1. File exists: `ls -la secrets/ash_bot_token`
+2. File has content: `cat secrets/ash_bot_token`
+3. No extra whitespace: `cat -A secrets/ash_bot_token`
 
 ### Permission Denied
 
 ```
-WARNING: Failed to read Docker secret 'discord_bot_token': Permission denied
+WARNING: Failed to read Docker secret 'ash_bot_token': Permission denied
 ```
 
 Fix permissions:
 ```bash
-chmod 600 secrets/discord_bot_token
+chmod 600 secrets/ash_bot_token
 ```
 
 ### Token Not Working
@@ -262,19 +262,19 @@ chmod 600 secrets/discord_bot_token
 Verify in docker-compose.yml:
 ```yaml
 secrets:
-  discord_bot_token:
-    file: ./secrets/discord_bot_token  # Path relative to docker-compose.yml
+  ash_bot_token:
+    file: ./secrets/ash_bot_token  # Path relative to docker-compose.yml
 
 services:
   ash-bot:
     secrets:
-      - discord_bot_token  # Must be listed here
+      - ash_bot_token  # Must be listed here
 ```
 
 Check inside container:
 ```bash
 docker exec ash-bot ls -la /run/secrets/
-docker exec ash-bot cat /run/secrets/discord_bot_token
+docker exec ash-bot cat /run/secrets/ash_bot_token
 ```
 
 ### Claude API Token Issues
@@ -313,7 +313,7 @@ print(secrets.get_status())
 # Shows which secrets are available
 
 # Check individual secrets (only show prefix!)
-discord = secrets.get_discord_bot_token()
+discord = secrets.get_ash_bot_token()
 claude = secrets.get_claude_api_token()
 
 if discord:
